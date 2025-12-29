@@ -1,0 +1,56 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Associated case ID"
+    },
+    "document_id": {
+      "type": "string",
+      "description": "Optional document reference"
+    },
+    "content": {
+      "type": "string"
+    },
+    "comment_type": {
+      "type": "string",
+      "enum": [
+        "note",
+        "question",
+        "update",
+        "reminder"
+      ],
+      "default": "note"
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether comment is shared with others or private to creator"
+    },
+    "is_internal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Internal comments only visible to legal team"
+    },
+    "mentioned_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    }
+  },
+  "required": [
+    "case_id",
+    "content"
+  ]
+}

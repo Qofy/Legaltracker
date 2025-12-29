@@ -1,0 +1,113 @@
+{
+  "name": "Lawyer",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Reference to User entity"
+    },
+    "bar_number": {
+      "type": "string"
+    },
+    "license_state": {
+      "type": "string"
+    },
+    "license_expiry": {
+      "type": "string",
+      "format": "date"
+    },
+    "specializations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Legal specializations"
+    },
+    "law_school": {
+      "type": "string"
+    },
+    "graduation_year": {
+      "type": "number"
+    },
+    "years_experience": {
+      "type": "number"
+    },
+    "hourly_rate": {
+      "type": "number"
+    },
+    "office_address": {
+      "type": "string"
+    },
+    "office_phone": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "suspended"
+      ],
+      "default": "active"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assigned_customers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Customers assigned to this lawyer"
+    }
+  },
+  "required": [
+    "user_id",
+    "bar_number"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        },
+        {
+          "assigned_customers": {
+            "$in": [
+              "{{user.id}}"
+            ]
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        }
+      ]
+    }
+  }
+}

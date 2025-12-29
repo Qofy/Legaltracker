@@ -1,0 +1,73 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Associated case ID"
+    },
+    "sender_id": {
+      "type": "string",
+      "description": "User ID of sender"
+    },
+    "message": {
+      "type": "string"
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "user",
+        "ai",
+        "system"
+      ],
+      "default": "user"
+    },
+    "ai_context": {
+      "type": "string",
+      "description": "AI analysis context"
+    },
+    "referenced_documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_private": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "case_id",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "sender_id": "{{user.id}}"
+        },
+        {
+          "sender_id": "ai-assistant"
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "sender_id": "{{user.id}}"
+        }
+      ]
+    }
+  }
+}

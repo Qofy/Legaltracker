@@ -1,0 +1,75 @@
+{
+  "name": "Invitation",
+  "type": "object",
+  "properties": {
+    "inviter_id": {
+      "type": "string",
+      "description": "ID of the person sending invitation"
+    },
+    "invitee_email": {
+      "type": "string",
+      "description": "Email of person being invited"
+    },
+    "invitee_user_id": {
+      "type": "string",
+      "description": "User ID if invitee is already a user"
+    },
+    "invitation_type": {
+      "type": "string",
+      "enum": [
+        "case_access",
+        "case_ownership",
+        "assistant_role",
+        "general_user"
+      ],
+      "description": "Type of invitation"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Related case if applicable"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "lawyer",
+        "customer",
+        "assistant",
+        "admin"
+      ],
+      "description": "Role being offered"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined",
+        "withdrawn",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "message": {
+      "type": "string",
+      "description": "Personal message with invitation"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "withdrawn_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When invitation was withdrawn"
+    },
+    "withdrawn_by": {
+      "type": "string",
+      "description": "User ID who withdrew the invitation"
+    }
+  },
+  "required": [
+    "inviter_id",
+    "invitee_email",
+    "invitation_type"
+  ]
+}

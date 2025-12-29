@@ -1,0 +1,275 @@
+{
+  "name": "Case",
+  "type": "object",
+  "properties": {
+    "case_number": {
+      "type": "string",
+      "description": "Unique case identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Case title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Case description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "closed",
+        "on_hold",
+        "archived"
+      ],
+      "default": "open"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "lawyer_id": {
+      "type": "string",
+      "description": "Primary lawyer assigned to case"
+    },
+    "customer_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Customers involved in the case"
+    },
+    "owner_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs with case ownership (can invite others, manage access)"
+    },
+    "shared_with_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User IDs who have been invited to view/collaborate on this case"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "court_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "case_type": {
+      "type": "string",
+      "enum": [
+        "civil",
+        "criminal",
+        "family",
+        "corporate",
+        "immigration",
+        "personal_injury",
+        "other"
+      ]
+    },
+    "case_value": {
+      "type": "number",
+      "description": "Monetary value of the case"
+    },
+    "billing_rate": {
+      "type": "number",
+      "description": "Hourly billing rate"
+    },
+    "estimated_hours": {
+      "type": "number",
+      "description": "Estimated hours to complete"
+    },
+    "actual_hours": {
+      "type": "number",
+      "description": "Actual hours worked"
+    },
+    "settlement_amount": {
+      "type": "number",
+      "description": "Settlement amount if applicable"
+    },
+    "court_name": {
+      "type": "string",
+      "description": "Name of the court"
+    },
+    "judge_name": {
+      "type": "string",
+      "description": "Name of the judge"
+    },
+    "opposing_counsel": {
+      "type": "string",
+      "description": "Opposing counsel information"
+    },
+    "case_outcome": {
+      "type": "string",
+      "description": "Final outcome of the case"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Case tags for organization"
+    },
+    "next_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Next important deadline"
+    },
+    "timeline_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Timeline of case events"
+    },
+    "ai_timeline": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "total_events": {
+          "type": "number"
+        },
+        "date_range": {
+          "type": "string"
+        },
+        "generated_at": {
+          "type": "string"
+        },
+        "timeline_data": {
+          "type": "object"
+        }
+      },
+      "description": "AI-generated timeline data"
+    },
+    "ai_outcome_prediction": {
+      "type": "object",
+      "properties": {
+        "win_probability": {
+          "type": "number"
+        },
+        "settlement_range_min": {
+          "type": "number"
+        },
+        "settlement_range_max": {
+          "type": "number"
+        },
+        "estimated_duration_days": {
+          "type": "number"
+        },
+        "confidence_level": {
+          "type": "string"
+        },
+        "key_factors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "opportunities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicted_at": {
+          "type": "string"
+        }
+      },
+      "description": "AI-predicted case outcomes"
+    },
+    "ai_conflict_assessment": {
+      "type": "object",
+      "properties": {
+        "has_conflicts": {
+          "type": "boolean"
+        },
+        "conflict_level": {
+          "type": "string"
+        },
+        "conflicts_found": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "related_case_id": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "party_overlaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "assessed_at": {
+          "type": "string"
+        }
+      },
+      "description": "AI conflict of interest assessment"
+    }
+  },
+  "required": [
+    "case_number",
+    "title",
+    "lawyer_id"
+  ]
+}

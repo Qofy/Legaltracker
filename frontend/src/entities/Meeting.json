@@ -1,0 +1,71 @@
+{
+  "name": "Meeting",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Optional associated case"
+    },
+    "attendee_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of User IDs attending"
+    },
+    "location": {
+      "type": "string",
+      "description": "URL or physical location"
+    }
+  },
+  "required": [
+    "title",
+    "start_time",
+    "end_time",
+    "attendee_ids"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "attendee_ids": {
+            "$in": [
+              "{{user.id}}"
+            ]
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

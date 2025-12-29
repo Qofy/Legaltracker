@@ -1,0 +1,79 @@
+{
+  "name": "FeatureRequest",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "ui",
+        "feature",
+        "integration",
+        "performance",
+        "other"
+      ]
+    },
+    "use_case": {
+      "type": "string"
+    },
+    "screenshot_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "reviewing",
+        "approved",
+        "in_development",
+        "completed",
+        "rejected"
+      ],
+      "default": "submitted"
+    }
+  },
+  "required": [
+    "title",
+    "description"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

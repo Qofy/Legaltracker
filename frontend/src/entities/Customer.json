@@ -1,0 +1,121 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Reference to User entity"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Company name if corporate client"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Main contact person"
+    },
+    "phone_primary": {
+      "type": "string"
+    },
+    "phone_secondary": {
+      "type": "string"
+    },
+    "email_primary": {
+      "type": "string"
+    },
+    "email_secondary": {
+      "type": "string"
+    },
+    "address_street": {
+      "type": "string"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "string"
+    },
+    "address_zip": {
+      "type": "string"
+    },
+    "address_country": {
+      "type": "string"
+    },
+    "client_type": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "corporate",
+        "organization"
+      ],
+      "default": "individual"
+    },
+    "preferred_communication": {
+      "type": "string",
+      "enum": [
+        "email",
+        "phone",
+        "mail",
+        "in_person"
+      ],
+      "default": "email"
+    },
+    "emergency_contact": {
+      "type": "string"
+    },
+    "emergency_phone": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "prospective"
+      ],
+      "default": "active"
+    },
+    "referral_source": {
+      "type": "string"
+    },
+    "assigned_lawyers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lawyers assigned to this customer"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_id": "{{user.id}}"
+        }
+      ]
+    }
+  }
+}

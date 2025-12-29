@@ -1,0 +1,98 @@
+{
+  "name": "Annotation",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Associated document ID"
+    },
+    "case_id": {
+      "type": "string",
+      "description": "Associated case ID"
+    },
+    "page_number": {
+      "type": "number"
+    },
+    "x_coordinate": {
+      "type": "number"
+    },
+    "y_coordinate": {
+      "type": "number"
+    },
+    "width": {
+      "type": "number"
+    },
+    "height": {
+      "type": "number"
+    },
+    "annotation_type": {
+      "type": "string",
+      "enum": [
+        "highlight",
+        "note",
+        "redact",
+        "signature",
+        "stamp"
+      ],
+      "default": "note"
+    },
+    "content": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string",
+      "default": "#FFE082"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "topic": {
+      "type": "string"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether annotation is visible to clients"
+    }
+  },
+  "required": [
+    "document_id",
+    "case_id",
+    "page_number",
+    "x_coordinate",
+    "y_coordinate"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "is_public": true
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}
+

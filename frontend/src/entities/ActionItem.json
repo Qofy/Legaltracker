@@ -1,0 +1,96 @@
+{
+  "name": "ActionItem",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Associated case ID"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "User ID of person responsible"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "overdue"
+      ],
+      "default": "pending"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "research",
+        "filing",
+        "client_contact",
+        "document_review",
+        "court_appearance",
+        "other"
+      ]
+    }
+  },
+  "required": [
+    "case_id",
+    "title",
+    "assigned_to"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "assigned_to": "{{user.id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "assigned_to": "{{user.id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

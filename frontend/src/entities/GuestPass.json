@@ -1,0 +1,66 @@
+{
+  "name": "GuestPass",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Associated case ID"
+    },
+    "issued_by": {
+      "type": "string",
+      "description": "User ID who issued the pass"
+    },
+    "guest_email": {
+      "type": "string",
+      "description": "Email of the guest receiving access"
+    },
+    "guest_name": {
+      "type": "string",
+      "description": "Name of the guest"
+    },
+    "pass_token": {
+      "type": "string",
+      "description": "Unique token for access"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this pass expires"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "revoked"
+      ],
+      "default": "active"
+    },
+    "access_level": {
+      "type": "string",
+      "enum": [
+        "view_only",
+        "view_documents",
+        "full_access"
+      ],
+      "default": "view_only",
+      "description": "Level of access granted"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about this guest pass"
+    },
+    "last_accessed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this pass was used"
+    }
+  },
+  "required": [
+    "case_id",
+    "issued_by",
+    "guest_email",
+    "pass_token",
+    "expires_at"
+  ]
+}

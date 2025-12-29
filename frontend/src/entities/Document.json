@@ -1,0 +1,273 @@
+{
+  "name": "Document",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Associated case ID"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "file_url": {
+      "type": "string"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "docx",
+        "xlsx",
+        "image",
+        "email",
+        "other"
+      ]
+    },
+    "file_size": {
+      "type": "number"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "contract",
+        "evidence",
+        "correspondence",
+        "court_filing",
+        "research",
+        "email",
+        "other"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ocr_text": {
+      "type": "string",
+      "description": "Extracted text from OCR"
+    },
+    "detected_language": {
+      "type": "string"
+    },
+    "is_confidential": {
+      "type": "boolean",
+      "default": false
+    },
+    "version": {
+      "type": "number",
+      "default": 1
+    },
+    "visibility_type": {
+      "type": "string",
+      "enum": [
+        "public",
+        "case_members",
+        "lawyers_only",
+        "specific_users"
+      ],
+      "default": "case_members",
+      "description": "Who can see this document"
+    },
+    "visible_to_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific user IDs who can see this document"
+    },
+    "visible_to_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "User roles who can see this document"
+    },
+    "submitted_by_party": {
+      "type": "string",
+      "enum": [
+        "us",
+        "counterpart",
+        "court",
+        "third_party"
+      ],
+      "default": "us",
+      "description": "Which party submitted this document"
+    },
+    "points_awarded": {
+      "type": "number",
+      "default": 0,
+      "description": "Points this document earned in the case"
+    },
+    "points_notes": {
+      "type": "string",
+      "description": "Notes about why points were awarded"
+    },
+    "inline_notes": {
+      "type": "string",
+      "description": "Quick notes about this document"
+    },
+    "email_metadata": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        }
+      },
+      "description": "Metadata for email documents"
+    },
+    "ai_analysis": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "party_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "key_dates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "legal_clauses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "key_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "document_category": {
+          "type": "string"
+        },
+        "risk_assessment": {
+          "type": "string"
+        },
+        "action_items_suggested": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "analyzed_at": {
+          "type": "string"
+        }
+      },
+      "description": "AI-generated analysis of document"
+    }
+  },
+  "required": [
+    "case_id",
+    "file_name",
+    "file_url",
+    "file_type"
+  ],
+  "rls": {
+    "read": {
+      "reader_emails": {
+        "$in": [
+          "{{user.email}}"
+        ]
+      },
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "visibility_type": "public"
+        },
+        {
+          "$and": [
+            {
+              "visibility_type": "case_members"
+            },
+            {
+              "visible_to_roles": {
+                "$in": [
+                  "{{user.user_type}}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "visibility_type": "lawyers_only"
+            },
+            {
+              "visible_to_roles": {
+                "$in": [
+                  "{{user.user_type}}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "visibility_type": "specific_users"
+            },
+            {
+              "visible_to_users": {
+                "$in": [
+                  "{{user.id}}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "writer_emails": {
+        "$in": [
+          "{{user.email}}"
+        ]
+      },
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}
