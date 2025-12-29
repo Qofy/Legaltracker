@@ -1,7 +1,79 @@
 <template>
-  <div class="p-6 space-y-6 bg-gray-50 min-h-screen">
-  
-    <!-- Welcome Header -->
+  <div class=" bg-gray-50 min-h-screen flex">
+    <aside class="w-64 flex flex-col gap-6 bg-white border-r">
+      <header class="flex flex-col bg-[#003aca] py-4 px-4 text-amber-50">
+        <h1 class="font-bold text-2xl flex gap-2 items-center">
+          <Scale size="26" />
+          LegalCases
+        </h1>
+        <p class="mt-2 text-sm">Welcome back, {{ user?.full_name?.split(' ')[0] || 'User' }}</p>
+      </header>
+
+      <nav class="px-3 py-4 space-y-2">
+        <router-link to="/dashboard" class="nav-link">
+          <House class="nav-icon" />
+          <span class="nav-text">Dashboard</span>
+        </router-link>
+
+        <router-link to="/cases" class="nav-link">
+          <FileText class="nav-icon" />
+          <span class="nav-text">Cases</span>
+        </router-link>
+
+        <router-link to="/my-cases" class="nav-link">
+          <FileText class="nav-icon" />
+          <span class="nav-text">My Cases</span>
+        </router-link>
+
+        <router-link to="/documents" class="nav-link">
+          <File class="nav-icon" />
+          <span class="nav-text">Documents</span>
+        </router-link>
+
+        <router-link to="/schedule" class="nav-link">
+          <Calendar class="nav-icon" />
+          <span class="nav-text">Schedule</span>
+        </router-link>
+
+        <router-link to="/legal-research" class="nav-link">
+          <Search class="nav-icon" />
+          <span class="nav-text">Legal Research</span>
+        </router-link>
+
+        <router-link to="/users" class="nav-link">
+          <Users class="nav-icon" />
+          <span class="nav-text">Users</span>
+        </router-link>
+
+        <router-link to="/settings" class="nav-link">
+          <Settings class="nav-icon" />
+          <span class="nav-text">Settings</span>
+        </router-link>
+
+        <router-link to="/help" class="nav-link">
+          <HelpCircle class="nav-icon" />
+          <span class="nav-text">Help</span>
+        </router-link>
+
+        <router-link to="/guest-access" class="nav-link">
+          <House class="nav-icon" />
+          <span class="nav-text">Guest Access</span>
+        </router-link>
+      </nav>
+    </aside>
+
+<div class="w-1/6">
+  <h1 class="bg-[#003aca] h-15 text-amber-50  border-r-4 border-gray-50">Ai Assistant</h1>
+</div>
+
+ <main class="w-1/2">
+  <h1>Main</h1>
+ </main>
+
+ <div class="w-1/6">
+  <h1 class="bg-[#003aca] h-15 text-amber-50  border-l-4 border-gray-50">Comment</h1>
+ </div>
+    <!-- Welcome Header --
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
       <div>
         <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ user?.full_name?.split(' ')[0] || 'User' }}</h1>
@@ -17,7 +89,7 @@
       </div>
     </div>
 
-    <!-- Conflict Alerts -->
+    <!-- Conflict Alerts --
     <Card v-if="conflictAlerts.length > 0" class="border-red-300 bg-red-50 material-elevation-2">
       <CardHeader>
         <CardTitle class="text-lg font-semibold text-red-900 flex items-center">
@@ -42,7 +114,7 @@
       </CardContent>
     </Card>
 
-    <!-- Stats Cards -->
+    <!-- Stats Cards --
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card class="material-elevation-2 hover:material-elevation-3 transition-shadow duration-300">
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -95,7 +167,7 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Recent Cases -->
+      <!-- Recent Cases --
       <Card class="lg:col-span-2 material-elevation-2">
         <CardHeader class="flex flex-row items-center justify-between">
           <CardTitle class="text-lg font-semibold text-gray-900">Recent Cases</CardTitle>
@@ -136,9 +208,9 @@
         </CardContent>
       </Card>
 
-      <!-- Right Column -->
+      <!-- Right Column --
       <div class="space-y-6">
-        <!-- Pending Actions -->
+        <!-- Pending Actions --
         <Card class="material-elevation-2">
           <CardHeader>
             <CardTitle class="text-lg font-semibold text-gray-900 flex items-center">
@@ -162,7 +234,7 @@
           </CardContent>
         </Card>
 
-        <!-- Recent Comments -->
+        <!-- Recent Comments --
         <Card class="material-elevation-2">
           <CardHeader>
             <CardTitle class="text-lg font-semibold text-gray-900 flex items-center">
@@ -189,6 +261,8 @@
         </Card>
       </div>
     </div>
+        <!---->
+
   </div>
 </template>
 
@@ -197,13 +271,14 @@ import { ref, onMounted, computed } from 'vue';
 import { Case, Comment, ActionItem } from '@/services/entities';
 import { User } from '@/services/entities';
 import { createPageUrl } from '@/utils';
-import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus } from 'lucide-vue-next';
+import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users, Settings, HelpCircle, File, Search } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+
 
 const user = ref(null);
 const cases = ref([]);
@@ -296,4 +371,20 @@ const productivityPercent = computed(() => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+.nav-link{
+  display:flex;
+  align-items:center;
+  gap:0.75rem;
+  padding:0.45rem 0.6rem;
+  border-radius:0.5rem;
+  color:var(--tw-text-opacity, 1) ;
+  color: #374151; /* gray-700 */
+  text-decoration:none;
+}
+.nav-link .nav-icon{ width:20px; height:20px; color:#4b5563; }
+.nav-link:hover{ background-color:#f3f4f6; color:#0ea5e9; }
+.router-link-active{ background-color:#eef2ff; color:#075985; }
+.nav-text{ font-size:0.95rem; }
+main{ background-color: #f8fafc; min-height:100vh; }
+</style>
