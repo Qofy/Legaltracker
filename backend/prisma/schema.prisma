@@ -1,0 +1,433 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Base User Model
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String
+  fullName          String    @map("full_name")
+  userType          String    @map("user_type") // admin, lawyer, customer, guest
+  profilePicture    String?   @map("profile_picture")
+  isActive          Boolean   @default(true) @map("is_active")
+  lastLogin         DateTime? @map("last_login")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  lawyer            Lawyer?
+  customer          Customer?
+  casesAsLawyer     Case[]    @relation("LawyerCases")
+  casesAsCustomer   CaseCustomer[]
+  casesAsOwner      CaseOwner[]
+  casesSharedWith   CaseSharedUser[]
+  actionItems       ActionItem[]
+  comments          Comment[] @relation("UserComments")
+  chatMessages      ChatMessage[]
+  meetings          MeetingAttendee[]
+  organizedMeetings Meeting[] @relation("MeetingOrganizer")
+  annotations       Annotation[]
+  invitationsSent   Invitation[] @relation("InviterInvitations")
+  invitationsReceived Invitation[] @relation("InviteeInvitations")
+  guestPassesIssued GuestPass[]
+  bugReports        BugReport[]
+  featureRequests   FeatureRequest[]
+  documentsCreated  Document[] @relation("DocumentCreator")
+
+  @@map("users")
+}
+
+// Lawyer Profile
+model Lawyer {
+  id               String    @id @default(uuid())
+  userId           String    @unique @map("user_id")
+  barNumber        String    @unique @map("bar_number")
+  licenseState     String?   @map("license_state")
+  licenseExpiry    DateTime? @map("license_expiry")
+  specializations  String?   // JSON array stored as string
+  lawSchool        String?   @map("law_school")
+  graduationYear   Int?      @map("graduation_year")
+  yearsExperience  Int?      @map("years_experience")
+  hourlyRate       Float?    @map("hourly_rate")
+  officeAddress    String?   @map("office_address")
+  officePhone      String?   @map("office_phone")
+  status           String    @default("active") // active, inactive, suspended
+  bio              String?
+  languages        String?   // JSON array
+  certifications   String?   // JSON array
+  assignedCustomers String?  @map("assigned_customers") // JSON array of customer IDs
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("lawyers")
+}
+
+// Customer Profile
+model Customer {
+  id                    String   @id @default(uuid())
+  userId                String   @unique @map("user_id")
+  companyName           String?  @map("company_name")
+  contactPerson         String?  @map("contact_person")
+  phonePrimary          String?  @map("phone_primary")
+  phoneSecondary        String?  @map("phone_secondary")
+  emailPrimary          String?  @map("email_primary")
+  emailSecondary        String?  @map("email_secondary")
+  addressStreet         String?  @map("address_street")
+  addressCity           String?  @map("address_city")
+  addressState          String?  @map("address_state")
+  addressZip            String?  @map("address_zip")
+  addressCountry        String?  @map("address_country")
+  clientType            String   @default("individual") // individual, corporate, organization
+  preferredCommunication String  @default("email") @map("preferred_communication")
+  emergencyContact      String?  @map("emergency_contact")
+  emergencyPhone        String?  @map("emergency_phone")
+  notes                 String?
+  status                String   @default("active") // active, inactive, prospective
+  referralSource        String?  @map("referral_source")
+  assignedLawyers       String?  @map("assigned_lawyers") // JSON array
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("customers")
+}
+
+// Case Model
+model Case {
+  id                     String    @id @default(uuid())
+  caseNumber             String    @unique @map("case_number")
+  title                  String
+  description            String?
+  status                 String    @default("open") // open, in_progress, closed, on_hold, archived
+  priority               String    @default("medium") // low, medium, high, urgent
+  lawyerId               String    @map("lawyer_id")
+  dueDate                DateTime? @map("due_date")
+  courtDate              DateTime? @map("court_date")
+  caseType               String?   @map("case_type") // civil, criminal, family, corporate, immigration, personal_injury, other
+  caseValue              Float?    @map("case_value")
+  billingRate            Float?    @map("billing_rate")
+  estimatedHours         Float?    @map("estimated_hours")
+  actualHours            Float?    @map("actual_hours")
+  settlementAmount       Float?    @map("settlement_amount")
+  courtName              String?   @map("court_name")
+  judgeName              String?   @map("judge_name")
+  opposingCounsel        String?   @map("opposing_counsel")
+  caseOutcome            String?   @map("case_outcome")
+  tags                   String?   // JSON array
+  nextDeadline           DateTime? @map("next_deadline")
+  timelineEvents         String?   @map("timeline_events") // JSON array
+  aiTimeline             String?   @map("ai_timeline") // JSON object
+  aiOutcomePrediction    String?   @map("ai_outcome_prediction") // JSON object
+  aiConflictAssessment   String?   @map("ai_conflict_assessment") // JSON object
+  createdBy              String    @map("created_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  lawyer           User              @relation("LawyerCases", fields: [lawyerId], references: [id])
+  customers        CaseCustomer[]
+  owners           CaseOwner[]
+  sharedUsers      CaseSharedUser[]
+  documents        Document[]
+  actionItems      ActionItem[]
+  comments         Comment[]
+  chatMessages     ChatMessage[]
+  meetings         Meeting[]
+  annotations      Annotation[]
+  guestPasses      GuestPass[]
+
+  @@map("cases")
+}
+
+// Junction table for Case-Customer many-to-many
+model CaseCustomer {
+  id         String   @id @default(uuid())
+  caseId     String   @map("case_id")
+  customerId String   @map("customer_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  case     Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([caseId, customerId])
+  @@map("case_customers")
+}
+
+// Case Owners (users who can manage access)
+model CaseOwner {
+  id        String   @id @default(uuid())
+  caseId    String   @map("case_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([caseId, userId])
+  @@map("case_owners")
+}
+
+// Shared case access
+model CaseSharedUser {
+  id        String   @id @default(uuid())
+  caseId    String   @map("case_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([caseId, userId])
+  @@map("case_shared_users")
+}
+
+// Document Model
+model Document {
+  id                String    @id @default(uuid())
+  caseId            String    @map("case_id")
+  fileName          String    @map("file_name")
+  fileUrl           String    @map("file_url")
+  fileType          String    @map("file_type") // pdf, docx, xlsx, image, email, other
+  fileSize          Int?      @map("file_size")
+  documentType      String?   @map("document_type") // contract, evidence, correspondence, court_filing, research, email, other
+  tags              String?   // JSON array
+  ocrText           String?   @map("ocr_text")
+  detectedLanguage  String?   @map("detected_language")
+  isConfidential    Boolean   @default(false) @map("is_confidential")
+  version           Int       @default(1)
+  visibilityType    String    @default("case_members") @map("visibility_type") // public, case_members, lawyers_only, specific_users
+  visibleToUsers    String?   @map("visible_to_users") // JSON array
+  visibleToRoles    String?   @map("visible_to_roles") // JSON array
+  submittedByParty  String    @default("us") @map("submitted_by_party") // us, counterpart, court, third_party
+  pointsAwarded     Int       @default(0) @map("points_awarded")
+  pointsNotes       String?   @map("points_notes")
+  inlineNotes       String?   @map("inline_notes")
+  emailMetadata     String?   @map("email_metadata") // JSON object
+  aiAnalysis        String?   @map("ai_analysis") // JSON object
+  createdBy         String    @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  case        Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  creator     User         @relation("DocumentCreator", fields: [createdBy], references: [id])
+  annotations Annotation[]
+
+  @@map("documents")
+}
+
+// Action Item Model
+model ActionItem {
+  id            String    @id @default(uuid())
+  caseId        String    @map("case_id")
+  title         String
+  description   String?
+  assignedTo    String    @map("assigned_to")
+  status        String    @default("pending") // pending, in_progress, completed, overdue
+  priority      String    @default("medium") // low, medium, high, urgent
+  dueDate       DateTime? @map("due_date")
+  completedDate DateTime? @map("completed_date")
+  category      String?   // research, filing, client_contact, document_review, court_appearance, other
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  case     Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignee User @relation(fields: [assignedTo], references: [id])
+
+  @@map("action_items")
+}
+
+// Comment Model
+model Comment {
+  id              String   @id @default(uuid())
+  caseId          String   @map("case_id")
+  documentId      String?  @map("document_id")
+  content         String
+  commentType     String   @default("note") // note, question, update, reminder
+  isShared        Boolean  @default(true) @map("is_shared")
+  isInternal      Boolean  @default(false) @map("is_internal")
+  mentionedUsers  String?  @map("mentioned_users") // JSON array
+  priority        String   @default("medium") // low, medium, high
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user User @relation("UserComments", fields: [createdBy], references: [id])
+
+  @@map("comments")
+}
+
+// Chat Message Model
+model ChatMessage {
+  id                   String   @id @default(uuid())
+  caseId               String   @map("case_id")
+  senderId             String?  @map("sender_id")
+  message              String
+  messageType          String   @default("user") // user, ai, system
+  aiContext            String?  @map("ai_context")
+  referencedDocuments  String?  @map("referenced_documents") // JSON array
+  isPrivate            Boolean  @default(false) @map("is_private")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  case   Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  sender User? @relation(fields: [senderId], references: [id])
+
+  @@map("chat_messages")
+}
+
+// Meeting Model
+model Meeting {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  startTime   DateTime @map("start_time")
+  endTime     DateTime @map("end_time")
+  caseId      String?  @map("case_id")
+  location    String?
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  case      Case?  @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  organizer User   @relation("MeetingOrganizer", fields: [createdBy], references: [id])
+  attendees MeetingAttendee[]
+
+  @@map("meetings")
+}
+
+// Meeting Attendees junction
+model MeetingAttendee {
+  id        String   @id @default(uuid())
+  meetingId String   @map("meeting_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@map("meeting_attendees")
+}
+
+// Annotation Model
+model Annotation {
+  id             String  @id @default(uuid())
+  documentId     String  @map("document_id")
+  caseId         String  @map("case_id")
+  pageNumber     Int     @map("page_number")
+  xCoordinate    Float   @map("x_coordinate")
+  yCoordinate    Float   @map("y_coordinate")
+  width          Float?
+  height         Float?
+  annotationType String  @default("note") @map("annotation_type") // highlight, note, redact, signature, stamp
+  content        String?
+  color          String  @default("#FFE082")
+  tags           String? // JSON array
+  topic          String?
+  isPublic       Boolean @default(true) @map("is_public")
+  createdBy      String  @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  case     Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [createdBy], references: [id])
+
+  @@map("annotations")
+}
+
+// Invitation Model
+model Invitation {
+  id              String    @id @default(uuid())
+  inviterId       String    @map("inviter_id")
+  inviteeEmail    String    @map("invitee_email")
+  inviteeUserId   String?   @map("invitee_user_id")
+  invitationType  String    @map("invitation_type") // case_access, case_ownership, assistant_role, general_user
+  caseId          String?   @map("case_id")
+  role            String?   // lawyer, customer, assistant, admin
+  status          String    @default("pending") // pending, accepted, declined, withdrawn, expired
+  message         String?
+  expiresAt       DateTime? @map("expires_at")
+  withdrawnAt     DateTime? @map("withdrawn_at")
+  withdrawnBy     String?   @map("withdrawn_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  inviter User  @relation("InviterInvitations", fields: [inviterId], references: [id])
+  invitee User? @relation("InviteeInvitations", fields: [inviteeUserId], references: [id])
+
+  @@map("invitations")
+}
+
+// Guest Pass Model
+model GuestPass {
+  id           String    @id @default(uuid())
+  caseId       String    @map("case_id")
+  issuedBy     String    @map("issued_by")
+  guestEmail   String    @map("guest_email")
+  guestName    String?   @map("guest_name")
+  passToken    String    @unique @map("pass_token")
+  expiresAt    DateTime  @map("expires_at")
+  status       String    @default("active") // active, expired, revoked
+  accessLevel  String    @default("view_only") @map("access_level") // view_only, view_documents, full_access
+  notes        String?
+  lastAccessed DateTime? @map("last_accessed")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  case   Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  issuer User @relation(fields: [issuedBy], references: [id])
+
+  @@map("guest_passes")
+}
+
+// Bug Report Model
+model BugReport {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  severity     String   @default("medium") // low, medium, high, critical
+  pageUrl      String?  @map("page_url")
+  browserInfo  String?  @map("browser_info")
+  screenshotUrl String? @map("screenshot_url")
+  status       String   @default("open") // open, in_progress, resolved, closed
+  createdBy    String   @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [createdBy], references: [id])
+
+  @@map("bug_reports")
+}
+
+// Feature Request Model
+model FeatureRequest {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  priority      String   @default("medium") // low, medium, high
+  category      String?  // ui, feature, integration, performance, other
+  useCase       String?  @map("use_case")
+  screenshotUrl String?  @map("screenshot_url")
+  status        String   @default("submitted") // submitted, reviewing, approved, in_development, completed, rejected
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [createdBy], references: [id])
+
+  @@map("feature_requests")
+}
