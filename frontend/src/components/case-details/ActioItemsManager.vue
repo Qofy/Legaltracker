@@ -65,8 +65,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { ActionItem } from '@/entities/ActionItem';
-import { User } from '@/entities/User';
+import { ActionItem, User } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

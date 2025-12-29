@@ -172,7 +172,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Loader2, Shield, AlertTriangle, CheckCircle2, RefreshCw, FileText, Users, Scale } from 'lucide-vue-next';
 import { InvokeLLM } from '@/integrations/Core';
-import { Case } from '@/entities/Case';
+import { Case } from '@/services/entities';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/utils';

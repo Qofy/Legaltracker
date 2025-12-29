@@ -118,7 +118,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
-import { GuestPass } from '@/entities/GuestPass';
+import { GuestPass } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

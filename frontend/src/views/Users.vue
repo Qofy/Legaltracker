@@ -76,8 +76,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { User } from '@/entities/User';
-import { Invitation } from '@/entities/Invitation';
+import { User, Invitation } from '@/services/entities';
 import { SendEmail } from '@/integrations/Core';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

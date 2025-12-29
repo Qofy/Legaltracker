@@ -309,7 +309,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { User } from '@/entities/User';
+import { User } from '@/services/entities';
 import { InvokeLLM } from '@/integrations/Core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

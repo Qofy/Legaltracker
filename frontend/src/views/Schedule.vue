@@ -76,9 +76,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { Case } from '@/entities/Case'
-import { ActionItem } from '@/entities/ActionItem'
-import { Meeting } from '@/entities/Meeting'
+import { Case, ActionItem, Meeting } from '@/services/entities'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {

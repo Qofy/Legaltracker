@@ -143,9 +143,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
-import { Case } from '@/entities/Case';
-import { User } from '@/entities/User';
-import { Invitation } from '@/entities/Invitation';
+import { Case, User, Invitation } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

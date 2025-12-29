@@ -142,7 +142,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { Comment } from '@/entities/Comment';
+import { Comment } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';

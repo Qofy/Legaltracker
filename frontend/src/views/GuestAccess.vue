@@ -162,9 +162,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { format } from 'date-fns';
-import { GuestPass } from '@/entities/GuestPass';
-import { Case } from '@/entities/Case';
-import { Document } from '@/entities/Document';
+import { GuestPass, Case, Document } from '@/services/entities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

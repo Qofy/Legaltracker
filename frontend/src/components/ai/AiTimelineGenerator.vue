@@ -184,7 +184,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Loader2, Calendar, Clock, AlertTriangle, CheckCircle2, TrendingUp, FileText, ListTodo, Scale, RefreshCw, Download, Eye, Circle } from 'lucide-vue-next';
 import { InvokeLLM } from '@/integrations/Core';
-import { Case } from '@/entities/Case';
+import { Case } from '@/services/entities';
 import { format, formatDistanceToNow, isFuture, addDays } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 

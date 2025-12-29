@@ -75,7 +75,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Save, X } from 'lucide-vue-next';
-import { User } from '@/entities/User';
+import { User } from '@/services/entities';
 
 const props = defineProps({
   caseData: { type: Object, required: true },

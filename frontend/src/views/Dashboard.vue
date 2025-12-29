@@ -193,10 +193,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { Case } from '@/entities/Case';
-import { Comment } from '@/entities/Comment';
-import { ActionItem } from '@/entities/ActionItem';
-import { User } from '@/entities/User';
+import { Case, Comment, ActionItem } from '@/services/entities';
+import { User } from '@/services/entities';
 import { createPageUrl } from '@/utils';
 import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

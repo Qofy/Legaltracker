@@ -93,7 +93,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { createPageUrl } from '@/utils';
-import { Case } from '@/entities/Case';
+import { Case } from '@/services/entities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

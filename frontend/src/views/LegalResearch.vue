@@ -191,8 +191,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { User } from '@/entities/User'
-import { Case } from '@/entities/Case'
+import { User, Case } from '@/services/entities'
 import { Scale, BookOpen, TrendingUp, Clock, Sparkles } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'

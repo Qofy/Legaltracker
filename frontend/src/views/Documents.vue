@@ -458,9 +458,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Document } from '@/entities/Document'
-import { Case } from '@/entities/Case'
-import { User } from '@/entities/User'
+import { Document, Case, User } from '@/services/entities'
 import { UploadFile, ExtractDataFromUploadedFile } from '@/integrations/Core'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'

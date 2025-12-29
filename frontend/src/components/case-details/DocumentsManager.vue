@@ -50,7 +50,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { Document } from '@/entities/Document';
+import { Document } from '@/services/entities';
 import { UploadFile } from '@/integrations/Core';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

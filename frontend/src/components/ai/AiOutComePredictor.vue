@@ -193,7 +193,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sparkles, Loader2, TrendingUp, DollarSign, Clock, Target, AlertTriangle, Lightbulb, RefreshCw, Award, Shield } from 'lucide-vue-next';
 import { InvokeLLM } from '@/integrations/Core';
-import { Case } from '@/entities/Case';
+import { Case } from '@/services/entities';
 import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 

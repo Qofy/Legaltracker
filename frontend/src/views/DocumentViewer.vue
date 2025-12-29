@@ -295,10 +295,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Document as DocumentEntity } from '@/entities/Document'
-import { Comment } from '@/entities/Comment'
-import { User } from '@/entities/User'
-import { Case } from '@/entities/Case'
+import { Document as DocumentEntity, Comment, User, Case } from '@/services/entities'
 import {
   FileText,
   ZoomIn,
