@@ -17,55 +17,55 @@
       </div>
 
       <nav class="px-3 py-4 space-y-2">
-        <router-link to="/dashboard" class="nav-link">
+        <button type="button" @click="selectedView = 'Dashboard'" :class="['nav-link', {active: selectedView === 'Dashboard'}]">
           <House class="nav-icon" />
           <span class="nav-text">Dashboard</span>
-        </router-link>
+        </button>
 
-        <router-link to="/cases" class="nav-link">
+        <button type="button" @click="selectedView = 'Cases'" :class="['nav-link', {active: selectedView === 'Cases'}]">
           <FileText class="nav-icon" />
           <span class="nav-text">Cases</span>
-        </router-link>
+        </button>
 
-        <router-link to="/my-cases" class="nav-link">
+        <button type="button" @click="selectedView = 'MyCases'" :class="['nav-link', {active: selectedView === 'MyCases'}]">
           <FileText class="nav-icon" />
           <span class="nav-text">My Cases</span>
-        </router-link>
+        </button>
 
-        <router-link to="/documents" class="nav-link">
+        <button type="button" @click="selectedView = 'Documents'" :class="['nav-link', {active: selectedView === 'Documents'}]">
           <File class="nav-icon" />
           <span class="nav-text">Documents</span>
-        </router-link>
+        </button>
 
-        <router-link to="/schedule" class="nav-link">
+        <button type="button" @click="selectedView = 'Schedule'" :class="['nav-link', {active: selectedView === 'Schedule'}]">
           <Calendar class="nav-icon" />
           <span class="nav-text">Schedule</span>
-        </router-link>
+        </button>
 
-        <router-link to="/legal-research" class="nav-link">
+        <button type="button" @click="selectedView = 'LegalResearch'" :class="['nav-link', {active: selectedView === 'LegalResearch'}]">
           <Search class="nav-icon" />
           <span class="nav-text">Legal Research</span>
-        </router-link>
+        </button>
 
-        <router-link to="/users" class="nav-link">
+        <button type="button" @click="selectedView = 'Users'" :class="['nav-link', {active: selectedView === 'Users'}]">
           <Users class="nav-icon" />
           <span class="nav-text">Users</span>
-        </router-link>
+        </button>
 
-        <router-link to="/settings" class="nav-link">
+        <button type="button" @click="selectedView = 'Settings'" :class="['nav-link', {active: selectedView === 'Settings'}]">
           <Settings class="nav-icon" />
           <span class="nav-text">Settings</span>
-        </router-link>
+        </button>
 
-        <router-link to="/help" class="nav-link">
+        <button type="button" @click="selectedView = 'Help'" :class="['nav-link', {active: selectedView === 'Help'}]">
           <HelpCircle class="nav-icon" />
           <span class="nav-text">Help</span>
-        </router-link>
+        </button>
 
-        <router-link to="/guest-access" class="nav-link">
+        <button type="button" @click="selectedView = 'GuestAccess'" :class="['nav-link', {active: selectedView === 'GuestAccess'}]">
           <House class="nav-icon" />
           <span class="nav-text">Guest Access</span>
-        </router-link>
+        </button>
       </nav>
     </aside>
 
@@ -73,202 +73,62 @@
   <h1 class="bg-[#003aca] h-23 text-amber-50  border-r-4 border-gray-50">Ai Assistant</h1>
 </div>
 
- <main class="w-1/2">
-  <h1>Main</h1>
- </main>
+    <main class="flex-1 p-6">
+      <div v-if="selectedView === 'Dashboard'">
+        <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
+        <p class="text-gray-600">Overview and widgets will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'Cases'">
+        <h2 class="text-2xl font-semibold mb-4">Cases</h2>
+        <p class="text-gray-600">Cases list / filters will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'MyCases'">
+        <h2 class="text-2xl font-semibold mb-4">My Cases</h2>
+        <p class="text-gray-600">Your personal cases will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'Documents'">
+        <h2 class="text-2xl font-semibold mb-4">Documents</h2>
+        <p class="text-gray-600">Document manager will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'Schedule'">
+        <h2 class="text-2xl font-semibold mb-4">Schedule</h2>
+        <p class="text-gray-600">Schedule and calendar will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'LegalResearch'">
+        <h2 class="text-2xl font-semibold mb-4">Legal Research</h2>
+        <p class="text-gray-600">Research tools will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'Users'">
+        <h2 class="text-2xl font-semibold mb-4">Users</h2>
+        <p class="text-gray-600">User management will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'Settings'">
+        <h2 class="text-2xl font-semibold mb-4">Settings</h2>
+        <p class="text-gray-600">Application settings will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'Help'">
+        <h2 class="text-2xl font-semibold mb-4">Help</h2>
+        <p class="text-gray-600">Help content will appear here.</p>
+      </div>
+
+      <div v-else-if="selectedView === 'GuestAccess'">
+        <h2 class="text-2xl font-semibold mb-4">Guest Access</h2>
+        <p class="text-gray-600">Guest access controls will appear here.</p>
+      </div>
+    </main>
 
  <div class="w-1/6">
   <h1 class="bg-[#003aca] h-23 text-amber-50  border-l-4 border-gray-50">Comment</h1>
  </div>
-    <!-- Welcome Header --
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ user?.full_name?.split(' ')[0] || 'User' }}</h1>
-        <p class="text-gray-600 mt-1">Here's what's happening with your {{ user?.user_type === 'lawyer' ? 'practice' : 'cases' }} today</p>
-      </div>
-      <div class="flex space-x-3">
-        <router-link v-if="user && (user.user_type === 'lawyer' || user.user_type === 'admin')" :to="createPageUrl('Cases')">
-          <Button class="bg-blue-600 hover:bg-blue-700 material-elevation-2">
-            <Plus class="w-4 h-4 mr-2" />
-            New Case
-          </Button>
-        </router-link>
-      </div>
-    </div>
-
-    <!-- Conflict Alerts --
-    <Card v-if="conflictAlerts.length > 0" class="border-red-300 bg-red-50 material-elevation-2">
-      <CardHeader>
-        <CardTitle class="text-lg font-semibold text-red-900 flex items-center">
-          <AlertTriangle class="w-5 h-5 mr-2" />
-          Conflict Alerts ({{ conflictAlerts.length }})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div class="space-y-2">
-          <div v-for="case_ in conflictAlerts.slice(0,3)" :key="case_.id">
-            <router-link :to="createPageUrl('CaseDetails') + `?caseId=${case_.id}`" class="block">
-              <div class="flex items-center justify-between p-3 rounded-lg bg-red-100 hover:bg-red-200 transition-colors">
-                <div class="flex-1">
-                  <p class="font-medium text-red-900">{{ case_.title }}</p>
-                  <p class="text-xs text-red-800">Case #{{ case_.case_number }} • {{ (case_.ai_conflict_assessment?.conflicts_found?.length) || 0 }} conflict(s) detected</p>
-                </div>
-                <Badge class="bg-red-600 text-white">{{ (case_.ai_conflict_assessment?.conflict_level || '').toUpperCase() }}</Badge>
-              </div>
-            </router-link>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-
-    <!-- Stats Cards --
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card class="material-elevation-2 hover:material-elevation-3 transition-shadow duration-300">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">Total Cases</CardTitle>
-          <FileText class="h-4 w-4 text-blue-600" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-gray-900">{{ stats.totalCases }}</div>
-          <p class="text-xs text-gray-500 mt-1">
-            <span class="text-green-600 font-medium">
-              <TrendingUp class="inline w-3 h-3 mr-1" />
-              {{ stats.activeCases }} active
-            </span>
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card class="material-elevation-2 hover:material-elevation-3 transition-shadow duration-300">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">Pending Actions</CardTitle>
-          <Clock class="h-4 w-4 text-orange-600" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-gray-900">{{ stats.pendingActions }}</div>
-          <p class="text-xs text-gray-500 mt-1">Require your attention</p>
-        </CardContent>
-      </Card>
-
-      <Card class="material-elevation-2 hover:material-elevation-3 transition-shadow duration-300">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">Completed Actions</CardTitle>
-          <CheckSquare class="h-4 w-4 text-green-600" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-gray-900">{{ stats.completedActions }}</div>
-          <p class="text-xs text-gray-500 mt-1">This month</p>
-        </CardContent>
-      </Card>
-
-      <Card class="material-elevation-2 hover:material-elevation-3 transition-shadow duration-300">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-gray-600">Productivity</CardTitle>
-          <TrendingUp class="h-4 w-4 text-purple-600" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-gray-900">{{ productivityPercent }}%</div>
-          <Progress :value="productivityPercent" class="mt-2 h-1" />
-        </CardContent>
-      </Card>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Recent Cases --
-      <Card class="lg:col-span-2 material-elevation-2">
-        <CardHeader class="flex flex-row items-center justify-between">
-          <CardTitle class="text-lg font-semibold text-gray-900">Recent Cases</CardTitle>
-          <router-link :to="createPageUrl(user?.user_type === 'customer' ? 'MyCases' : 'Cases')">
-            <Button variant="outline" size="sm">View All</Button>
-          </router-link>
-        </CardHeader>
-        <CardContent>
-          <div class="space-y-4">
-            <div v-if="cases.length === 0" class="text-center py-8">
-              <FileText class="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p class="text-gray-500">No cases found</p>
-            </div>
-
-            <div v-else>
-              <div v-for="case_ in cases.slice(0,5)" :key="case_.id">
-                <router-link :to="createPageUrl('CaseDetails') + `?caseId=${case_.id}`" class="block">
-                  <div class="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 border border-gray-100">
-                    <div class="flex-1">
-                      <div class="flex items-center space-x-3 mb-2">
-                        <h3 class="font-medium text-gray-900">{{ case_.title }}</h3>
-                        <Badge :class="getStatusColor(case_.status)">{{ case_.status?.replace('_',' ') }}</Badge>
-                        <Badge :class="getPriorityColor(case_.priority)">{{ case_.priority }}</Badge>
-                      </div>
-                      <p class="text-sm text-gray-600 truncate">Case #{{ case_.case_number }} • {{ case_.case_type?.replace('_',' ') }}</p>
-                    </div>
-                    <div class="text-right text-sm text-gray-500">
-                      <div v-if="case_.due_date" class="flex items-center space-x-1">
-                        <Calendar class="w-4 h-4" />
-                        <span>{{ formatDate(case_.due_date) }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- Right Column --
-      <div class="space-y-6">
-        <!-- Pending Actions --
-        <Card class="material-elevation-2">
-          <CardHeader>
-            <CardTitle class="text-lg font-semibold text-gray-900 flex items-center">
-              <AlertTriangle class="w-5 h-5 text-orange-600 mr-2" />
-              Pending Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="space-y-3">
-              <div v-if="pendingActions.length === 0" class="text-center text-gray-500 py-4">No pending actions</div>
-              <div v-else>
-                <div v-for="action in pendingActions.slice(0,3)" :key="action.id" class="flex items-center space-x-3 p-3 rounded-lg bg-orange-50 border border-orange-200">
-                  <div class="flex-1">
-                    <h4 class="font-medium text-gray-900 text-sm">{{ action.title }}</h4>
-                    <p class="text-xs text-gray-600">Due: {{ action.due_date ? formatDate(action.due_date) : 'No due date' }}</p>
-                  </div>
-                  <Badge :class="getPriorityColor(action.priority)">{{ action.priority }}</Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <!-- Recent Comments --
-        <Card class="material-elevation-2">
-          <CardHeader>
-            <CardTitle class="text-lg font-semibold text-gray-900 flex items-center">
-              <MessageCircle class="w-5 h-5 text-blue-600 mr-2" />
-              Recent Comments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="space-y-3">
-              <div v-if="recentComments.length === 0" class="text-center text-gray-500 py-4">No recent comments</div>
-              <div v-else>
-                <div v-for="comment in recentComments" :key="comment.id" class="flex space-x-3">
-                  <Avatar class="h-8 w-8">
-                    <AvatarFallback class="bg-blue-100 text-blue-600 text-xs">{{ comment.created_by?.[0]?.toUpperCase() || 'U' }}</AvatarFallback>
-                  </Avatar>
-                  <div class="flex-1">
-                    <p class="text-sm text-gray-800 line-clamp-2">{{ comment.content }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ formatDate(comment.created_date) }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-        <!---->
+   
 
   </div>
 </template>
@@ -373,6 +233,9 @@ const productivityPercent = computed(() => {
   const total = completed + pending;
   return total > 0 ? Math.round((completed / total) * 100) : 0;
 });
+
+// Local view selection for aside -> main content behavior
+const selectedView = ref('Dashboard');
 
 // `createPageUrl` is imported above and available to the template
 
