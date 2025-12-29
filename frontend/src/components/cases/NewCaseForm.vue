@@ -164,20 +164,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { User } from '@/entities/User';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as UiCalendar } from '@/components/ui/calendar';
+import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, Save, X } from 'lucide-vue-next';
-import { Check, ChevronsUpDown } from 'lucide-vue-next';
+import { CalendarIcon, Save, X, Check, ChevronsUpDown } from 'lucide-vue-next';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Command as CommandAlias } from '@/components/ui/command';
 
 const props = defineProps({ onSubmit: { type: Function, required: true }, onCancel: { type: Function, required: true }, pinnedCaseId: { type: [String,Number], required: false }, currentUser: { type: Object, required: false } });
 
