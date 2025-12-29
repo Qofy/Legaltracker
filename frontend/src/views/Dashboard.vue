@@ -9,6 +9,13 @@
         <p class="mt-2 text-sm">Welcome back, {{ user?.full_name?.split(' ')[0] || 'User' }}</p>
       </header>
 
+      <div class=" w-30 h-30 mx-auto my-1 flex flex-col items-center justify-center">
+      <div class="w-15 h-15 bg-amber-100 flex items-center justify-center rounded-full"> 
+        <UserIcon/>
+      </div>
+        <h2 class="font-bold">Profile</h2>
+      </div>
+
       <nav class="px-3 py-4 space-y-2">
         <router-link to="/dashboard" class="nav-link">
           <House class="nav-icon" />
@@ -63,7 +70,7 @@
     </aside>
 
 <div class="w-1/6">
-  <h1 class="bg-[#003aca] h-15 text-amber-50  border-r-4 border-gray-50">Ai Assistant</h1>
+  <h1 class="bg-[#003aca] h-23 text-amber-50  border-r-4 border-gray-50">Ai Assistant</h1>
 </div>
 
  <main class="w-1/2">
@@ -71,7 +78,7 @@
  </main>
 
  <div class="w-1/6">
-  <h1 class="bg-[#003aca] h-15 text-amber-50  border-l-4 border-gray-50">Comment</h1>
+  <h1 class="bg-[#003aca] h-23 text-amber-50  border-l-4 border-gray-50">Comment</h1>
  </div>
     <!-- Welcome Header --
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
@@ -271,7 +278,7 @@ import { ref, onMounted, computed } from 'vue';
 import { Case, Comment, ActionItem } from '@/services/entities';
 import { User } from '@/services/entities';
 import { createPageUrl } from '@/utils';
-import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users, Settings, HelpCircle, File, Search } from 'lucide-vue-next';
+import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users,Settings, HelpCircle, File, Search, UserIcon} from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
