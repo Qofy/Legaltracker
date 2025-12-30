@@ -1,22 +1,30 @@
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 mb-6">
-      <div>
-        <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <CalendarIcon class="w-7 h-7 text-[#003aca]" />
-          Schedule & Calendar
-        </h2>
-        <p class="text-gray-600 mt-1">
-          View all important dates for cases, tasks, and meetings.
-        </p>
-      </div>
-      <Dialog v-model:open="showMeetingForm">
-        <DialogTrigger as-child>
-          <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
-            <Plus class="w-4 h-4 mr-2" />
-            New Meeting
-          </Button>
-        </DialogTrigger>
+    <!-- Header -->
+    <div class="mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+        <CalendarIcon class="w-7 h-7 text-[#003aca]" />
+        Schedule & Calendar
+      </h2>
+      <p class="text-gray-600 mt-1">
+        View all important dates for cases, tasks, and meetings.
+      </p>
+    </div>
+
+    <!-- New Meeting Section -->
+    <div class="p-6 bg-white rounded-lg border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">New Meeting</h3>
+          <p class="text-sm text-gray-600 mt-1">Schedule meetings and appointments</p>
+        </div>
+        <Dialog v-model:open="showMeetingForm">
+          <DialogTrigger as-child>
+            <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+              <Plus class="w-4 h-4 mr-2" />
+              New Meeting
+            </Button>
+          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Schedule a New Meeting</DialogTitle>
@@ -25,21 +33,23 @@
           </DialogContent>
         </Dialog>
       </div>
+    </div>
 
-      <Card class="material-elevation-2 clean-border">
-        <CardHeader class="flex flex-row items-center justify-between">
-          <CardTitle class="text-2xl font-bold text-gray-800">{{ format(currentDate, 'MMMM yyyy') }}</CardTitle>
-          <div class="flex space-x-2">
-            <Button variant="outline" size="icon" @click="currentDate = subMonths(currentDate, 1)">
-              <ChevronLeft class="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" @click="currentDate = new Date()">Today</Button>
-            <Button variant="outline" size="icon" @click="currentDate = addMonths(currentDate, 1)">
-              <ChevronRight class="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
+    <!-- Calendar -->
+    <div class="bg-white rounded-lg border border-gray-200">
+      <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-2xl font-bold text-gray-800">{{ format(currentDate, 'MMMM yyyy') }}</h3>
+        <div class="flex space-x-2">
+          <Button variant="outline" size="icon" @click="currentDate = subMonths(currentDate, 1)">
+            <ChevronLeft class="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" @click="currentDate = new Date()">Today</Button>
+          <Button variant="outline" size="icon" @click="currentDate = addMonths(currentDate, 1)">
+            <ChevronRight class="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div class="p-6">
           <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
             <div v-for="day in weekDays" :key="day" class="text-center font-medium text-sm py-2 bg-gray-50 text-gray-600">
               {{ day }}
@@ -67,15 +77,14 @@
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { Case, ActionItem, Meeting } from '@/services/entities'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   Calendar as CalendarIcon,
