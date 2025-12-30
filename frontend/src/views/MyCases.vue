@@ -19,18 +19,7 @@
 
   <div v-else class="p-6 bg-gray-50 min-h-screen">
     <div class="max-w-7xl mx-auto space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-            <FileText class="w-8 h-8 text-blue-600 mr-3" />
-            My Cases
-          </h1>
-          <p class="text-gray-600 mt-1">
-            Track your legal matters and communicate with your lawyers
-          </p>
-        </div>
-      </div>
+    
 
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
