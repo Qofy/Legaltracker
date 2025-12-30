@@ -90,8 +90,117 @@
       </nav>
     </aside>
 
-<div class="w-1/6 border-gray-400 border-r">
-  <h1 class="bg-white h-23 text-gray-600 border-b border-gray-400">AI Assistant</h1>
+<div class="w-1/5 border-gray-400 border-r flex flex-col bg-gray-50">
+  <div class="bg-white px-4 py-3 border-b border-gray-400 h-23">
+    <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+      <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+      AI Assistant
+    </h2>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-4 space-y-4">
+    <!-- AI Quick Actions -->
+    <div class="bg-white rounded-lg border border-gray-200 p-3">
+      <h3 class="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">Quick Actions</h3>
+      <div class="space-y-2">
+        <button class="w-full px-3 py-2 text-left text-sm bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-md hover:from-purple-100 hover:to-blue-100 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="text-gray-700">Generate Summary</span>
+        </button>
+        <button class="w-full px-3 py-2 text-left text-sm bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-md hover:from-amber-100 hover:to-orange-100 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-gray-700">Timeline Analysis</span>
+        </button>
+        <button class="w-full px-3 py-2 text-left text-sm bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-md hover:from-red-100 hover:to-pink-100 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span class="text-gray-700">Detect Conflicts</span>
+        </button>
+        <button class="w-full px-3 py-2 text-left text-sm bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-md hover:from-green-100 hover:to-emerald-100 transition flex items-center gap-2">
+          <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span class="text-gray-700">Predict Outcome</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="bg-white rounded-lg border border-gray-200 p-3">
+      <h3 class="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">Recent Insights</h3>
+      <div class="space-y-3">
+        <div v-if="conflictAlerts.length > 0" class="p-2 bg-red-50 border border-red-200 rounded-md">
+          <div class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p class="text-xs font-medium text-red-800">Conflict Alert</p>
+              <p class="text-xs text-red-600 mt-1">{{ conflictAlerts.length }} case(s) with potential conflicts detected</p>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="stats.activeCases > 0" class="p-2 bg-blue-50 border border-blue-200 rounded-md">
+          <div class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-xs font-medium text-blue-800">Active Cases</p>
+              <p class="text-xs text-blue-600 mt-1">{{ stats.activeCases }} cases require attention</p>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="pendingActions.length > 0" class="p-2 bg-amber-50 border border-amber-200 rounded-md">
+          <div class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-xs font-medium text-amber-800">Pending Tasks</p>
+              <p class="text-xs text-amber-600 mt-1">{{ pendingActions.length }} action items due soon</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Suggestions -->
+    <div class="bg-white rounded-lg border border-gray-200 p-3">
+      <h3 class="text-xs font-semibold text-gray-700 mb-3 uppercase tracking-wide">AI Suggestions</h3>
+      <div class="space-y-2">
+        <div class="p-2 bg-purple-50 border border-purple-100 rounded-md">
+          <p class="text-xs text-purple-800 font-medium mb-1">Document Review</p>
+          <p class="text-xs text-purple-600">Review recent documents for key points and deadlines</p>
+        </div>
+        <div class="p-2 bg-blue-50 border border-blue-100 rounded-md">
+          <p class="text-xs text-blue-800 font-medium mb-1">Legal Research</p>
+          <p class="text-xs text-blue-600">Research similar cases for precedent analysis</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Stats -->
+    <div class="bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg p-3 text-white">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <h3 class="text-xs font-semibold uppercase tracking-wide">AI Power</h3>
+      </div>
+      <p class="text-2xl font-bold">{{ productivityPercent }}%</p>
+      <p class="text-xs opacity-90 mt-1">Productivity Score</p>
+    </div>
+  </div>
 </div>
 
     <main class="flex-1 p-6 overflow-x-hidden">

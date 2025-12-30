@@ -30,7 +30,7 @@
         </div>
         <Dialog v-model:open="showUploadDialog">
           <DialogTrigger as-child>
-            <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+            <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white px-2.5 h-10 ">
               <Upload class="w-4 h-4 mr-2" />
               Upload Documents
             </Button>
@@ -61,7 +61,7 @@
               </div>
               <div class="flex justify-end gap-2">
                 <Button variant="outline" @click="showUploadDialog = false">Cancel</Button>
-                <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white" @click="handleUpload">
+                <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white px-2.5 h-10" @click="handleUpload">
                   Upload
                 </Button>
               </div>
@@ -181,7 +181,7 @@
         <Button
           v-if="!searchQuery && Object.values(filters).every(f => f === 'all')"
           @click="showUploadDialog = true"
-          class="bg-[#003aca] hover:bg-[#002a8a] text-white"
+          class="bg-[#003aca] hover:bg-[#002a8a] text-white px-2.5 h-10"
         >
           <Upload class="w-4 h-4 mr-2" />
           Upload Document
