@@ -21,6 +21,56 @@
       </p>
     </div>
 
+    <!-- Case Selection for Analysis -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+          Case Analysis & Insights
+        </h3>
+        <p class="text-sm text-gray-600 mt-1">Select a case to view document points and AI-powered insights</p>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Select Case</label>
+        <div class="relative">
+          <select
+            v-model="selectedCaseForInsights"
+            class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+          >
+            <option value="">Choose a case to analyze...</option>
+            <option v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
+              {{ caseItem.case_number }} - {{ caseItem.title }}
+            </option>
+          </select>
+          <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        </div>
+      </div>
+
+      <!-- Point Tracker for selected case -->
+      <div v-if="selectedCaseForInsights && selectedCaseData" class="space-y-6">
+        <DocumentPointsPanel
+          :documents="caseDocuments"
+          :case-data="selectedCaseData"
+        />
+
+        <AIDocumentAssistant
+          :case-id="selectedCaseForInsights"
+          :documents="caseDocuments"
+        />
+      </div>
+
+      <div v-else class="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg">
+        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+        <p class="text-gray-600 font-medium mb-1">No Case Selected</p>
+        <p class="text-sm text-gray-500">Select a case from the dropdown above to view point tracking and AI insights</p>
+      </div>
+    </div>
+
     <!-- Upload Section -->
     <div class="p-6 bg-white rounded-lg border border-gray-200">
       <div class="flex items-center justify-between mb-4">
@@ -282,6 +332,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
+import DocumentPointsPanel from '@/components/documents/DocumentPointsPanel.vue'
+import AIDocumentAssistant from '@/components/documents/AIDocumentAssistant.vue'
 
 // State
 const router = useRouter()
@@ -296,6 +348,7 @@ const filters = ref({
 const showUploadDialog = ref(false)
 const uploadCaseId = ref('')
 const selectedFiles = ref([])
+const selectedCaseForInsights = ref('')
 
 // Computed
 const filteredDocuments = computed(() => {
@@ -318,6 +371,16 @@ const filteredDocuments = computed(() => {
   }
 
   return filtered
+})
+
+const selectedCaseData = computed(() => {
+  if (!selectedCaseForInsights.value) return null
+  return cases.value.find(c => c.id === selectedCaseForInsights.value)
+})
+
+const caseDocuments = computed(() => {
+  if (!selectedCaseForInsights.value) return []
+  return documents.value.filter(d => d.case_id === selectedCaseForInsights.value)
 })
 
 // Methods
