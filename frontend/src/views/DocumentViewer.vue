@@ -311,6 +311,7 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Bot,
   Menu,
   X,
@@ -324,7 +325,6 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { format } from 'date-fns'
 import ChatPanel from '../components/chat/ChatPanel.vue'
@@ -522,37 +522,19 @@ export default {
         <div class="space-y-4">
           <div>
             <Label for="visibility_type">Visibility Level</Label>
-            <Select v-model="permissions.visibility_type">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">
-                  <div class="flex items-center">
-                    <Eye class="w-4 h-4 mr-2" />
-                    Public - Everyone can see
-                  </div>
-                </SelectItem>
-                <SelectItem value="case_members">
-                  <div class="flex items-center">
-                    <Users class="w-4 h-4 mr-2" />
-                    Case Members - Only case participants
-                  </div>
-                </SelectItem>
-                <SelectItem value="lawyers_only">
-                  <div class="flex items-center">
-                    <Lock class="w-4 h-4 mr-2" />
-                    Lawyers Only - Legal team only
-                  </div>
-                </SelectItem>
-                <SelectItem value="specific_users">
-                  <div class="flex items-center">
-                    <EyeOff class="w-4 h-4 mr-2" />
-                    Specific Users - Custom selection
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div class="relative">
+              <select
+                id="visibility_type"
+                v-model="permissions.visibility_type"
+                class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+              >
+                <option value="public">Public - Everyone can see</option>
+                <option value="case_members">Case Members - Only case participants</option>
+                <option value="lawyers_only">Lawyers Only - Legal team only</option>
+                <option value="specific_users">Specific Users - Custom selection</option>
+              </select>
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
           <div v-if="permissions.visibility_type === 'specific_users'">

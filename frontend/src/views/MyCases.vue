@@ -101,39 +101,29 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <Select v-model="statusFilter">
-              <SelectTrigger>
-                <div class="flex items-center justify-between px-3 py-2 border rounded w-40 bg-white">
-                  <span class="text-sm text-gray-700">{{ selectedStatusLabel }}</span>
-                  <ChevronDown class="w-4 h-4 text-gray-400" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="opt in statusOptionsWithCounts" :key="opt.value" :value="opt.value">
-                  <div class="flex items-center justify-between w-full">
-                    <span>{{ opt.label }}</span>
-                    <span class="text-xs text-gray-500">{{ opt.count }}</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div class="relative">
+              <select
+                v-model="statusFilter"
+                class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white w-40"
+              >
+                <option v-for="opt in statusOptionsWithCounts" :key="opt.value" :value="opt.value">
+                  {{ opt.display }}
+                </option>
+              </select>
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
 
-            <Select v-model="priorityFilter">
-              <SelectTrigger>
-                <div class="flex items-center justify-between px-3 py-2 border rounded w-36 bg-white">
-                  <span class="text-sm text-gray-700">{{ selectedPriorityLabel }}</span>
-                  <ChevronDown class="w-4 h-4 text-gray-400" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="opt in priorityOptionsWithCounts" :key="opt.value" :value="opt.value">
-                  <div class="flex items-center justify-between w-full">
-                    <span>{{ opt.label }}</span>
-                    <span class="text-xs text-gray-500">{{ opt.count }}</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div class="relative">
+              <select
+                v-model="priorityFilter"
+                class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white w-36"
+              >
+                <option v-for="opt in priorityOptionsWithCounts" :key="opt.value" :value="opt.value">
+                  {{ opt.display }}
+                </option>
+              </select>
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
@@ -271,7 +261,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Grid, List } from 'lucide-vue-next';
 
 // State
@@ -314,16 +303,6 @@ const priorityOptionsWithCounts = computed(() => {
     const count = o.value === 'all' ? cases.value.length : cases.value.filter(c => c.priority === o.value).length;
     return { ...o, count, display: `${o.label} (${count})` };
   });
-});
-
-const selectedStatusLabel = computed(() => {
-  const s = statusOptionsWithCounts.value.find(o => o.value === statusFilter.value);
-  return s ? s.display : 'Filter by status';
-});
-
-const selectedPriorityLabel = computed(() => {
-  const p = priorityOptionsWithCounts.value.find(o => o.value === priorityFilter.value);
-  return p ? p.display : 'Priority';
 });
 
 // Computed

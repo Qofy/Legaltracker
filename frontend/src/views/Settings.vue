@@ -66,38 +66,42 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label for="ai_provider">AI Provider</Label>
-                  <Select v-model="settings.ai_provider">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="openai">OpenAI (GPT)</SelectItem>
-                      <SelectItem value="gemini">Google Gemini</SelectItem>
-                      <SelectItem value="claude">Anthropic Claude</SelectItem>
-                      <SelectItem value="mistral">Mistral AI</SelectItem>
-                      <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="kimi">Kimi (Moonshot)</SelectItem>
-                      <SelectItem value="local">Local (Ollama)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div class="relative">
+                    <select
+                      id="ai_provider"
+                      v-model="settings.ai_provider"
+                      class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+                    >
+                      <option value="openai">OpenAI (GPT)</option>
+                      <option value="gemini">Google Gemini</option>
+                      <option value="claude">Anthropic Claude</option>
+                      <option value="mistral">Mistral AI</option>
+                      <option value="deepseek">DeepSeek</option>
+                      <option value="kimi">Kimi (Moonshot)</option>
+                      <option value="local">Local (Ollama)</option>
+                    </select>
+                    <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div>
                   <Label for="ai_model">Model</Label>
-                  <Select v-model="settings.ai_model">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem
+                  <div class="relative">
+                    <select
+                      id="ai_model"
+                      v-model="settings.ai_model"
+                      class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+                    >
+                      <option
                         v-for="model in getModelOptions()"
                         :key="model"
                         :value="model"
                       >
                         {{ model }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                      </option>
+                    </select>
+                    <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
@@ -284,20 +288,22 @@
             <CardContent class="space-y-4">
               <div>
                 <Label for="language_preference">Language</Label>
-                <Select v-model="settings.language_preference">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
-                    <SelectItem value="pt">Português</SelectItem>
-                    <SelectItem value="zh">中文</SelectItem>
-                    <SelectItem value="ar">العربية</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div class="relative">
+                  <select
+                    id="language_preference"
+                    v-model="settings.language_preference"
+                    class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="pt">Português</option>
+                    <option value="zh">中文</option>
+                    <option value="ar">العربية</option>
+                  </select>
+                  <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -318,13 +324,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Settings as SettingsIcon,
@@ -336,7 +335,8 @@ import {
   Save,
   TestTube,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ChevronDown
 } from 'lucide-vue-next';
 
 const user = ref(null);

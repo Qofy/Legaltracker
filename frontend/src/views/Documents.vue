@@ -42,16 +42,18 @@
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select Case</label>
-                <Select v-model="uploadCaseId">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a case..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
+                <div class="relative">
+                  <select
+                    v-model="uploadCaseId"
+                    class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+                  >
+                    <option value="">Choose a case...</option>
+                    <option v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
                       {{ caseItem.case_number }} - {{ caseItem.title }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </option>
+                  </select>
+                  <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Files</label>
@@ -127,32 +129,34 @@
 
         <!-- Filters -->
         <div class="flex gap-2">
-          <Select v-model="filters.case_id">
-            <SelectTrigger class="w-40">
-              <SelectValue placeholder="All Cases" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Cases</SelectItem>
-              <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
+          <div class="relative">
+            <select
+              v-model="filters.case_id"
+              class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white w-40"
+            >
+              <option value="all">All Cases</option>
+              <option v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
                 {{ caseItem.case_number }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+              </option>
+            </select>
+            <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
 
-          <Select v-model="filters.document_type">
-            <SelectTrigger class="w-40">
-              <SelectValue placeholder="Document Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="contract">Contract</SelectItem>
-              <SelectItem value="evidence">Evidence</SelectItem>
-              <SelectItem value="correspondence">Correspondence</SelectItem>
-              <SelectItem value="court_filing">Court Filing</SelectItem>
-              <SelectItem value="research">Research</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
+          <div class="relative">
+            <select
+              v-model="filters.document_type"
+              class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white w-40"
+            >
+              <option value="all">All Types</option>
+              <option value="contract">Contract</option>
+              <option value="evidence">Evidence</option>
+              <option value="correspondence">Correspondence</option>
+              <option value="court_filing">Court Filing</option>
+              <option value="research">Research</option>
+              <option value="other">Other</option>
+            </select>
+            <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
       </div>
     </div>
@@ -265,6 +269,7 @@ import {
   Lock,
   HardDrive,
   Search,
+  ChevronDown,
 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -276,13 +281,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { format } from 'date-fns'
 
 // State

@@ -95,17 +95,18 @@
               </p>
             </CardHeader>
             <CardContent>
-              <Select v-model="selectedCase">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a case (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="null">No case selected</SelectItem>
-                  <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
+              <div class="relative">
+                <select
+                  v-model="selectedCase"
+                  class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+                >
+                  <option :value="null">No case selected</option>
+                  <option v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
                     {{ caseItem.case_number }} - {{ caseItem.title }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                  </option>
+                </select>
+                <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
             </CardContent>
           </Card>
 
@@ -192,10 +193,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { User, Case } from '@/services/entities'
-import { Scale, BookOpen, TrendingUp, Clock, Sparkles } from 'lucide-vue-next'
+import { Scale, BookOpen, TrendingUp, Clock, Sparkles, ChevronDown } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import LegalResearchAssistant from '../components/ai/LegalResearchAssistant.vue'
 
 const user = ref(null)
