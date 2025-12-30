@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <Card class="material-elevation-2 border-l-4 border-l-purple-500">
+    <Card v-if="caseData" class="material-elevation-2 border-l-4 border-l-purple-500">
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle class="flex items-center space-x-2">
@@ -113,6 +113,7 @@
         </div>
       </CardContent>
     </Card>
+    <div v-else class="p-4 text-sm text-gray-500">No case selected.</div>
   </div>
 </template>
 

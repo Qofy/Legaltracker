@@ -299,6 +299,7 @@ import { ref, onMounted, computed } from 'vue';
 import { Case, Comment, ActionItem } from '@/services/entities';
 import { User } from '@/services/entities';
 import { createPageUrl } from '@/utils';
+import { useAuthStore } from '@/stores/auth';
 import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users as UsersIcon, Settings as SettingsIcon, HelpCircle, File, Search, UserIcon} from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -318,6 +319,9 @@ import Help from './Help.vue';
 import GuestAccess from './GuestAccess.vue';
 
 
+
+// Auth store for development login
+const authStore = useAuthStore();
 
 const user = ref(null);
 const cases = ref([]);
@@ -380,7 +384,14 @@ const loadDashboardData = async () => {
   isLoading.value = false;
 };
 
-onMounted(() => loadDashboardData());
+onMounted(() => {
+  // Auto-login for development if not authenticated
+  if (!authStore.isAuthenticated) {
+    console.log('Auto-logging in for development...');
+    authStore.fakeLogin('admin');
+  }
+  loadDashboardData();
+});
 
 const getStatusColor = (status) => {
   switch (status) {

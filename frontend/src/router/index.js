@@ -101,7 +101,13 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
-  // Check if route requires authentication
+  // Development mode: Auto-login if not authenticated
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    console.log('🔓 Development mode: Auto-logging in as admin');
+    authStore.fakeLogin('admin');
+  }
+
+  // Check if route requires authentication (after fake login attempt)
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
