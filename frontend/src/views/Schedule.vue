@@ -1,23 +1,22 @@
 <template>
-  <div class="p-6 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto space-y-6">
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-            <CalendarIcon class="w-8 h-8 text-blue-600 mr-3" />
-            Schedule & Calendar
-          </h1>
-          <p class="text-gray-600 mt-1">
-            View all important dates for cases, tasks, and meetings.
-          </p>
-        </div>
-        <Dialog v-model:open="showMeetingForm">
-          <DialogTrigger as-child>
-            <Button class="bg-blue-600 hover:bg-blue-700 material-elevation-2">
-              <Plus class="w-4 h-4 mr-2" />
-              New Meeting
-            </Button>
-          </DialogTrigger>
+  <div class="space-y-6">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 mb-6">
+      <div>
+        <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <CalendarIcon class="w-7 h-7 text-[#003aca]" />
+          Schedule & Calendar
+        </h2>
+        <p class="text-gray-600 mt-1">
+          View all important dates for cases, tasks, and meetings.
+        </p>
+      </div>
+      <Dialog v-model:open="showMeetingForm">
+        <DialogTrigger as-child>
+          <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+            <Plus class="w-4 h-4 mr-2" />
+            New Meeting
+          </Button>
+        </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Schedule a New Meeting</DialogTitle>
@@ -70,7 +69,6 @@
           </div>
         </CardContent>
       </Card>
-    </div>
   </div>
 </template>
 

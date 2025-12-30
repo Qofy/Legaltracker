@@ -17,15 +17,14 @@
     </div>
   </div>
 
-  <div v-else class="p-6 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+  <div v-else class="space-y-6">
+    <!-- Header -->
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 mb-6">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-            <FileText class="w-8 h-8 text-blue-600 mr-3" />
+          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <FileText class="w-7 h-7 text-[#003aca]" />
             Cases Management
-          </h1>
+          </h2>
           <p class="text-gray-600 mt-1">
             Manage and track all your legal cases
           </p>
@@ -42,7 +41,7 @@
           </Button>
           <Dialog v-model:open="showNewCase">
             <DialogTrigger as-child>
-              <Button class="bg-blue-600 hover:bg-blue-700 material-elevation-2">
+              <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
                 <Plus class="w-4 h-4 mr-2" />
                 New Case
               </Button>
@@ -65,77 +64,57 @@
       <AIMultiCaseSummary v-if="showAISummary" :cases="cases" :users="[user]" />
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Total Cases</p>
-                <p class="text-2xl font-bold text-gray-900">{{ cases.length }}</p>
-              </div>
-              <FileText class="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Total Cases</p>
+            <FileText class="w-4 h-4 text-blue-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">{{ cases.length }}</p>
+        </div>
 
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Open</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ activeCases.filter(c => c.status === 'open').length }}
-                </p>
-              </div>
-              <Clock class="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Open</p>
+            <Clock class="w-4 h-4 text-orange-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ activeCases.filter(c => c.status === 'open').length }}
+          </p>
+        </div>
 
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">In Progress</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ activeCases.filter(c => c.status === 'in_progress').length }}
-                </p>
-              </div>
-              <AlertTriangle class="h-8 w-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">In Progress</p>
+            <AlertTriangle class="w-4 h-4 text-yellow-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ activeCases.filter(c => c.status === 'in_progress').length }}
+          </p>
+        </div>
 
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Closed</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ activeCases.filter(c => c.status === 'closed').length }}
-                </p>
-              </div>
-              <CheckCircle class="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Closed</p>
+            <CheckCircle class="w-4 h-4 text-green-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ activeCases.filter(c => c.status === 'closed').length }}
+          </p>
+        </div>
 
-        <Card
-          class="material-elevation-1 clean-border cursor-pointer hover:bg-purple-50 transition-colors"
+        <div
+          class="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-purple-50 transition-colors"
           @click="activeTab = 'archived'"
         >
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Archived</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ archivedCases.length }}
-                </p>
-              </div>
-              <Archive class="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Archived</p>
+            <Archive class="w-4 h-4 text-purple-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ archivedCases.length }}
+          </p>
+        </div>
       </div>
 
       <!-- Tabs for Active/Archived -->
@@ -155,8 +134,7 @@
 
         <TabsContent value="active" class="mt-6 space-y-6">
           <!-- Filters and Search -->
-          <Card class="material-elevation-1 clean-border">
-            <CardContent class="p-6">
+          <div class="p-6 bg-white rounded-lg border border-gray-200">
               <div class="flex flex-col lg:flex-row gap-4">
                 <!-- Search -->
                 <div class="flex-1">
@@ -173,8 +151,7 @@
                 <!-- Filters -->
                 <CaseFilters :filters="filters" @filter-change="handleFilterChange" />
               </div>
-            </CardContent>
-          </Card>
+          </div>
 
           <!-- Cases Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -193,7 +170,7 @@
                   <Button
                     v-if="!searchQuery && Object.values(filters).every(f => f === 'all')"
                     @click="showNewCase = true"
-                    class="bg-blue-600 hover:bg-blue-700"
+                    class="bg-[#003aca] hover:bg-[#002a8a] text-white"
                   >
                     <Plus class="w-4 h-4 mr-2" />
                     Create First Case
@@ -234,18 +211,16 @@
           </Card>
 
           <!-- Search for Archived Cases -->
-          <Card class="material-elevation-1 clean-border">
-            <CardContent class="p-6">
-              <div class="relative">
-                <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  v-model="searchQuery"
-                  placeholder="Search archived cases..."
-                  class="pl-10 clean-border"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <div class="p-6 bg-white rounded-lg border border-gray-200">
+            <div class="relative">
+              <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                v-model="searchQuery"
+                placeholder="Search archived cases..."
+                class="pl-10"
+              />
+            </div>
+          </div>
 
           <!-- Archived Cases Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -275,7 +250,6 @@
           </div>
         </TabsContent>
       </Tabs>
-    </div>
   </div>
 </template>
 

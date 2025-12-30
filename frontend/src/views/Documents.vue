@@ -1,33 +1,32 @@
 <template>
-  <div v-if="isLoading" class="p-6 space-y-6">
+ <div v-if="isLoading" class="p-6 space-y-6">
     <div class="animate-pulse space-y-4">
       <div class="h-8 bg-gray-200 rounded w-1/3"></div>
       <div class="h-60 bg-gray-200 rounded"></div>
     </div>
   </div>
 
-  <div v-else class="p-6 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto space-y-6">
+  <div v-else class="space-y-6">
       <!-- Header -->
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+      <div class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-            <FolderOpen class="w-8 h-8 text-blue-600 mr-3" />
+          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <FolderOpen class="w-7 h-7 text-[#003aca]" />
             Documents Management
-          </h1>
-          <p class="text-gray-600 mt-1">
+          </h2>
+          <p class="text-gray-500 mt-1">
             Upload, organize, and manage all case documents with OCR capabilities
           </p>
         </div>
-
-        <div class="flex space-x-2">
+        <div>
           <Dialog v-model:open="showUploadDialog">
             <DialogTrigger as-child>
-              <Button class="bg-blue-600 hover:bg-blue-700 material-elevation-2">
-                <Upload class="w-4 h-4 mr-2" />
+              <button class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium flex items-center gap-2">
+                <Upload class="w-4 h-4" />
                 Upload Documents
-              </Button>
+              </button>
             </DialogTrigger>
+
             <DialogContent class="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Upload New Documents</DialogTitle>
@@ -36,16 +35,20 @@
               <div class="space-y-6">
                 <div>
                   <Label for="case_id">Select Case</Label>
-                  <Select v-model="uploadData.case_id" :disabled="!!pinnedCaseId">
-                    <SelectTrigger class="clean-border">
-                      <SelectValue placeholder="Choose a case" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
-                        {{ caseItem.case_number }} - {{ caseItem.title }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div class="relative">
+                    <Select v-model="uploadData.case_id" :disabled="!!pinnedCaseId">
+                      <SelectTrigger class="clean-border">
+                        <SelectValue placeholder="Choose a case" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Choose a case</SelectItem>
+                        <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
+                          {{ caseItem.case_number }} - {{ caseItem.title }} ({{ documents.filter(d => d.case_id === caseItem.id).length }})
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div>
@@ -161,138 +164,120 @@
         <!-- Main Content - 3 columns -->
         <div class="lg:col-span-3 space-y-6">
           <!-- Stats Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card class="material-elevation-1 clean-border">
-              <CardContent class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm font-medium text-gray-600">Total Documents</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ documents.length }}</p>
-                  </div>
-                  <FileText class="h-8 w-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div class="p-4 bg-white rounded-lg border border-gray-200">
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-600 font-medium">Total Documents</p>
+                <FileText class="w-4 h-4 text-blue-600" />
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mt-2">{{ documents.length }}</p>
+            </div>
 
-            <Card class="material-elevation-1 clean-border">
-              <CardContent class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm font-medium text-gray-600">With OCR Text</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                      {{ documents.filter(d => d.ocr_text).length }}
-                    </p>
-                  </div>
-                  <Eye class="h-8 w-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
+            <div class="p-4 bg-white rounded-lg border border-gray-200">
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-600 font-medium">With OCR Text</p>
+                <Eye class="w-4 h-4 text-green-600" />
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mt-2">
+                {{ documents.filter(d => d.ocr_text).length }}
+              </p>
+            </div>
 
-            <Card class="material-elevation-1 clean-border">
-              <CardContent class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm font-medium text-gray-600">Confidential</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                      {{ documents.filter(d => d.is_confidential).length }}
-                    </p>
-                  </div>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-lock h-8 w-8 text-red-600"
-                  >
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </div>
-              </CardContent>
-            </Card>
+            <div class="p-4 bg-white rounded-lg border border-gray-200">
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-600 font-medium">Confidential</p>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="w-4 h-4 text-red-600"
+                >
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mt-2">
+                {{ documents.filter(d => d.is_confidential).length }}
+              </p>
+            </div>
 
-            <Card class="material-elevation-1 clean-border">
-              <CardContent class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm font-medium text-gray-600">Total Size</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                      {{ formatFileSize(documents.reduce((sum, d) => sum + (d.file_size || 0), 0)) }}
-                    </p>
-                  </div>
-                  <Upload class="h-8 w-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
+            <div class="p-4 bg-white rounded-lg border border-gray-200">
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-600 font-medium">Total Size</p>
+                <Upload class="w-4 h-4 text-purple-600" />
+              </div>
+              <p class="text-2xl font-bold text-gray-900 mt-2">
+                {{ formatFileSize(documents.reduce((sum, d) => sum + (d.file_size || 0), 0)) }}
+              </p>
+            </div>
           </div>
 
           <!-- Filters and Search -->
-          <Card class="material-elevation-1 clean-border">
-            <CardContent class="p-6">
-              <div class="flex flex-col lg:flex-row gap-4">
-                <div class="flex-1">
-                  <div class="relative">
-                    <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      v-model="searchQuery"
-                      placeholder="Search by filename, content, or tags..."
-                      class="pl-10 clean-border"
-                    />
-                  </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row gap-3">
-                  <Select v-model="filters.case_id">
-                    <SelectTrigger class="w-full sm:w-48 clean-border">
-                      <SelectValue placeholder="All Cases" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Cases</SelectItem>
-                      <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
-                        {{ caseItem.case_number }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select v-model="filters.file_type">
-                    <SelectTrigger class="w-full sm:w-32 clean-border">
-                      <SelectValue placeholder="File Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="pdf">PDF</SelectItem>
-                      <SelectItem value="docx">Word</SelectItem>
-                      <SelectItem value="xlsx">Excel</SelectItem>
-                      <SelectItem value="image">Image</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select v-model="filters.document_type">
-                    <SelectTrigger class="w-full sm:w-40 clean-border">
-                      <SelectValue placeholder="Document Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Document Types</SelectItem>
-                      <SelectItem value="contract">Contract</SelectItem>
-                      <SelectItem value="evidence">Evidence</SelectItem>
-                      <SelectItem value="correspondence">Correspondence</SelectItem>
-                      <SelectItem value="court_filing">Court Filing</SelectItem>
-                      <SelectItem value="research">Research</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex flex-col lg:flex-row gap-3">
+              <div class="flex-1">
+                <div class="relative">
+                  <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    v-model="searchQuery"
+                    placeholder="Search by filename, content, or tags..."
+                    class="pl-10 border-gray-300 h-10"
+                  />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              <div class="flex flex-col sm:flex-row gap-2">
+                <Select v-model="filters.case_id">
+                  <SelectTrigger class="w-full sm:w-40 border-gray-300 h-10">
+                    <SelectValue placeholder="All Cases" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Cases ({{ documents.length }})</SelectItem>
+                    <SelectItem v-for="caseItem in cases" :key="caseItem.id" :value="caseItem.id">
+                      {{ caseItem.case_number }} ({{ documents.filter(d => d.case_id === caseItem.id).length }})
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select v-model="filters.file_type">
+                  <SelectTrigger class="w-full sm:w-32 border-gray-300 h-10">
+                    <SelectValue placeholder="File Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                    <SelectItem value="docx">Word</SelectItem>
+                    <SelectItem value="xlsx">Excel</SelectItem>
+                    <SelectItem value="image">Image</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select v-model="filters.document_type">
+                  <SelectTrigger class="w-full sm:w-36 border-gray-300 h-10">
+                    <SelectValue placeholder="Doc Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                    <SelectItem value="evidence">Evidence</SelectItem>
+                    <SelectItem value="correspondence">Correspondence</SelectItem>
+                    <SelectItem value="court_filing">Court Filing</SelectItem>
+                    <SelectItem value="research">Research</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           <!-- View Tabs -->
           <Tabs v-model="viewMode">
@@ -308,15 +293,15 @@
             </TabsList>
 
             <TabsContent value="table" class="mt-4">
-              <Card class="material-elevation-1 clean-border">
-                <CardHeader>
-                  <CardTitle>Documents ({{ filteredDocuments.length }})</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div class="bg-white rounded-lg border border-gray-200">
+                <div class="p-4 border-b border-gray-200">
+                  <h3 class="text-base font-semibold text-gray-800">Documents ({{ filteredDocuments.length }})</h3>
+                </div>
+                <div class="p-4">
                   <div v-if="filteredDocuments.length === 0" class="text-center py-12">
-                    <FolderOpen class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No documents found</h3>
-                    <p class="text-gray-500 mb-4">
+                    <FolderOpen class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <h3 class="text-base font-semibold text-gray-900 mb-1">No documents found</h3>
+                    <p class="text-sm text-gray-500">
                       {{ searchQuery || Object.values(filters).some(f => f !== "all")
                         ? "Try adjusting your search or filters"
                         : "Upload your first document to get started"
@@ -432,8 +417,8 @@
                       </template>
                     </TableBody>
                   </Table>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="timeline" class="mt-4">
@@ -451,12 +436,11 @@
           <DocumentPointsPanel :documents="filteredDocuments" />
         </div>
       </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Document, Case, User } from '@/services/entities'
 import { UploadFile, ExtractDataFromUploadedFile } from '@/integrations/Core'
@@ -477,6 +461,7 @@ import {
   Save,
   Edit3,
   Mail
+  , ChevronDown
 } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

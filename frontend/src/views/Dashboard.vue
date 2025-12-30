@@ -94,9 +94,10 @@
   <h1 class="bg-white h-23 text-gray-600 border-b border-gray-400">AI Assistant</h1>
 </div>
 
-    <main class="flex-1 p-6">
-      <div v-if="selectedView === 'Dashboard'">
-        <div class="flex items-center justify-between mb-6">
+    <main class="flex-1 p-6 overflow-x-hidden">
+      <div class="max-w-7xl mx-auto">
+        <div v-if="selectedView === 'Dashboard'">
+          <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
               <FileText class="w-7 h-7 text-[#003aca]" />
@@ -188,30 +189,41 @@
                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <select v-model="filterStatus" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">All Status</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="closed">Closed</option>
-              <option value="on_hold">On Hold</option>
-            </select>
-            <select v-model="filterPriority" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">All Priority</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
-            <select v-model="filterType" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">All Types</option>
-              <option value="civil">Civil</option>
-              <option value="criminal">Criminal</option>
-              <option value="family">Family</option>
-              <option value="corporate">Corporate</option>
-              <option value="immigration">Immigration</option>
-              <option value="personal_injury">Personal Injury</option>
-              <option value="other">Other</option>
-            </select>
+            <div class="relative">
+              <select v-model="filterStatus" class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white">
+                <option value="">All Status</option>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="closed">Closed</option>
+                <option value="on_hold">On Hold</option>
+              </select>
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div class="relative">
+              <select v-model="filterPriority" class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white">
+                <option value="">All Priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            <div class="relative">
+              <select v-model="filterType" class="appearance-none px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white">
+                <option value="">All Types</option>
+                <option value="civil">Civil</option>
+                <option value="criminal">Criminal</option>
+                <option value="family">Family</option>
+                <option value="corporate">Corporate</option>
+                <option value="immigration">Immigration</option>
+                <option value="personal_injury">Personal Injury</option>
+                <option value="other">Other</option>
+              </select>
+              <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
           <!-- Case Cards Grid -->
@@ -283,7 +295,8 @@
 
       <Help v-else-if="selectedView === 'Help'" />
 
-      <GuestAccess v-else-if="selectedView === 'GuestAccess'" />
+      <GuestAccess v-else-if="selectedView === 'GuestAccess'"  />
+      </div>
     </main>
 
  <div class="w-1/6  border-gray-400 border-l">
@@ -300,7 +313,7 @@ import { Case, Comment, ActionItem } from '@/services/entities';
 import { User } from '@/services/entities';
 import { createPageUrl } from '@/utils';
 import { useAuthStore } from '@/stores/auth';
-import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users as UsersIcon, Settings as SettingsIcon, HelpCircle, File, Search, UserIcon} from 'lucide-vue-next';
+import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users as UsersIcon, Settings as SettingsIcon, HelpCircle, File, Search, UserIcon, ChevronDown } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

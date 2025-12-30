@@ -1,23 +1,22 @@
 <template>
-  <div class="p-6 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto space-y-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-            <UsersIcon class="w-8 h-8 text-blue-600 mr-3" />
-            User Management
-          </h1>
-          <p class="text-gray-600 mt-1">
-            View and manage system users.
-          </p>
-        </div>
-        <Dialog v-model:open="showInviteDialog">
-          <DialogTrigger as-child>
-            <Button>
-              <UserPlus class="w-4 h-4 mr-2"/>
-              Invite User
-            </Button>
-          </DialogTrigger>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <UsersIcon class="w-7 h-7 text-[#003aca]" />
+          User Management
+        </h2>
+        <p class="text-gray-600 mt-1">
+          View and manage system users.
+        </p>
+      </div>
+      <Dialog v-model:open="showInviteDialog">
+        <DialogTrigger as-child>
+          <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+            <UserPlus class="w-4 h-4 mr-2"/>
+            Invite User
+          </Button>
+        </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Invite a New User</DialogTitle>
@@ -70,7 +69,6 @@
           />
         </DialogContent>
       </Dialog>
-    </div>
   </div>
 </template>
 

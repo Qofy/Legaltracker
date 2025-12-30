@@ -17,9 +17,7 @@
     </div>
   </div>
 
-  <div v-else class="bg-gray-50 min-h-screen">
-    <div class="space-y-6">
-
+  <div v-else class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <div>
@@ -104,20 +102,36 @@
 
           <div class="flex items-center gap-2">
             <Select v-model="statusFilter">
-              <SelectTrigger class="w-40 border-gray-300 h-10">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger>
+                <div class="flex items-center justify-between px-3 py-2 border rounded w-40 bg-white">
+                  <span class="text-sm text-gray-700">{{ selectedStatusLabel }}</span>
+                  <ChevronDown class="w-4 h-4 text-gray-400" />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                <SelectItem v-for="opt in statusOptionsWithCounts" :key="opt.value" :value="opt.value">
+                  <div class="flex items-center justify-between w-full">
+                    <span>{{ opt.label }}</span>
+                    <span class="text-xs text-gray-500">{{ opt.count }}</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
 
             <Select v-model="priorityFilter">
-              <SelectTrigger class="w-36 border-gray-300 h-10">
-                <SelectValue placeholder="Priority" />
+              <SelectTrigger>
+                <div class="flex items-center justify-between px-3 py-2 border rounded w-36 bg-white">
+                  <span class="text-sm text-gray-700">{{ selectedPriorityLabel }}</span>
+                  <ChevronDown class="w-4 h-4 text-gray-400" />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+                <SelectItem v-for="opt in priorityOptionsWithCounts" :key="opt.value" :value="opt.value">
+                  <div class="flex items-center justify-between w-full">
+                    <span>{{ opt.label }}</span>
+                    <span class="text-xs text-gray-500">{{ opt.count }}</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -131,11 +145,11 @@
             <FileText class="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <h3 class="text-base font-semibold text-gray-900 mb-1">No cases found</h3>
             <p class="text-sm text-gray-500">
-              {{
-                searchQuery || statusFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "You don't have any cases yet"
-              }}
+                {{
+                  searchQuery || statusFilter !== "all" || priorityFilter !== 'all'
+                    ? "Try adjusting your search or filters"
+                    : "You don't have any cases yet"
+                }}
             </p>
           </div>
         </div>
@@ -235,7 +249,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -252,6 +265,7 @@ import {
   AlertTriangle,
   Search,
   Eye,
+  ChevronDown,
 } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -286,6 +300,31 @@ const priorityOptions = [
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' }
 ];
+
+// Computed options with dynamic counts for better UX
+const statusOptionsWithCounts = computed(() => {
+  return statusOptions.map(o => {
+    const count = o.value === 'all' ? cases.value.length : cases.value.filter(c => c.status === o.value).length;
+    return { ...o, count, display: `${o.label} (${count})` };
+  });
+});
+
+const priorityOptionsWithCounts = computed(() => {
+  return priorityOptions.map(o => {
+    const count = o.value === 'all' ? cases.value.length : cases.value.filter(c => c.priority === o.value).length;
+    return { ...o, count, display: `${o.label} (${count})` };
+  });
+});
+
+const selectedStatusLabel = computed(() => {
+  const s = statusOptionsWithCounts.value.find(o => o.value === statusFilter.value);
+  return s ? s.display : 'Filter by status';
+});
+
+const selectedPriorityLabel = computed(() => {
+  const p = priorityOptionsWithCounts.value.find(o => o.value === priorityFilter.value);
+  return p ? p.display : 'Priority';
+});
 
 // Computed
 
