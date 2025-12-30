@@ -17,176 +17,223 @@
     </div>
   </div>
 
-  <div v-else class="p-6 bg-gray-50 min-h-screen">
-    <div class="max-w-7xl mx-auto space-y-6">
+  <div v-else class="bg-gray-50 min-h-screen">
+    <div class="space-y-6">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <FileText class="w-7 h-7 text-[#003aca]" />
+            My Cases
+          </h2>
+          <p class="text-gray-500 mt-1">Overview of your assigned and created cases</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center bg-white border border-gray-300 rounded-md">
+            <button @click="setView('cards')" :class="['p-2 rounded-l-md transition', viewMode === 'cards' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100']" aria-label="Cards view">
+              <Grid class="w-4 h-4" />
+            </button>
+            <button @click="setView('table')" :class="['p-2 rounded-r-md transition', viewMode === 'table' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100']" aria-label="Table view">
+              <List class="w-4 h-4" />
+            </button>
+          </div>
+
+          <button class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium flex items-center gap-2">
+            <Plus class="w-4 h-4" />
+            New Case
+          </button>
+        </div>
+      </div>
     
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Total Cases</p>
-                <p class="text-2xl font-bold text-gray-900">{{ cases.length }}</p>
-              </div>
-              <FileText class="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Total Cases</p>
+            <FileText class="w-4 h-4 text-blue-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">{{ cases.length }}</p>
+        </div>
 
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Active Cases</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ cases.filter(c => ['open', 'in_progress'].includes(c.status)).length }}
-                </p>
-              </div>
-              <Clock class="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Active Cases</p>
+            <Clock class="w-4 h-4 text-orange-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ cases.filter(c => ['open', 'in_progress'].includes(c.status)).length }}
+          </p>
+        </div>
 
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">High Priority</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ cases.filter(c => ['urgent', 'high'].includes(c.priority)).length }}
-                </p>
-              </div>
-              <AlertTriangle class="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">High Priority</p>
+            <AlertTriangle class="w-4 h-4 text-red-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ cases.filter(c => ['urgent', 'high'].includes(c.priority)).length }}
+          </p>
+        </div>
 
-        <Card class="material-elevation-1 clean-border">
-          <CardContent class="p-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600">Upcoming Deadlines</p>
-                <p class="text-2xl font-bold text-gray-900">
-                  {{ cases.filter(c => c.next_deadline && new Date(c.next_deadline) > new Date()).length }}
-                </p>
-              </div>
-              <Calendar class="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <div class="p-4 bg-white rounded-lg border border-gray-200">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-600 font-medium">Upcoming Deadlines</p>
+            <Calendar class="w-4 h-4 text-purple-600" />
+          </div>
+          <p class="text-2xl font-bold text-gray-900 mt-2">
+            {{ cases.filter(c => c.next_deadline && new Date(c.next_deadline) > new Date()).length }}
+          </p>
+        </div>
       </div>
 
       <!-- Filters and Search -->
-      <Card class="material-elevation-1 clean-border">
-        <CardContent class="p-6">
-          <div class="flex flex-col lg:flex-row gap-4">
-            <div class="flex-1">
-              <div class="relative">
-                <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  v-model="searchQuery"
-                  placeholder="Search your cases..."
-                  class="pl-10 clean-border"
-                />
-              </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex flex-col lg:flex-row gap-3 items-center">
+          <div class="flex-1 w-full">
+            <div class="relative">
+              <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                v-model="searchQuery"
+                placeholder="Search your cases by title, number or description..."
+                class="pl-10 border-gray-300 h-10"
+              />
             </div>
+          </div>
+
+          <div class="flex items-center gap-2">
             <Select v-model="statusFilter">
-              <SelectTrigger class="w-48 clean-border">
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger class="w-40 border-gray-300 h-10">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
+                <SelectItem v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select v-model="priorityFilter">
+              <SelectTrigger class="w-36 border-gray-300 h-10">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
-
-      <!-- Cases Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-if="filteredCases.length === 0" class="col-span-full">
-          <Card class="material-elevation-1 clean-border">
-            <CardContent class="text-center py-12">
-              <FileText class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">No cases found</h3>
-              <p class="text-gray-500">
-                {{
-                  searchQuery || statusFilter !== "all"
-                    ? "Try adjusting your search or filters"
-                    : "You don't have any cases yet"
-                }}
-              </p>
-            </CardContent>
-          </Card>
         </div>
-        <Card
-          v-else
-          v-for="caseItem in filteredCases"
-          :key="caseItem.id"
-          class="material-elevation-2 hover:material-elevation-3 transition-shadow duration-300 clean-border"
-        >
-          <CardHeader class="pb-3">
-            <div class="flex items-start justify-between">
-              <div class="flex-1 min-w-0">
-                <CardTitle class="text-lg font-semibold text-gray-900 mb-1 truncate">
+      </div>
+
+      <!-- Cases Grid / Table -->
+      <div>
+        <div v-if="filteredCases.length === 0" class="col-span-full">
+          <div class="bg-white rounded-lg border border-gray-200 text-center py-12">
+            <FileText class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <h3 class="text-base font-semibold text-gray-900 mb-1">No cases found</h3>
+            <p class="text-sm text-gray-500">
+              {{
+                searchQuery || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "You don't have any cases yet"
+              }}
+            </p>
+          </div>
+        </div>
+        <div v-else>
+          <div v-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              v-for="caseItem in filteredCases"
+              :key="caseItem.id"
+              class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200"
+            >
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0">
                   <router-link
                     :to="`/case-details?caseId=${caseItem.id}`"
-                    class="hover:underline"
+                    class="text-base font-semibold text-gray-900 hover:text-[#003aca] transition-colors truncate block"
                   >
                     {{ caseItem.title }}
                   </router-link>
-                </CardTitle>
-                <p class="text-sm text-gray-600">Case #{{ caseItem.case_number }}</p>
+                  <p class="text-xs text-gray-500 mt-1">Case #{{ caseItem.case_number }}</p>
+                </div>
               </div>
+
+              <p class="text-sm text-gray-600 line-clamp-2 mb-3">
+                {{ caseItem.description }}
+              </p>
+
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                <Badge :class="`${getStatusColor(caseItem.status)} text-xs`">
+                  {{ caseItem.status.replace('_', ' ') }}
+                </Badge>
+                <Badge :class="`${getPriorityColor(caseItem.priority)} text-xs`">
+                  {{ caseItem.priority }}
+                </Badge>
+                <Badge variant="outline" class="text-xs border-gray-300">
+                  {{ caseItem.case_type?.replace('_', ' ') }}
+                </Badge>
+              </div>
+
+              <div class="space-y-1.5 text-xs text-gray-500 mb-3">
+                <div v-if="caseItem.due_date" class="flex items-center space-x-1.5">
+                  <Calendar class="w-3.5 h-3.5" />
+                  <span>Due: {{ formatDate(caseItem.due_date) }}</span>
+                </div>
+                <div v-if="caseItem.next_deadline" class="flex items-center space-x-1.5">
+                  <AlertTriangle class="w-3.5 h-3.5 text-orange-500" />
+                  <span>Next: {{ formatDate(caseItem.next_deadline) }}</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <Clock class="w-3.5 h-3.5" />
+                  <span>Updated: {{ formatDate(caseItem.updated_date) }}</span>
+                </div>
+              </div>
+
+              <router-link :to="`/case-details?caseId=${caseItem.id}`" class="block">
+                <button class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                  <Eye class="w-4 h-4" />
+                  View Case Details
+                </button>
+              </router-link>
             </div>
-          </CardHeader>
+          </div>
 
-          <CardContent class="space-y-4">
-            <p class="text-sm text-gray-700 line-clamp-2">
-              {{ caseItem.description }}
-            </p>
-
-            <div class="flex flex-wrap gap-2">
-              <Badge :class="`${getStatusColor(caseItem.status)} clean-border`">
-                {{ caseItem.status.replace('_', ' ') }}
-              </Badge>
-              <Badge :class="`${getPriorityColor(caseItem.priority)} clean-border`">
-                {{ caseItem.priority }} priority
-              </Badge>
-              <Badge variant="outline" class="clean-border">
-                {{ caseItem.case_type?.replace('_', ' ') }}
-              </Badge>
-            </div>
-
-            <div class="space-y-2 text-xs text-gray-500">
-              <div v-if="caseItem.due_date" class="flex items-center space-x-2">
-                <Calendar class="w-3 h-3" />
-                <span>Due: {{ formatDate(caseItem.due_date) }}</span>
-              </div>
-              <div v-if="caseItem.next_deadline" class="flex items-center space-x-2">
-                <AlertTriangle class="w-3 h-3 text-orange-500" />
-                <span>Next: {{ formatDate(caseItem.next_deadline) }}</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                <Clock class="w-3 h-3" />
-                <span>Updated: {{ formatDate(caseItem.updated_date) }}</span>
-              </div>
-            </div>
-
-            <router-link :to="`/case-details?caseId=${caseItem.id}`" class="block">
-              <Button variant="outline" class="w-full clean-border">
-                <Eye class="w-4 h-4 mr-2" />
-                View Case Details
-              </Button>
-            </router-link>
-          </CardContent>
-        </Card>
+          <div v-else class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Title</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Case #</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Priority</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Next Deadline</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="caseItem in filteredCases" :key="caseItem.id" class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-sm">
+                    <router-link :to="`/case-details?caseId=${caseItem.id}`" class="font-medium text-gray-900 hover:text-[#003aca]">{{ caseItem.title }}</router-link>
+                    <div class="text-xs text-gray-500 mt-0.5">{{ caseItem.description?.slice(0, 60) }}{{ caseItem.description?.length > 60 ? '…' : '' }}</div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ caseItem.case_number }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm">
+                    <Badge :class="`${getStatusColor(caseItem.status)} text-xs`">{{ caseItem.status.replace('_',' ') }}</Badge>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm">
+                    <Badge :class="`${getPriorityColor(caseItem.priority)} text-xs`">{{ caseItem.priority }}</Badge>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ caseItem.next_deadline ? formatDate(caseItem.next_deadline) : '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right text-sm">
+                    <router-link :to="`/case-details?caseId=${caseItem.id}`">
+                      <button class="text-[#003aca] hover:text-[#0031a0] font-medium">View</button>
+                    </router-link>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -211,6 +258,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Grid, List } from 'lucide-vue-next';
 
 // State
 const cases = ref([]);
@@ -219,6 +267,25 @@ const user = ref(null);
 const isLoading = ref(true);
 const searchQuery = ref('');
 const statusFilter = ref('all');
+const priorityFilter = ref('all');
+const viewMode = ref('cards');
+
+// Options for selects (label shown to user, value used internally)
+const statusOptions = [
+  { value: 'all', label: 'All Status' },
+  { value: 'open', label: 'Open' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'on_hold', label: 'On Hold' }
+];
+
+const priorityOptions = [
+  { value: 'all', label: 'All Priorities' },
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' }
+];
 
 // Computed
 
@@ -255,6 +322,10 @@ const applyFilters = () => {
 
   if (statusFilter.value !== 'all') {
     filtered = filtered.filter(caseItem => caseItem.status === statusFilter.value);
+  }
+
+  if (priorityFilter.value !== 'all') {
+    filtered = filtered.filter(caseItem => caseItem.priority === priorityFilter.value);
   }
 
   filteredCases.value = filtered;
@@ -301,8 +372,12 @@ onMounted(() => {
   loadUserAndCases();
 });
 
+const setView = (mode) => {
+  viewMode.value = mode;
+};
+
 // Watchers
-watch([cases, searchQuery, statusFilter], () => {
+watch([cases, searchQuery, statusFilter, priorityFilter], () => {
   applyFilters();
 });
 </script>
