@@ -62,14 +62,14 @@
 
         <button type="button" @click="selectedView = 'Users'" :class="['nav-link', {active: selectedView === 'Users'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-            <Users class="nav-icon" size="20" />
+            <UsersIcon class="nav-icon" size="20" />
           </span>
           <span class="nav-text">Users</span>
         </button>
 
         <button type="button" @click="selectedView = 'Settings'" :class="['nav-link', {active: selectedView === 'Settings'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-            <Settings class="nav-icon" size="20" />
+            <SettingsIcon class="nav-icon" size="20" />
           </span>
           <span class="nav-text">Settings</span>
         </button>
@@ -267,52 +267,23 @@
         </div>
       </div>
 
-      <div v-else-if="selectedView === 'Cases'">
-        <h2 class="text-2xl font-semibold mb-4">Cases</h2>
-        <p class="text-gray-600">Cases list / filters will appear here.</p>
-      </div>
+      <Cases v-else-if="selectedView === 'Cases'" />
 
-      <div v-else-if="selectedView === 'MyCases'">
-        <h2 class="text-2xl font-semibold mb-4">My Cases</h2>
-        <p class="text-gray-600">Your personal cases will appear here.</p>
-        <MyCases/>
-      </div>
+      <MyCases v-else-if="selectedView === 'MyCases'" />
 
-      <div v-else-if="selectedView === 'Documents'">
-        <h2 class="text-2xl font-semibold mb-4">Documents</h2>
-        <p class="text-gray-600">Document manager will appear here.</p>
-        <!-- <MyDocument/> -->
-      </div>
+      <Documents v-else-if="selectedView === 'Documents'" />
 
-      <div v-else-if="selectedView === 'Schedule'">
-        <h2 class="text-2xl font-semibold mb-4">Schedule</h2>
-        <p class="text-gray-600">Schedule and calendar will appear here.</p>
-      </div>
+      <Schedule v-else-if="selectedView === 'Schedule'" />
 
-      <div v-else-if="selectedView === 'LegalResearch'">
-        <h2 class="text-2xl font-semibold mb-4">Legal Research</h2>
-        <p class="text-gray-600">Research tools will appear here.</p>
-      </div>
+      <LegalResearch v-else-if="selectedView === 'LegalResearch'" />
 
-      <div v-else-if="selectedView === 'Users'">
-        <h2 class="text-2xl font-semibold mb-4">Users</h2>
-        <p class="text-gray-600">User management will appear here.</p>
-      </div>
+      <Users v-else-if="selectedView === 'Users'" />
 
-      <div v-else-if="selectedView === 'Settings'">
-        <h2 class="text-2xl font-semibold mb-4">Settings</h2>
-        <p class="text-gray-600">Application settings will appear here.</p>
-      </div>
+      <Settings v-else-if="selectedView === 'Settings'" />
 
-      <div v-else-if="selectedView === 'Help'">
-        <h2 class="text-2xl font-semibold mb-4">Help</h2>
-        <p class="text-gray-600">Help content will appear here.</p>
-      </div>
+      <Help v-else-if="selectedView === 'Help'" />
 
-      <div v-else-if="selectedView === 'GuestAccess'">
-        <h2 class="text-2xl font-semibold mb-4">Guest Access</h2>
-        <p class="text-gray-600">Guest access controls will appear here.</p>
-      </div>
+      <GuestAccess v-else-if="selectedView === 'GuestAccess'" />
     </main>
 
  <div class="w-1/6  border-gray-400 border-l">
@@ -328,16 +299,23 @@ import { ref, onMounted, computed } from 'vue';
 import { Case, Comment, ActionItem } from '@/services/entities';
 import { User } from '@/services/entities';
 import { createPageUrl } from '@/utils';
-import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users,Settings, HelpCircle, File, Search, UserIcon} from 'lucide-vue-next';
+import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users as UsersIcon, Settings as SettingsIcon, HelpCircle, File, Search, UserIcon} from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
-import MyCases from "../views/MyCases.vue";
-import MyDocument from "../views/Documents.vue";
-import DocumentViewer from "../views/DocumentViewer.vue"
+import Cases from './Cases.vue';
+import MyCases from './MyCases.vue';
+import Documents from './Documents.vue';
+import DocumentViewer from './DocumentViewer.vue';
+import Schedule from './Schedule.vue';
+import LegalResearch from './LegalResearch.vue';
+import Users from './Users.vue';
+import Settings from './Settings.vue';
+import Help from './Help.vue';
+import GuestAccess from './GuestAccess.vue';
 
 
 
