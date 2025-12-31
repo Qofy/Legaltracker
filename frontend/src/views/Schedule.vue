@@ -10,30 +10,30 @@
         View all important dates for cases, tasks, and meetings.
       </p>
     </div>
-
-    <!-- New Meeting Section -->
     <div class="p-6 bg-white rounded-lg border border-gray-200">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex  justify-between mb-4">
         <div>
           <h3 class="text-lg font-semibold text-gray-800">New Meeting</h3>
           <p class="text-sm text-gray-600 mt-1">Schedule meetings and appointments</p>
         </div>
+      </div>
         <Dialog v-model:open="showMeetingForm">
           <DialogTrigger as-child>
-            <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+            <DialogHeader>
+              <DialogTitle>Schedule a New Meeting</DialogTitle>
+            </DialogHeader>
+            <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10 px-2">
               <Plus class="w-4 h-4 mr-2" />
               New Meeting
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Schedule a New Meeting</DialogTitle>
-            </DialogHeader>
             <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" />
           </DialogContent>
         </Dialog>
-      </div>
     </div>
+
+    <!-- New Meeting Section -->
 
     <!-- Calendar -->
     <div class="bg-white rounded-lg border border-gray-200">

@@ -9,31 +9,27 @@
       />
     </div>
 
-    <!-- Associated Case Select -->
-    <div>
-      <Label>Associated Case (Optional)</Label>
-      <Select
-        :model-value="formData.case_id || ''"
-        @update:model-value="value => formData.case_id = value"
+    <!-- Associated Case (native select) -->
+    <div class="flex items-start flex-col">
+      <Label for="case-select">Associated Case (Optional)</Label>
+      <select
+        id="case-select"
+        v-model="formData.case_id"
+        class="border rounded px-3 py-2 w-full max-w-md "
       >
-        <SelectTrigger>
-          <SelectValue placeholder="Select a case (optional)" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="">No case</SelectItem>
-          <SelectItem
-            v-for="caseItem in allCases"
-            :key="caseItem.id"
-            :value="caseItem.id"
-          >
-            {{ caseItem.title }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
+        <option value="">No case</option>
+        <option
+          v-for="caseItem in allCases"
+          :key="caseItem.id"
+          :value="caseItem.id"
+        >
+          {{ caseItem.title }}
+        </option>
+      </select>
     </div>
 
-    <div>
-      <Label>Date</Label>
+    <div >
+      <Label class="font-bold">Date</Label>
       <Popover>
         <PopoverTrigger as-child>
           <Button variant="outline" class="w-full justify-start text-left font-normal">
@@ -52,7 +48,7 @@
       </Popover>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-4 mt-60">
       <div>
         <Label>Start Time</Label>
         <Input type="time" v-model="startTime" />
@@ -131,7 +127,6 @@ import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { format } from 'date-fns';
 // import { Meeting } from '@/entities/Meeting'; // Commented out - API call
 // import { User } from '@/entities/User'; // Commented out - API call
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
