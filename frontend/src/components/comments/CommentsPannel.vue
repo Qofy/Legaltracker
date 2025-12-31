@@ -24,17 +24,21 @@
         />
 
         <div class="space-y-2">
-          <Select v-model="commentType">
-            <SelectTrigger class="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="note">Note</SelectItem>
-              <SelectItem value="question">Question</SelectItem>
-              <SelectItem value="update">Update</SelectItem>
-              <SelectItem value="reminder">Reminder</SelectItem>
-            </SelectContent>
-          </Select>
+        
+          <div>
+            <label for="comment-type" class="sr-only">Comment type</label>
+            <select
+              id="comment-type"
+              v-model="commentType"
+              class="w-full h-8 text-xs border rounded-md px-2 focus:ring-2 focus:ring-blue-500"
+              aria-label="Comment type"
+            >
+              <option value="note">Note</option>
+              <option value="question">Question</option>
+              <option value="update">Update</option>
+              <option value="reminder">Reminder</option>
+            </select>
+          </div>
 
           <div class="flex items-center justify-between">
             <button
@@ -59,7 +63,7 @@
         </div>
 
         <div class="flex space-x-1">
-          <Button type="submit" size="sm" :disabled="!newComment.trim() || isSubmitting" class="h-6 text-xs bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" size="sm" :disabled="!newComment.trim() || isSubmitting" class="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 ">
             <Send class="w-3 h-3 mr-1" />
             Post
           </Button>
@@ -150,13 +154,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// using native <select> for comment type
 import { useToast } from '@/components/ui/use-toast';
 import {
   MessageCircle,

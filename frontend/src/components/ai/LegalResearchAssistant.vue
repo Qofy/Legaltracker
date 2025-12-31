@@ -1,11 +1,13 @@
 <template>
-  <div class="legal-research-assistant p-4 bg-white rounded shadow">
+  <div class=" p-4  ">
     <h3 class="text-lg font-semibold mb-2">Legal Research Assistant</h3>
     <p class="text-sm text-gray-600">This is a placeholder assistant component. Replace with real AI UI later.</p>
+    <div class="flex flex-col">     
     <textarea v-model="prompt" placeholder="Ask a legal question..." class="w-full mt-3 p-2 border rounded"></textarea>
     <div class="mt-3 flex gap-2">
       <button @click="ask" class="px-3 py-1 bg-blue-600 text-white rounded">Ask</button>
       <button @click="clear" class="px-3 py-1 border rounded">Clear</button>
+    </div>
     </div>
     <div v-if="answer" class="mt-4 p-3 border rounded bg-gray-50">
       <h4 class="font-medium mb-1">Answer</h4>
