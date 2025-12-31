@@ -11,19 +11,14 @@
       />
     </div>
 
-    <div>
+    <div class="flex items-start flex-col">
       <Label for="role">Assign Role</Label>
-      <Select v-model="role">
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="customer">Customer</SelectItem>
-          <SelectItem value="lawyer">Lawyer</SelectItem>
-          <SelectItem value="guest">Guest</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
-        </SelectContent>
-      </Select>
+      <select id="role" v-model="role" class="border rounded px-3 py-2 w-full max-w-xs">
+        <option value="customer">Customer</option>
+        <option value="lawyer">Lawyer</option>
+        <option value="guest">Guest</option>
+        <option value="admin">Admin</option>
+      </select>
     </div>
 
     <div>
@@ -57,7 +52,7 @@ import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// Using native <select> for role selection; no Select shim required
 import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle } from 'lucide-vue-next';
 

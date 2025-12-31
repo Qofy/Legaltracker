@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col justify-between gap-6 mb-6">
       <div>
         <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
           <UsersIcon class="w-7 h-7 text-[#003aca]" />
@@ -12,15 +12,16 @@
       </div>
       <Dialog v-model:open="showInviteDialog">
         <DialogTrigger as-child>
-          <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+            <DialogHeader>
+              <DialogTitle>Invite a New User</DialogTitle>
+            </DialogHeader>
+          <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white px-2 h-10">
             <UserPlus class="w-4 h-4 mr-2"/>
             Invite User
           </Button>
         </DialogTrigger>
+        
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Invite a New User</DialogTitle>
-            </DialogHeader>
             <InviteUserForm
               @invite="handleInvite"
               @cancel="showInviteDialog = false"

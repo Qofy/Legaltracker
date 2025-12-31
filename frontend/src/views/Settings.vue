@@ -23,7 +23,7 @@
           </h1>
           <p class="text-gray-600 mt-1">Manage your preferences and AI configuration</p>
         </div>
-        <Button @click="handleSave" :disabled="isSaving" class="bg-blue-600 hover:bg-blue-700">
+        <Button @click="handleSave" :disabled="isSaving" class="bg-blue-600 hover:bg-blue-700 h-10 px-2">
           <Save class="w-4 h-4 mr-2" />
           {{ isSaving ? 'Saving...' : 'Save Settings' }}
         </Button>
