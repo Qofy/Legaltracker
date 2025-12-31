@@ -1,5 +1,6 @@
 <template>
   <div class=" bg-gray-50 min-h-screen flex">
+  <!-- ///////////////////Aside/////////////////////////// -->
     <aside class="w-64 flex flex-col gap-6 bg-white border-r-2 border-r-gray-400">
       <header class="flex flex-col bg-white py-4 px-4 text-gray-800 border-b border-b-gray-400">
         <h1 class="font-bold text-2xl flex gap-2 items-center text-[#003aca]">
@@ -90,7 +91,8 @@
       </nav>
     </aside>
 
-<div class="w-1/5 border-gray-400 border-r flex flex-col bg-gray-50">
+     <!----------------Ai Assistant------------------------------->
+<div class="w-50 border-gray-400 border-r flex flex-col bg-gray-50">
   <div class="bg-white px-4 py-3 border-b border-gray-400 h-23">
     <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
       <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +204,7 @@
     </div>
   </div>
 </div>
-
+<!------------- MAin---------------->
     <main class="flex-1 p-6 overflow-x-hidden">
       <div class="max-w-7xl mx-auto">
         <div v-if="selectedView === 'Dashboard'">
@@ -408,7 +410,7 @@
       </div>
     </main>
 
- <div class="w-1/6  border-gray-400 border-l">
+ <div class="w-50  border-gray-400 border-l">
   <h1 class="bg-white h-23 text-gray-600 border-b border-gray-400">Comment</h1>
  </div>
    

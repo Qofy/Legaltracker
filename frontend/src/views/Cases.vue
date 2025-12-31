@@ -1,5 +1,6 @@
 <template>
-  <div v-if="isLoading" class="p-6 space-y-6">
+  <!-- Loading State -->
+  <div v-if="isLoading" class="space-y-6">
     <div class="animate-pulse space-y-4">
       <div class="h-8 bg-gray-200 rounded w-1/3"></div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -17,247 +18,304 @@
     </div>
   </div>
 
+  <!-- Main Content -->
   <div v-else class="space-y-6">
-    <!-- Header -->
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 mb-6">
-        <div>
-          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <FileText class="w-7 h-7 text-[#003aca]" />
-            Cases Management
-          </h2>
-          <p class="text-gray-600 mt-1">
-            Manage and track all your legal cases
-          </p>
-        </div>
+    <!-- ==================== HEADER SECTION ==================== -->
+    <div class="mb-6">
+      <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+        <FileText class="w-7 h-7 text-[#003aca]" />
+        Cases Management
+      </h2>
+      <p class="text-gray-600 mt-1">
+        Manage and track all your legal cases
+      </p>
+    </div>
 
-        <div class="flex space-x-2">
-          <Button
-            @click="showAISummary = !showAISummary"
-            variant="outline"
-            class="border-purple-300 text-purple-700 hover:bg-purple-50"
-          >
-            <Sparkles class="w-4 h-4 mr-2" />
-            AI Analysis
-          </Button>
-          <Dialog v-model:open="showNewCase">
-            <DialogTrigger as-child>
-              <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
-                <Plus class="w-4 h-4 mr-2" />
-                New Case
-              </Button>
-            </DialogTrigger>
-            <DialogContent class="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Case</DialogTitle>
-              </DialogHeader>
-              <NewCaseForm
-                :current-user="user"
-                @submit="handleNewCase"
-                @cancel="showNewCase = false"
-              />
-            </DialogContent>
-          </Dialog>
+    <!-- ==================== CASE MANAGEMENT TOOLS ==================== -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Case Management</h3>
+          <p class="text-sm text-gray-600 mt-1">Create new cases and manage existing ones</p>
         </div>
+        <div>
+         <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+              <Plus class="w-4 h-4 mr-2" />
+              New Case
+            </Button>
+              <DialogTitle>Create New Case</DialogTitle>
+        </div>
+        <Dialog v-model:open="showNewCase">
+         
+          <DialogContent class="max-w-2xl">
+           
+            <!-- <NewCaseForm
+              :current-user="user"
+              @submit="handleNewCase"
+              @cancel="showNewCase = false"
+            /> -->
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <!-- AI Summary Section -->
-      <AIMultiCaseSummary v-if="showAISummary" :cases="cases" :users="[user]" />
+      <!-- AI Summary Toggle (Optional) -->
+      <div v-if="false" class="mt-4 pt-4 border-t border-gray-200">
+        <Button
+          @click="showAISummary = !showAISummary"
+          variant="outline"
+          class="border-purple-300 text-purple-700 hover:bg-purple-50"
+        >
+          <Sparkles class="w-4 h-4 mr-2" />
+          {{ showAISummary ? 'Hide' : 'Show' }} AI Analysis
+        </Button>
+      </div>
+    </div>
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        <div class="p-4 bg-white rounded-lg border border-gray-200">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-600 font-medium">Total Cases</p>
+    <!-- ==================== AI SUMMARY SECTION ==================== -->
+    <AIMultiCaseSummary v-if="showAISummary" :cases="cases" :users="[user]" />
+
+    <!-- ==================== STATS CARDS ==================== -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <!-- Total Cases -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Cases</p>
+          <div class="p-2 bg-blue-50 rounded-lg">
             <FileText class="w-4 h-4 text-blue-600" />
           </div>
-          <p class="text-2xl font-bold text-gray-900 mt-2">{{ cases.length }}</p>
         </div>
-
-        <div class="p-4 bg-white rounded-lg border border-gray-200">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-600 font-medium">Open</p>
-            <Clock class="w-4 h-4 text-orange-600" />
-          </div>
-          <p class="text-2xl font-bold text-gray-900 mt-2">
-            {{ activeCases.filter(c => c.status === 'open').length }}
-          </p>
-        </div>
-
-        <div class="p-4 bg-white rounded-lg border border-gray-200">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-600 font-medium">In Progress</p>
-            <AlertTriangle class="w-4 h-4 text-yellow-600" />
-          </div>
-          <p class="text-2xl font-bold text-gray-900 mt-2">
-            {{ activeCases.filter(c => c.status === 'in_progress').length }}
-          </p>
-        </div>
-
-        <div class="p-4 bg-white rounded-lg border border-gray-200">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-600 font-medium">Closed</p>
-            <CheckCircle class="w-4 h-4 text-green-600" />
-          </div>
-          <p class="text-2xl font-bold text-gray-900 mt-2">
-            {{ activeCases.filter(c => c.status === 'closed').length }}
-          </p>
-        </div>
-
-        <div
-          class="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-purple-50 transition-colors"
-          @click="activeTab = 'archived'"
-        >
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-600 font-medium">Archived</p>
-            <Archive class="w-4 h-4 text-purple-600" />
-          </div>
-          <p class="text-2xl font-bold text-gray-900 mt-2">
-            {{ archivedCases.length }}
-          </p>
-        </div>
+        <p class="text-2xl font-bold text-gray-900">{{ cases.length }}</p>
+        <p class="text-xs text-gray-500 mt-1">All cases in system</p>
       </div>
 
-      <!-- Tabs for Active/Archived -->
-      <Tabs v-model="activeTab">
-        <TabsList class="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="active" class="flex items-center space-x-2">
-            <Eye class="w-4 h-4" />
-            <span>Active Cases</span>
-            <Badge variant="secondary" class="ml-2">{{ activeCases.length }}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="archived" class="flex items-center space-x-2">
-            <Archive class="w-4 h-4" />
-            <span>Archived</span>
-            <Badge variant="secondary" class="ml-2">{{ archivedCases.length }}</Badge>
-          </TabsTrigger>
-        </TabsList>
+      <!-- Open Cases -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Open</p>
+          <div class="p-2 bg-orange-50 rounded-lg">
+            <Clock class="w-4 h-4 text-orange-600" />
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-900">
+          {{ activeCases.filter(c => c.status === 'open').length }}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">Newly opened</p>
+      </div>
 
-        <TabsContent value="active" class="mt-6 space-y-6">
-          <!-- Filters and Search -->
-          <div class="p-6 bg-white rounded-lg border border-gray-200">
-              <div class="flex flex-col lg:flex-row gap-4">
-                <!-- Search -->
-                <div class="flex-1">
-                  <div class="relative">
-                    <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      v-model="searchQuery"
-                      placeholder="Search cases by title, number, or description..."
-                      class="pl-10 clean-border"
-                    />
-                  </div>
-                </div>
+      <!-- In Progress Cases -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">In Progress</p>
+          <div class="p-2 bg-yellow-50 rounded-lg">
+            <AlertTriangle class="w-4 h-4 text-yellow-600" />
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-900">
+          {{ activeCases.filter(c => c.status === 'in_progress').length }}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">Active work</p>
+      </div>
 
-                <!-- Filters -->
-                <CaseFilters :filters="filters" @filter-change="handleFilterChange" />
+      <!-- Closed Cases -->
+      <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Closed</p>
+          <div class="p-2 bg-green-50 rounded-lg">
+            <CheckCircle class="w-4 h-4 text-green-600" />
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-900">
+          {{ activeCases.filter(c => c.status === 'closed').length }}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">Successfully closed</p>
+      </div>
+
+      <!-- Archived Cases -->
+      <div
+        class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-lg hover:border-purple-300 transition-all"
+        @click="activeTab = 'archived'"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Archived</p>
+          <div class="p-2 bg-purple-50 rounded-lg">
+            <Archive class="w-4 h-4 text-purple-600" />
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-gray-900">
+          {{ archivedCases.length }}
+        </p>
+        <p class="text-xs text-purple-600 mt-1 font-medium">Click to view →</p>
+      </div>
+    </div>
+
+    <!-- ==================== TABS SECTION ==================== -->
+    <Tabs v-model="activeTab" class="space-y-6">
+      <TabsList class="grid w-full max-w-md grid-cols-2 bg-gray-100 p-1">
+        <TabsTrigger
+          value="active"
+          class="flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
+          <Eye class="w-4 h-4" />
+          <span>Active Cases</span>
+          <Badge variant="secondary" class="ml-1 bg-blue-100 text-blue-800">
+            {{ activeCases.length }}
+          </Badge>
+        </TabsTrigger>
+        <TabsTrigger
+          value="archived"
+          class="flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
+          <Archive class="w-4 h-4" />
+          <span>Archived</span>
+          <Badge variant="secondary" class="ml-1 bg-purple-100 text-purple-800">
+            {{ archivedCases.length }}
+          </Badge>
+        </TabsTrigger>
+      </TabsList>
+
+      <!-- ==================== ACTIVE CASES TAB ==================== -->
+      <TabsContent value="active" class="space-y-6">
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <!-- Search Bar -->
+            <div class="flex-1">
+              <div class="relative">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  v-model="searchQuery"
+                  placeholder="Search cases by title, number, or description..."
+                  class="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
               </div>
+            </div>
+
+            <!-- Filters Component -->
+            <CaseFilters :filters="filters" @filter-change="handleFilterChange" />
+          </div>
+        </div>
+
+        <!-- Cases Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Empty State -->
+          <div v-if="filteredCases.length === 0" class="col-span-full">
+            <Card class="border-2 border-dashed border-gray-300 bg-gray-50">
+              <CardContent class="text-center py-16">
+                <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
+                  <FileText class="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No active cases found</h3>
+                <p class="text-gray-500 mb-6 max-w-md mx-auto">
+                  {{
+                    searchQuery || Object.values(filters).some(f => f !== "all")
+                      ? "Try adjusting your search criteria or filters to find what you're looking for"
+                      : "Get started by creating your first case to begin managing your legal work"
+                  }}
+                </p>
+                <Button
+                  v-if="!searchQuery && Object.values(filters).every(f => f === 'all')"
+                  @click="showNewCase = true"
+                  class="bg-[#003aca] hover:bg-[#002a8a] text-white"
+                >
+                  <Plus class="w-4 h-4 mr-2" />
+                  Create Your First Case
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
-          <!-- Cases Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-if="filteredCases.length === 0" class="col-span-full">
-              <Card class="material-elevation-1 clean-border">
-                <CardContent class="text-center py-12">
-                  <FileText class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 class="text-lg font-semibold text-gray-900 mb-2">No active cases found</h3>
-                  <p class="text-gray-500 mb-4">
-                    {{
-                      searchQuery || Object.values(filters).some(f => f !== "all")
-                        ? "Try adjusting your search or filters"
-                        : "Get started by creating your first case"
-                    }}
-                  </p>
-                  <Button
-                    v-if="!searchQuery && Object.values(filters).every(f => f === 'all')"
-                    @click="showNewCase = true"
-                    class="bg-[#003aca] hover:bg-[#002a8a] text-white"
-                  >
-                    <Plus class="w-4 h-4 mr-2" />
-                    Create First Case
-                  </Button>
-                </CardContent>
-              </Card>
+          <!-- Case Cards -->
+          <CaseCard
+            v-else
+            v-for="caseItem in filteredCases"
+            :key="caseItem.id"
+            :case-data="caseItem"
+            :get-status-color="getStatusColor"
+            :get-priority-color="getPriorityColor"
+            :get-status-icon="getStatusIcon"
+            :is-pinned="pinnedCaseId === caseItem.id"
+            @pin="handlePinCase(caseItem.id)"
+            @update="loadUserAndCases"
+          />
+        </div>
+      </TabsContent>
+
+      <!-- ==================== ARCHIVED CASES TAB ==================== -->
+      <TabsContent value="archived" class="space-y-6">
+        <!-- Archived Info Banner -->
+        <Card class="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 shadow-sm">
+          <CardContent class="p-6">
+            <div class="flex items-start gap-4">
+              <div class="p-3 bg-purple-100 rounded-lg">
+                <Archive class="w-6 h-6 text-purple-600" />
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold text-purple-900 text-lg mb-2">Archived Cases</h3>
+                <p class="text-sm text-purple-800 leading-relaxed">
+                  These cases have been archived and are hidden from the active cases view.
+                  They remain fully searchable and accessible. You can unarchive a case at any time
+                  to return it to your active cases list.
+                </p>
+              </div>
             </div>
-            <CaseCard
-              v-else
-              v-for="caseItem in filteredCases"
-              :key="caseItem.id"
-              :case-data="caseItem"
-              :get-status-color="getStatusColor"
-              :get-priority-color="getPriorityColor"
-              :get-status-icon="getStatusIcon"
-              :is-pinned="pinnedCaseId === caseItem.id"
-              @pin="handlePinCase(caseItem.id)"
-              @update="loadUserAndCases"
+          </CardContent>
+        </Card>
+
+        <!-- Search for Archived Cases -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div class="relative">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              v-model="searchQuery"
+              placeholder="Search archived cases by title, number, or description..."
+              class="pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
             />
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="archived" class="mt-6 space-y-6">
-          <!-- Archived Cases Info Card -->
-          <Card class="bg-purple-50 border-purple-200">
-            <CardContent class="p-4">
-              <div class="flex items-start space-x-3">
-                <Archive class="w-5 h-5 text-purple-600 mt-0.5" />
-                <div>
-                  <h3 class="font-semibold text-purple-900 mb-1">Archived Cases</h3>
-                  <p class="text-sm text-purple-800">
-                    These cases have been archived and are hidden from the active cases view.
-                    They remain fully searchable and accessible. You can unarchive a case at any time.
-                  </p>
+        <!-- Archived Cases Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Empty State -->
+          <div v-if="filteredCases.length === 0" class="col-span-full">
+            <Card class="border-2 border-dashed border-gray-300 bg-gray-50">
+              <CardContent class="text-center py-16">
+                <div class="inline-block p-4 bg-purple-100 rounded-full mb-4">
+                  <Archive class="w-12 h-12 text-purple-400" />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <!-- Search for Archived Cases -->
-          <div class="p-6 bg-white rounded-lg border border-gray-200">
-            <div class="relative">
-              <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                v-model="searchQuery"
-                placeholder="Search archived cases..."
-                class="pl-10"
-              />
-            </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                  {{ searchQuery ? "No archived cases match your search" : "No archived cases" }}
+                </h3>
+                <p class="text-gray-500 max-w-md mx-auto">
+                  {{ searchQuery
+                    ? "Try adjusting your search query to find what you're looking for"
+                    : "Cases that you archive will appear here for easy reference and future access"
+                  }}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
-          <!-- Archived Cases Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-if="filteredCases.length === 0" class="col-span-full">
-              <Card class="material-elevation-1 clean-border">
-                <CardContent class="text-center py-12">
-                  <Archive class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 class="text-lg font-semibold text-gray-900 mb-2">No archived cases</h3>
-                  <p class="text-gray-500">
-                    {{ searchQuery ? "No archived cases match your search" : "Archived cases will appear here" }}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-            <CaseCard
-              v-else
-              v-for="caseItem in filteredCases"
-              :key="caseItem.id"
-              :case-data="caseItem"
-              :get-status-color="getStatusColor"
-              :get-priority-color="getPriorityColor"
-              :get-status-icon="getStatusIcon"
-              :is-pinned="false"
-              @pin="() => {}"
-              @update="loadUserAndCases"
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+          <!-- Archived Case Cards -->
+          <CaseCard
+            v-else
+            v-for="caseItem in filteredCases"
+            :key="caseItem.id"
+            :case-data="caseItem"
+            :get-status-color="getStatusColor"
+            :get-priority-color="getPriorityColor"
+            :get-status-icon="getStatusIcon"
+            :is-pinned="false"
+            @pin="() => {}"
+            @update="loadUserAndCases"
+          />
+        </div>
+      </TabsContent>
+    </Tabs>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-// TODO: Import Case and User entities when API is ready
-// import { Case } from '@/entities/Case';
-// import { User } from '@/entities/User';
 import {
   FileText,
   Plus,
@@ -281,21 +339,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 import NewCaseForm from '@/components/cases/NewCaseForm.vue';
 import CaseFilters from '@/components/cases/CaseFilters.vue';
 import CaseCard from '@/components/cases/CaseCard.vue';
 import AIMultiCaseSummary from '@/components/ai/AIMultiCaseSummary.vue';
 
-// Props
-const props = defineProps({
-  pinnedCaseId: {
-    type: String,
-    default: null,
-  },
-});
-
-// State
+// ==================== STATE ====================
 const cases = ref([]);
 const filteredCases = ref([]);
 const user = ref(null);
@@ -313,37 +362,15 @@ const impersonatedRole = ref(null);
 const activeTab = ref('active');
 const showAISummary = ref(false);
 
-// Computed
+// ==================== COMPUTED ====================
 const activeCases = computed(() => cases.value.filter(c => c.status !== 'archived'));
 const archivedCases = computed(() => cases.value.filter(c => c.status === 'archived'));
 
-// Methods
+// ==================== METHODS ====================
 const loadUserAndCases = async () => {
   isLoading.value = true;
   try {
     // TODO: Replace with actual API calls when ready
-    // const userData = await User.me();
-    // user.value = userData;
-
-    // const allCases = await Case.list('-updated_date');
-
-    // Apply role-based filtering
-    // const savedRole = localStorage.getItem('impersonatedRole');
-    // const currentRole = savedRole || userData.user_type;
-
-    // let filteredByRole = allCases;
-
-    // if (currentRole === 'lawyer') {
-    //   filteredByRole = allCases.filter(c => c.lawyer_id === userData.id);
-    // } else if (currentRole === 'customer') {
-    //   filteredByRole = allCases.filter(c =>
-    //     c.customer_ids && c.customer_ids.includes(userData.id)
-    //   );
-    // } else if (currentRole === 'guest') {
-    //   filteredByRole = [];
-    // }
-
-    // cases.value = filteredByRole;
     console.log('TODO: Load user and cases from API');
   } catch (error) {
     console.error('Failed to load data:', error);
@@ -353,11 +380,9 @@ const loadUserAndCases = async () => {
 
 const handlePinCase = (caseId) => {
   if (pinnedCaseId.value === caseId) {
-    // Unpin
     pinnedCaseId.value = null;
     localStorage.removeItem('pinnedCaseId');
   } else {
-    // Pin
     pinnedCaseId.value = caseId;
     localStorage.setItem('pinnedCaseId', caseId);
   }
@@ -382,6 +407,7 @@ const applyFilters = () => {
     }
   }
 
+  // Search filter
   if (searchQuery.value) {
     filtered = filtered.filter(caseItem =>
       caseItem.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -390,14 +416,17 @@ const applyFilters = () => {
     );
   }
 
+  // Status filter
   if (filters.value.status !== 'all' && filters.value.status !== 'archived') {
     filtered = filtered.filter(caseItem => caseItem.status === filters.value.status);
   }
 
+  // Priority filter
   if (filters.value.priority !== 'all') {
     filtered = filtered.filter(caseItem => caseItem.priority === filters.value.priority);
   }
 
+  // Type filter
   if (filters.value.type !== 'all') {
     filtered = filtered.filter(caseItem => caseItem.case_type === filters.value.type);
   }
@@ -407,13 +436,6 @@ const applyFilters = () => {
 
 const handleNewCase = async (caseData) => {
   try {
-    // TODO: Replace with actual API call when ready
-    // const newCase = await Case.create({
-    //   ...caseData,
-    //   lawyer_id: user.value?.id,
-    //   owner_ids: user.value ? [user.value.id] : []
-    // });
-    // cases.value = [newCase, ...cases.value];
     console.log('TODO: Create new case:', caseData);
     showNewCase.value = false;
   } catch (error) {
@@ -474,14 +496,16 @@ const getStatusIcon = (status) => {
   }
 };
 
-// Lifecycle
+// ==================== LIFECYCLE ====================
 onMounted(() => {
   loadUserAndCases();
+
   // Load pinned case from localStorage
   const pinned = localStorage.getItem('pinnedCaseId');
   if (pinned) {
     pinnedCaseId.value = pinned;
   }
+
   // Load impersonated role from localStorage
   const savedRole = localStorage.getItem('impersonatedRole');
   if (savedRole) {
@@ -489,7 +513,7 @@ onMounted(() => {
   }
 });
 
-// Watchers
+// ==================== WATCHERS ====================
 watch(
   [cases, searchQuery, filters, user, impersonatedRole, activeTab],
   () => {

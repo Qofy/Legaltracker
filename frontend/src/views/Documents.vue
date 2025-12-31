@@ -391,8 +391,61 @@ const loadData = async () => {
     // documents.value = await Document.list()
     // cases.value = await Case.list()
     console.log('TODO: Load documents and cases from API')
-    documents.value = []
-    cases.value = []
+
+    // Mock data for testing
+    cases.value = [
+      {
+        id: '1',
+        case_number: 'CASE-2024-001',
+        title: 'Smith v. Johnson Construction',
+        status: 'in_progress',
+        case_type: 'civil'
+      },
+      {
+        id: '2',
+        case_number: 'CASE-2024-002',
+        title: 'Estate of Williams',
+        status: 'open',
+        case_type: 'estate'
+      }
+    ]
+
+    documents.value = [
+      {
+        id: '1',
+        case_id: '1',
+        filename: 'contract_agreement.pdf',
+        description: 'Initial contract agreement',
+        document_type: 'contract',
+        file_size: 245000,
+        ocr_text: 'Sample OCR text',
+        is_confidential: true,
+        submitted_by_party: 'us',
+        points_awarded: 8,
+        created_date: '2024-01-15'
+      },
+      {
+        id: '2',
+        case_id: '1',
+        filename: 'evidence_photo.jpg',
+        description: 'Site inspection photos',
+        document_type: 'evidence',
+        file_size: 512000,
+        submitted_by_party: 'them',
+        points_awarded: 5,
+        created_date: '2024-01-20'
+      },
+      {
+        id: '3',
+        case_id: '2',
+        filename: 'will_document.pdf',
+        description: 'Last will and testament',
+        document_type: 'court_filing',
+        file_size: 180000,
+        ocr_text: 'Will content',
+        created_date: '2024-02-01'
+      }
+    ]
   } catch (error) {
     console.error('Failed to load data:', error)
   }
