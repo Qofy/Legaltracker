@@ -39,24 +39,24 @@
           <p class="text-sm text-gray-600 mt-1">Create new cases and manage existing ones</p>
         </div>
         <div>
-         <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white">
+              <DialogTitle>Create New Case</DialogTitle>
+         <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10 px-2">
               <Plus class="w-4 h-4 mr-2" />
               New Case
             </Button>
-              <DialogTitle>Create New Case</DialogTitle>
         </div>
-        <Dialog v-model:open="showNewCase">
          
+      </div>
+        <Dialog v-model:open="showNewCase">
           <DialogContent class="max-w-2xl">
            
-            <!-- <NewCaseForm
+          </DialogContent>
+            <NewCaseForm
               :current-user="user"
               @submit="handleNewCase"
               @cancel="showNewCase = false"
-            /> -->
-          </DialogContent>
+            />
         </Dialog>
-      </div>
 
       <!-- AI Summary Toggle (Optional) -->
       <div v-if="false" class="mt-4 pt-4 border-t border-gray-200">

@@ -3,14 +3,14 @@ import { h } from 'vue';
 const Popover = {
   name: 'UiPopover',
   setup(_, { slots }) {
-    return () => h('div', { class: 'ui-popover relative inline-block' }, slots.default ? slots.default() : []);
+    return () => h('div', { class: 'ui-popover relative block' }, slots.default ? slots.default() : []);
   },
 };
 
 const PopoverTrigger = {
   name: 'UiPopoverTrigger',
   setup(_, { slots }) {
-    return () => h('div', { class: 'ui-popover-trigger inline-block' }, slots.default ? slots.default() : []);
+    return () => h('div', { class: 'ui-popover-trigger block' }, slots.default ? slots.default() : []);
   },
 };
 
