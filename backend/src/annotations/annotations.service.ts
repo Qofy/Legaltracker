@@ -25,7 +25,7 @@ export class AnnotationsService {
 
     if (!annotation) return false;
 
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     // Check document access first
     const document = annotation.document;
@@ -40,7 +40,7 @@ export class AnnotationsService {
     // Check document-level visibility
     if (document.visibility_type === 'public') return true;
     if (document.visibility_type === 'case_members') return hasCaseAccess;
-    if (document.visibility_type === 'lawyers_only') return user.role === 'admin' || user.role === 'lawyer';
+    if (document.visibility_type === 'lawyers_only') return user.user_type === 'admin' || user.user_type === 'lawyer';
     if (document.visibility_type === 'specific_users') {
       return document.visible_to_users?.some(u => u.id === user.id);
     }
@@ -50,7 +50,7 @@ export class AnnotationsService {
 
   // Check if user can edit an annotation
   async canEditAnnotation(annotationId: string, user: User): Promise<boolean> {
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     const annotation = await this.annotationsRepository.findOne({
       where: { id: annotationId },
@@ -82,7 +82,7 @@ export class AnnotationsService {
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
     const hasCaseAccess = isOwner || isCustomer || isShared;
 
-    if (!hasCaseAccess && user.role !== 'admin') {
+    if (!hasCaseAccess && user.user_type !== 'admin') {
       throw new ForbiddenException('You do not have permission to annotate this document');
     }
 
@@ -90,12 +90,12 @@ export class AnnotationsService {
     let hasDocumentAccess = false;
     if (document.visibility_type === 'public') hasDocumentAccess = true;
     else if (document.visibility_type === 'case_members') hasDocumentAccess = hasCaseAccess;
-    else if (document.visibility_type === 'lawyers_only') hasDocumentAccess = user.role === 'admin' || user.role === 'lawyer';
+    else if (document.visibility_type === 'lawyers_only') hasDocumentAccess = user.user_type === 'admin' || user.user_type === 'lawyer';
     else if (document.visibility_type === 'specific_users') {
       hasDocumentAccess = document.visible_to_users?.some(u => u.id === user.id);
     }
 
-    if (!hasDocumentAccess && user.role !== 'admin') {
+    if (!hasDocumentAccess && user.user_type !== 'admin') {
       throw new ForbiddenException('You do not have permission to annotate this document');
     }
 
@@ -107,7 +107,7 @@ export class AnnotationsService {
       position_y,
       author: user,
       author_id: user.id,
-    });
+    }) as unknown as Annotation;
 
     return await this.annotationsRepository.save(newAnnotation);
   }
@@ -124,7 +124,7 @@ export class AnnotationsService {
       .leftJoinAndSelect('document.visible_to_users', 'visible_to_user');
 
     // Apply RLS based on case access
-    if (user.role !== 'admin') {
+    if (user.user_type !== 'admin') {
       queryBuilder.where(
         '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
         { userId: user.id }
@@ -139,7 +139,7 @@ export class AnnotationsService {
           specific: 'specific_users',
           lawyers: 'lawyers_only',
           userId: user.id,
-          userRole: user.role,
+          userRole: user.user_type,
           lawyerRoles: ['admin', 'lawyer'],
         }
       );

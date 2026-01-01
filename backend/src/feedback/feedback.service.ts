@@ -21,7 +21,7 @@ export class FeedbackService {
     const newBugReport = this.bugReportsRepository.create({
       ...createBugReportDto,
       submitted_by_id: user.id,
-    });
+    }) as unknown as BugReport;
 
     return await this.bugReportsRepository.save(newBugReport);
   }
@@ -92,7 +92,7 @@ export class FeedbackService {
       ...createFeatureRequestDto,
       submitted_by_id: user.id,
       votes: 0,
-    });
+    }) as unknown as FeatureRequest;
 
     return await this.featureRequestsRepository.save(newFeatureRequest);
   }

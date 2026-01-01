@@ -9,29 +9,27 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@Request() req) {
-    const user = await this.usersService.findOne(req.user.userId);
+    const user = await this.usersService.findOne(req.user.id);
     const { password, ...result } = user;
     return result;
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getUsers(@Request() req, @Query('role') role?: string) {
-    const userCompanyId = req.user.company_id;
-    
-    if (role) {
-      const users = await this.usersService.findByCompanyAndRole(userCompanyId, role);
+  async getUsers(@Query('user_type') userType?: string, @Query('search') search?: string) {
+    if (userType) {
+      const users = await this.usersService.findByUserType(userType);
       return users.map(({ password, ...user }) => user);
     }
-    
-    const users = await this.usersService.findAll(userCompanyId);
+
+    const users = await this.usersService.findAll();
     return users.map(({ password, ...user }) => user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateUser(@Param('id') id: string, @Body() userData: Partial<any>) {
-    const user = await this.usersService.update(+id, userData);
+    const user = await this.usersService.update(id, userData);
     const { password, ...result } = user;
     return result;
   }
@@ -39,7 +37,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteUser(@Param('id') id: string) {
-    await this.usersService.remove(+id);
+    await this.usersService.remove(id);
     return { message: 'User deleted successfully' };
   }
 }

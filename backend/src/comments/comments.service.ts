@@ -25,7 +25,7 @@ export class CommentsService {
 
     if (!comment) return false;
 
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     const caseItem = comment.case;
     const isOwner = caseItem.owners?.some(owner => owner.id === user.id);
@@ -37,7 +37,7 @@ export class CommentsService {
 
   // Check if user can edit a comment
   async canEditComment(commentId: string, user: User): Promise<boolean> {
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     const comment = await this.commentsRepository.findOne({
       where: { id: commentId },
@@ -67,7 +67,7 @@ export class CommentsService {
     const isCustomer = caseItem.customers?.some(customer => customer.id === user.id);
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
 
-    if (!isOwner && !isCustomer && !isShared && user.role !== 'admin') {
+    if (!isOwner && !isCustomer && !isShared && user.user_type !== 'admin') {
       throw new ForbiddenException('You do not have permission to comment on this case');
     }
 
@@ -76,7 +76,7 @@ export class CommentsService {
       case_id,
       author: user,
       author_id: user.id,
-    });
+    }) as unknown as Comment;
 
     return await this.commentsRepository.save(newComment);
   }
@@ -91,7 +91,7 @@ export class CommentsService {
       .leftJoinAndSelect('comment.author', 'author');
 
     // Apply RLS based on case access
-    if (user.role !== 'admin') {
+    if (user.user_type !== 'admin') {
       queryBuilder.where(
         '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
         { userId: user.id }

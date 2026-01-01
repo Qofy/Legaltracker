@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Meeting } from './meeting.entity';
 import { User } from '../users/user.entity';
 import { CasesService } from '../cases/cases.service';
@@ -69,10 +69,10 @@ export class MeetingsService {
       ...meetingData,
       case_id,
       created_by: user,
-    });
+    }) as unknown as Meeting;
 
     if (attendee_ids && attendee_ids.length > 0) {
-      meeting.attendees = await this.usersRepository.findByIds(attendee_ids);
+      meeting.attendees = await this.usersRepository.findBy({ id: In(attendee_ids) });
     }
 
     return await this.meetingsRepository.save(meeting);
@@ -91,7 +91,7 @@ export class MeetingsService {
     Object.assign(meeting, meetingData);
 
     if (attendee_ids) {
-      meeting.attendees = await this.usersRepository.findByIds(attendee_ids);
+      meeting.attendees = await this.usersRepository.findBy({ id: In(attendee_ids) });
     }
 
     return await this.meetingsRepository.save(meeting);

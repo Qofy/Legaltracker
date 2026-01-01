@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Case } from './case.entity';
 import { User } from '../users/user.entity';
 
@@ -65,23 +65,23 @@ export class CasesService {
   async create(createCaseDto: any, user: User): Promise<Case> {
     const { customer_ids, owner_ids, shared_with_users, ...caseData } = createCaseDto;
 
-    const newCase = this.casesRepository.create(caseData);
+    const newCase = this.casesRepository.create(caseData) as unknown as Case;
 
     // Set owners
     if (owner_ids && owner_ids.length > 0) {
-      newCase.owners = await this.usersRepository.findByIds(owner_ids);
+      newCase.owners = await this.usersRepository.findBy({ id: In(owner_ids) });
     } else {
       newCase.owners = [user]; // Default to current user as owner
     }
 
     // Set customers
     if (customer_ids && customer_ids.length > 0) {
-      newCase.customers = await this.usersRepository.findByIds(customer_ids);
+      newCase.customers = await this.usersRepository.findBy({ id: In(customer_ids) });
     }
 
     // Set shared users
     if (shared_with_users && shared_with_users.length > 0) {
-      newCase.shared_users = await this.usersRepository.findByIds(shared_with_users);
+      newCase.shared_users = await this.usersRepository.findBy({ id: In(shared_with_users) });
     }
 
     return await this.casesRepository.save(newCase);
@@ -155,13 +155,13 @@ export class CasesService {
 
     // Update relations if provided
     if (customer_ids !== undefined) {
-      caseItem.customers = await this.usersRepository.findByIds(customer_ids);
+      caseItem.customers = await this.usersRepository.findBy({ id: In(customer_ids) });
     }
     if (owner_ids !== undefined) {
-      caseItem.owners = await this.usersRepository.findByIds(owner_ids);
+      caseItem.owners = await this.usersRepository.findBy({ id: In(owner_ids) });
     }
     if (shared_with_users !== undefined) {
-      caseItem.shared_users = await this.usersRepository.findByIds(shared_with_users);
+      caseItem.shared_users = await this.usersRepository.findBy({ id: In(shared_with_users) });
     }
 
     return await this.casesRepository.save(caseItem);
@@ -184,7 +184,7 @@ export class CasesService {
     }
 
     const caseItem = await this.findOne(id, user);
-    const usersToShare = await this.usersRepository.findByIds(userIds);
+    const usersToShare = await this.usersRepository.findBy({ id: In(userIds) });
 
     caseItem.shared_users = [
       ...(caseItem.shared_users || []),

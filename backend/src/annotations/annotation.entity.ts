@@ -29,7 +29,7 @@ export class Annotation {
   author: User;
 
   @Column()
-  author_id: number;
+  author_id: string;
 
   @CreateDateColumn()
   created_date: Date;

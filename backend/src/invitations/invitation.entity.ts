@@ -27,7 +27,7 @@ export class Invitation {
   @Column({ default: 'pending' })
   status: string; // pending, accepted, declined
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   expires_at: Date;
 
   @CreateDateColumn()

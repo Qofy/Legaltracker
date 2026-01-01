@@ -25,7 +25,7 @@ export class ActionItemsService {
 
     if (!actionItem) return false;
 
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     const caseItem = actionItem.case;
     const isOwner = caseItem.owners?.some(owner => owner.id === user.id);
@@ -37,7 +37,7 @@ export class ActionItemsService {
 
   // Check if user can edit an action item
   async canEditActionItem(actionItemId: string, user: User): Promise<boolean> {
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     const actionItem = await this.actionItemsRepository.findOne({
       where: { id: actionItemId },
@@ -70,7 +70,7 @@ export class ActionItemsService {
     const isCustomer = caseItem.customers?.some(customer => customer.id === user.id);
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
 
-    if (!isOwner && !isCustomer && !isShared && user.role !== 'admin') {
+    if (!isOwner && !isCustomer && !isShared && user.user_type !== 'admin') {
       throw new ForbiddenException('You do not have permission to create action items for this case');
     }
 
@@ -79,7 +79,7 @@ export class ActionItemsService {
       case_id,
       created_by: user,
       created_by_id: user.id,
-    });
+    }) as unknown as ActionItem;
 
     // Assign to user if specified
     if (assigned_to_id) {
@@ -104,7 +104,7 @@ export class ActionItemsService {
       .leftJoinAndSelect('action_item.created_by', 'created_by');
 
     // Apply RLS based on case access
-    if (user.role !== 'admin') {
+    if (user.user_type !== 'admin') {
       queryBuilder.where(
         '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
         { userId: user.id }

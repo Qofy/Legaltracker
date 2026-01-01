@@ -27,15 +27,14 @@ export class MessagesController {
     const messagePayload = {
       from_email: user.email,
       to_email: messageData.to_email,
-      from_role: user.role,
+      from_role: user.user_type,
       to_role: messageData.to_role,
       subject: messageData.subject,
       content: messageData.content,
       student_id: messageData.student_id,
       mentor_email: messageData.mentor_email,
       message_type: messageData.message_type || 'message',
-      report_data: messageData.report_data,
-      company_id: user.company_id
+      report_data: messageData.report_data
     };
     
     console.log('[Messages] Storing message:', messagePayload);
@@ -46,8 +45,8 @@ export class MessagesController {
   @Get('mentor')
   async getMentorMessages(@Request() req): Promise<Message[]> {
     const { user } = req;
-    console.log('[Messages] getMentorMessages for user:', user.email, 'company:', user.company_id);
-    const messages = await this.messagesService.getMentorMessages(user.email, user.company_id);
+    console.log('[Messages] getMentorMessages for user:', user.email);
+    const messages = await this.messagesService.getMentorMessages(user.email);
     console.log('[Messages] Found', messages.length, 'messages for mentor');
     messages.forEach((msg, index) => {
       console.log(`[Messages] Message ${index}: from="${msg.from_email}" to="${msg.to_email}" subject="${msg.subject}"`);
@@ -58,7 +57,7 @@ export class MessagesController {
   @Get('student')
   async getStudentMessages(@Request() req): Promise<Message[]> {
     const { user } = req;
-    return this.messagesService.getStudentMessages(user.email, user.company_id);
+    return this.messagesService.getStudentMessages(user.email);
   }
 
   @Get('conversation/:otherEmail')
@@ -98,8 +97,8 @@ export class MessagesController {
   @Get('admin')
   async getAdminMessages(@Request() req): Promise<Message[]> {
     const { user } = req;
-    console.log('[Messages] getAdminMessages for user:', user.email, 'company:', user.company_id);
-    const messages = await this.messagesService.getAdminMessages(user.email, user.company_id);
+    console.log('[Messages] getAdminMessages for user:', user.email);
+    const messages = await this.messagesService.getAdminMessages(user.email);
     console.log('[Messages] Found', messages.length, 'messages for admin');
     return messages;
   }
@@ -107,8 +106,8 @@ export class MessagesController {
   @Get('admin/reports')
   async getAdminReports(@Request() req): Promise<Message[]> {
     const { user } = req;
-    console.log('[Messages] getAdminReports for user:', user.email, 'company:', user.company_id);
-    const reports = await this.messagesService.getAdminReports(user.email, user.company_id);
+    console.log('[Messages] getAdminReports for user:', user.email);
+    const reports = await this.messagesService.getAdminReports(user.email);
     console.log('[Messages] Found', reports.length, 'reports for admin');
     return reports;
   }

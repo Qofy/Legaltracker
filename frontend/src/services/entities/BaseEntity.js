@@ -6,7 +6,7 @@ import axios from '../../plugins/axios'
 class BaseEntityService {
   constructor(entityName, baseUrl = null) {
     this.entityName = entityName
-    this.baseUrl = baseUrl || `/api/${entityName.toLowerCase()}s`
+    this.baseUrl = baseUrl || `/${entityName.toLowerCase()}s`
   }
 
   /**

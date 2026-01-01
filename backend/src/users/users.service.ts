@@ -20,7 +20,7 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async findOne(id: number): Promise<User> {
+  async findOne(id: string): Promise<User> {
     return this.usersRepository.findOne({ where: { id } });
   }
 
@@ -28,18 +28,18 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { email } });
   }
 
-  async findAll(companyId?: number): Promise<User[]> {
-    if (companyId) {
-      return this.usersRepository.find({ where: { company_id: companyId } });
+  async findAll(userType?: string): Promise<User[]> {
+    if (userType) {
+      return this.usersRepository.find({ where: { user_type: userType } });
     }
     return this.usersRepository.find();
   }
 
-  async findByCompanyAndRole(companyId: number, role: string): Promise<User[]> {
-    return this.usersRepository.find({ where: { company_id: companyId, role } });
+  async findByUserType(userType: string): Promise<User[]> {
+    return this.usersRepository.find({ where: { user_type: userType } });
   }
 
-  async update(id: number, userData: Partial<User>): Promise<User> {
+  async update(id: string, userData: Partial<User>): Promise<User> {
     if (userData.password) {
       userData.password = await bcrypt.hash(userData.password, 10);
     }
@@ -47,7 +47,7 @@ export class UsersService {
     return this.findOne(id);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.usersRepository.delete(id);
   }
 }

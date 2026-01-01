@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "seed": "ts-node src/seed.ts",
     "clear:users": "node scripts/clear_users.js",
     "clear:all": "node scripts/clear_all.js"
   },
@@ -44,6 +45,7 @@
     "@types/node": "^20.11.5",
     "@types/passport-jwt": "^4.0.0",
     "@types/passport-local": "^1.0.38",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
 }

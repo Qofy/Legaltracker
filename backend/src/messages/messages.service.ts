@@ -21,39 +21,30 @@ export class MessagesService {
     mentor_email?: string;
     message_type?: string;
     report_data?: string;
-    company_id?: number;
   }): Promise<Message> {
     const message = this.messagesRepository.create(messageData);
     return this.messagesRepository.save(message);
   }
 
-  async getMentorMessages(mentorEmail: string, companyId?: number): Promise<Message[]> {
+  async getMentorMessages(mentorEmail: string): Promise<Message[]> {
     const whereConditions: any[] = [
       { to_email: mentorEmail },  // All messages TO this mentor (regardless of role)
       { from_email: mentorEmail } // All messages FROM this mentor
     ];
-    
-    if (companyId) {
-      whereConditions.forEach(condition => condition.company_id = companyId);
-    }
-    
-    return this.messagesRepository.find({ 
+
+    return this.messagesRepository.find({
       where: whereConditions,
       order: { created_at: 'DESC' }
     });
   }
 
-  async getStudentMessages(studentEmail: string, companyId?: number): Promise<Message[]> {
+  async getStudentMessages(studentEmail: string): Promise<Message[]> {
     const whereConditions: any[] = [
       { to_email: studentEmail },   // All messages TO this student
       { from_email: studentEmail } // All messages FROM this student
     ];
-    
-    if (companyId) {
-      whereConditions.forEach(condition => condition.company_id = companyId);
-    }
-    
-    return this.messagesRepository.find({ 
+
+    return this.messagesRepository.find({
       where: whereConditions,
       order: { created_at: 'DESC' }
     });
@@ -91,33 +82,25 @@ export class MessagesService {
     await this.messagesRepository.delete(messageId);
   }
 
-  async getAdminMessages(adminEmail: string, companyId?: number): Promise<Message[]> {
+  async getAdminMessages(adminEmail: string): Promise<Message[]> {
     const whereConditions: any[] = [
       { to_email: adminEmail },   // All messages TO this admin
       { from_email: adminEmail }  // All messages FROM this admin
     ];
-    
-    if (companyId) {
-      whereConditions.forEach(condition => condition.company_id = companyId);
-    }
-    
-    return this.messagesRepository.find({ 
+
+    return this.messagesRepository.find({
       where: whereConditions,
       order: { created_at: 'DESC' }
     });
   }
 
-  async getAdminReports(adminEmail: string, companyId?: number): Promise<Message[]> {
-    const whereCondition: any = { 
-      to_email: adminEmail, 
-      message_type: 'report' 
+  async getAdminReports(adminEmail: string): Promise<Message[]> {
+    const whereCondition: any = {
+      to_email: adminEmail,
+      message_type: 'report'
     };
-    
-    if (companyId) {
-      whereCondition.company_id = companyId;
-    }
-    
-    return this.messagesRepository.find({ 
+
+    return this.messagesRepository.find({
       where: whereCondition,
       order: { created_at: 'DESC' }
     });

@@ -23,7 +23,7 @@ export class GuestPass {
   @Column({ default: 'view_only' })
   access_level: string; // view_only, view_comment
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'datetime' })
   expires_at: Date;
 
   @Column()

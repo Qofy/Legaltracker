@@ -29,13 +29,13 @@ export class ActionItem {
   assigned_to: User;
 
   @Column({ nullable: true })
-  assigned_to_id: number;
+  assigned_to_id: string;
 
   @ManyToOne(() => User)
   created_by: User;
 
   @Column()
-  created_by_id: number;
+  created_by_id: string;
 
   @CreateDateColumn()
   created_date: Date;

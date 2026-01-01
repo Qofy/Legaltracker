@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Document } from './document.entity';
 import { User } from '../users/user.entity';
 import { Case } from '../cases/case.entity';
@@ -25,7 +25,7 @@ export class DocumentsService {
 
     if (!document) return false;
 
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     // Check case access
     const caseItem = document.case;
@@ -39,7 +39,7 @@ export class DocumentsService {
     // Check document-level visibility
     if (document.visibility_type === 'public') return true;
     if (document.visibility_type === 'case_members') return hasCaseAccess;
-    if (document.visibility_type === 'lawyers_only') return user.role === 'admin' || user.role === 'lawyer';
+    if (document.visibility_type === 'lawyers_only') return user.user_type === 'admin' || user.user_type === 'lawyer';
     if (document.visibility_type === 'specific_users') {
       return document.visible_to_users?.some(u => u.id === user.id);
     }
@@ -49,7 +49,7 @@ export class DocumentsService {
 
   // Check if user can edit a document
   async canEditDocument(documentId: string, user: User): Promise<boolean> {
-    if (user.role === 'admin') return true;
+    if (user.user_type === 'admin') return true;
 
     const document = await this.documentsRepository.findOne({
       where: { id: documentId },
@@ -82,7 +82,7 @@ export class DocumentsService {
     const isCustomer = caseItem.customers?.some(customer => customer.id === user.id);
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
 
-    if (!isOwner && !isCustomer && !isShared && user.role !== 'admin') {
+    if (!isOwner && !isCustomer && !isShared && user.user_type !== 'admin') {
       throw new ForbiddenException('You do not have permission to add documents to this case');
     }
 
@@ -90,11 +90,11 @@ export class DocumentsService {
       ...documentData,
       case_id,
       uploaded_by: user,
-    });
+    }) as unknown as Document;
 
     // Set visible to users if specified
     if (visible_to_user_ids && visible_to_user_ids.length > 0) {
-      const users = await this.usersRepository.findByIds(visible_to_user_ids);
+      const users = await this.usersRepository.findBy({ id: In(visible_to_user_ids) });
       newDocument.visible_to_users = users;
     }
 
@@ -112,7 +112,7 @@ export class DocumentsService {
       .leftJoinAndSelect('document.visible_to_users', 'visible_to_user');
 
     // Apply RLS based on case access
-    if (user.role !== 'admin') {
+    if (user.user_type !== 'admin') {
       queryBuilder.where(
         '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
         { userId: user.id }
@@ -127,7 +127,7 @@ export class DocumentsService {
           specific: 'specific_users',
           lawyers: 'lawyers_only',
           userId: user.id,
-          userRole: user.role,
+          userRole: user.user_type,
           lawyerRoles: ['admin', 'lawyer'],
         }
       );
@@ -187,7 +187,7 @@ export class DocumentsService {
 
     // Update visible to users if provided
     if (visible_to_user_ids !== undefined) {
-      const users = await this.usersRepository.findByIds(visible_to_user_ids);
+      const users = await this.usersRepository.findBy({ id: In(visible_to_user_ids) });
       document.visible_to_users = users;
     }
 
