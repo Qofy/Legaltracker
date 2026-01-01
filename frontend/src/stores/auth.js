@@ -74,11 +74,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   const setAuthData = (data) => {
     user.value = data.user
-    accessToken.value = data.accessToken
-    refreshToken.value = data.refreshToken
+    accessToken.value = data.access_token || data.accessToken
+    refreshToken.value = data.refresh_token || data.refreshToken
     localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
+    localStorage.setItem('accessToken', data.access_token || data.accessToken)
+    if (data.refresh_token || data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refresh_token || data.refreshToken)
+    }
   }
 
   const hasRole = (...roles) => {

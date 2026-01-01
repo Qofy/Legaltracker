@@ -20,9 +20,9 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, user_type: user.user_type };
+    const payload = { email: user.email, sub: user.id, id: user.id, user_type: user.user_type };
     return {
-      token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
         email: user.email,
@@ -46,5 +46,14 @@ export class AuthService {
     });
 
     return this.login(user);
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const { password, ...result } = user;
+    return result;
   }
 }

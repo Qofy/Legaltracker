@@ -82,6 +82,87 @@
           <span class="nav-text">Help</span>
         </button>
 
+        <!-- Admin-only navigation -->
+        <div v-if="isAdmin" class="border-t border-gray-200 my-2 pt-2">
+          <p class="text-xs text-gray-500 font-semibold px-3 mb-2">ADMIN PANEL</p>
+
+          <button type="button" @click="selectedView = 'AdminOverview'" :class="['nav-link', {active: selectedView === 'AdminOverview'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </span>
+            <span class="nav-text">Overview</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'FinancialManagement'" :class="['nav-link', {active: selectedView === 'FinancialManagement'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </span>
+            <span class="nav-text">Financial</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'SystemLogs'" :class="['nav-link', {active: selectedView === 'SystemLogs'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </span>
+            <span class="nav-text">System Logs</span>
+          </button>
+        </div>
+
+        <!-- Lawyer-only navigation -->
+        <div v-if="isLawyer" class="border-t border-gray-200 my-2 pt-2">
+          <p class="text-xs text-gray-500 font-semibold px-3 mb-2">LAWYER PANEL</p>
+
+          <button type="button" @click="selectedView = 'LawyerOverview'" :class="['nav-link', {active: selectedView === 'LawyerOverview'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Dashboard</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'LawyerCalendar'" :class="['nav-link', {active: selectedView === 'LawyerCalendar'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Calendar</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'LawyerTasks'" :class="['nav-link', {active: selectedView === 'LawyerTasks'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Tasks</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'LawyerReports'" :class="['nav-link', {active: selectedView === 'LawyerReports'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Reports</span>
+          </button>
+        </div>
+
         <button type="button" @click="selectedView = 'GuestAccess'" :class="['nav-link', {active: selectedView === 'GuestAccess'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
             <House class="nav-icon" size="20" />
@@ -312,6 +393,22 @@
       <Help v-else-if="selectedView === 'Help'" />
 
       <GuestAccess v-else-if="selectedView === 'GuestAccess'"  />
+
+      <!-- Admin Views -->
+      <AdminOverview v-else-if="selectedView === 'AdminOverview' && isAdmin" />
+
+      <FinancialManagement v-else-if="selectedView === 'FinancialManagement' && isAdmin" />
+
+      <SystemActivityLogs v-else-if="selectedView === 'SystemLogs' && isAdmin" />
+
+      <!-- Lawyer Views -->
+      <LawyerOverview v-else-if="selectedView === 'LawyerOverview' && isLawyer" />
+
+      <LawyerCalendar v-else-if="selectedView === 'LawyerCalendar' && isLawyer" />
+
+      <LawyerTasks v-else-if="selectedView === 'LawyerTasks' && isLawyer" />
+
+      <LawyerReports v-else-if="selectedView === 'LawyerReports' && isLawyer" />
       </div>
     </main>
 
@@ -356,11 +453,22 @@ import Help from './Help.vue';
 import GuestAccess from './GuestAccess.vue';
 import LegalResearchAssistant from '@/components/ai/LegalResearchAssistant.vue';
 import CommentsPannel from '@/components/comments/CommentsPannel.vue';
+import AdminOverview from '@/components/admin/AdminOverview.vue';
+import FinancialManagement from '@/components/admin/FinancialManagement.vue';
+import SystemActivityLogs from '@/components/admin/SystemActivityLogs.vue';
+import LawyerOverview from '@/components/lawyer/LawyerOverview.vue';
+import LawyerCalendar from '@/components/lawyer/LawyerCalendar.vue';
+import LawyerTasks from '@/components/lawyer/LawyerTasks.vue';
+import LawyerReports from '@/components/lawyer/LawyerReports.vue';
 
 
 
 // Auth store for development login
 const authStore = useAuthStore();
+
+// Check if user is admin or lawyer
+const isAdmin = computed(() => user.value?.user_type === 'admin');
+const isLawyer = computed(() => user.value?.user_type === 'lawyer');
 
 const user = ref(null);
 const cases = ref([]);
