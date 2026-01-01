@@ -3,19 +3,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { StudentsModule } from './students/students.module';
-import { TimeEntriesModule } from './time-entries/time-entries.module';
-import { TasksModule } from './tasks/tasks.module';
-import { SchedulesModule } from './schedules/schedules.module';
 import { MessagesModule } from './messages/messages.module';
 import { LlmModule } from './llm/llm.module';
-import { CompaniesModule } from './companies/companies.module';
-import { ProjectsModule } from './projects/projects.module';
-import { ContractsModule } from './contracts/contracts.module';
-import { VacanciesModule } from './vacancies/vacancies.module';
-import { ApplicationsModule } from './applications/applications.module';
-import { PortfoliosModule } from './portfolios/portfolios.module';
-import { CertificatesModule } from './certificates/certificates.module';
+import { CasesModule } from './cases/cases.module';
+import { DocumentsModule } from './documents/documents.module';
+import { CommentsModule } from './comments/comments.module';
+import { ActionItemsModule } from './action-items/action-items.module';
+import { AnnotationsModule } from './annotations/annotations.module';
+import { MeetingsModule } from './meetings/meetings.module';
+import { ChatMessagesModule } from './chat-messages/chat-messages.module';
+import { InvitationsModule } from './invitations/invitations.module';
+import { GuestPassesModule } from './guest-passes/guest-passes.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -26,7 +25,7 @@ import { CertificatesModule } from './certificates/certificates.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'better-sqlite3',
-        database: configService.get('DB_DATABASE') || 'intern_tracker.db',
+        database: configService.get('DB_DATABASE') || 'legalhub.db',
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // Set to false in production
         logging: false,
@@ -35,19 +34,18 @@ import { CertificatesModule } from './certificates/certificates.module';
     }),
     AuthModule,
     UsersModule,
-    StudentsModule,
-    TimeEntriesModule,
-    TasksModule,
-    SchedulesModule,
     MessagesModule,
     LlmModule,
-    CompaniesModule,
-    ProjectsModule,
-    ContractsModule,
-    VacanciesModule,
-    PortfoliosModule,
-    ApplicationsModule,
-    CertificatesModule,
+    CasesModule,
+    DocumentsModule,
+    CommentsModule,
+    ActionItemsModule,
+    AnnotationsModule,
+    MeetingsModule,
+    ChatMessagesModule,
+    InvitationsModule,
+    GuestPassesModule,
+    FeedbackModule,
   ],
 })
 export class AppModule {}

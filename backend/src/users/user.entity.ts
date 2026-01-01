@@ -1,16 +1,16 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Company } from '../companies/company.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-export enum UserRole {
+export enum UserType {
   ADMIN = 'admin',
-  MENTOR = 'mentor',
-  STUDENT = 'student',
+  LAWYER = 'lawyer',
+  CUSTOMER = 'customer',
+  GUEST = 'guest',
 }
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ unique: true })
   email: string;
@@ -21,18 +21,29 @@ export class User {
   @Column()
   full_name: string;
 
-  @Column({ default: 'student' })
-  role: string;
+  @Column({ default: 'customer' })
+  user_type: string; // admin, lawyer, customer, guest
 
   @Column({ nullable: true })
-  company_id: number;
+  phone: string;
 
   @Column({ nullable: true })
-  companyKey: string;
+  bar_number: string; // For lawyers
 
-  @ManyToOne(() => Company, company => company.users, { nullable: true })
-  @JoinColumn({ name: 'company_id' })
-  company: Company;
+  @Column({ type: 'text', nullable: true })
+  specializations: string; // Comma-separated list for lawyers
+
+  @Column({ nullable: true })
+  firm_name: string; // For lawyers
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ default: true })
+  is_active: boolean;
+
+  @Column({ nullable: true })
+  last_login: Date;
 
   @CreateDateColumn()
   created_at: Date;
