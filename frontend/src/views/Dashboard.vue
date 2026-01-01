@@ -163,6 +163,56 @@
           </button>
         </div>
 
+        <!-- Customer-only navigation -->
+        <div v-if="isCustomer" class="border-t border-gray-200 my-2 pt-2">
+          <p class="text-xs text-gray-500 font-semibold px-3 mb-2">CLIENT PANEL</p>
+
+          <button type="button" @click="selectedView = 'CustomerOverview'" :class="['nav-link', {active: selectedView === 'CustomerOverview'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Dashboard</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'CustomerCaseDetails'" :class="['nav-link', {active: selectedView === 'CustomerCaseDetails'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Case</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'CustomerMessages'" :class="['nav-link', {active: selectedView === 'CustomerMessages'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Messages</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'CustomerDocuments'" :class="['nav-link', {active: selectedView === 'CustomerDocuments'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Documents</span>
+          </button>
+
+          <button type="button" @click="selectedView = 'CustomerInvoices'" :class="['nav-link', {active: selectedView === 'CustomerInvoices'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Invoices</span>
+          </button>
+        </div>
+
         <button type="button" @click="selectedView = 'GuestAccess'" :class="['nav-link', {active: selectedView === 'GuestAccess'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
             <House class="nav-icon" size="20" />
@@ -409,6 +459,17 @@
       <LawyerTasks v-else-if="selectedView === 'LawyerTasks' && isLawyer" />
 
       <LawyerReports v-else-if="selectedView === 'LawyerReports' && isLawyer" />
+
+      <!-- Customer Views -->
+      <CustomerOverview v-else-if="selectedView === 'CustomerOverview' && isCustomer" />
+
+      <CustomerCaseDetails v-else-if="selectedView === 'CustomerCaseDetails' && isCustomer" />
+
+      <CustomerMessages v-else-if="selectedView === 'CustomerMessages' && isCustomer" />
+
+      <CustomerDocuments v-else-if="selectedView === 'CustomerDocuments' && isCustomer" />
+
+      <CustomerInvoices v-else-if="selectedView === 'CustomerInvoices' && isCustomer" />
       </div>
     </main>
 
@@ -460,15 +521,21 @@ import LawyerOverview from '@/components/lawyer/LawyerOverview.vue';
 import LawyerCalendar from '@/components/lawyer/LawyerCalendar.vue';
 import LawyerTasks from '@/components/lawyer/LawyerTasks.vue';
 import LawyerReports from '@/components/lawyer/LawyerReports.vue';
+import CustomerOverview from '@/components/customer/CustomerOverview.vue';
+import CustomerCaseDetails from '@/components/customer/CustomerCaseDetails.vue';
+import CustomerMessages from '@/components/customer/CustomerMessages.vue';
+import CustomerDocuments from '@/components/customer/CustomerDocuments.vue';
+import CustomerInvoices from '@/components/customer/CustomerInvoices.vue';
 
 
 
 // Auth store for development login
 const authStore = useAuthStore();
 
-// Check if user is admin or lawyer
+// Check if user is admin, lawyer, or customer
 const isAdmin = computed(() => user.value?.user_type === 'admin');
 const isLawyer = computed(() => user.value?.user_type === 'lawyer');
+const isCustomer = computed(() => user.value?.user_type === 'customer');
 
 const user = ref(null);
 const cases = ref([]);
