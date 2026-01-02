@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-6 max-h-[80vh] overflow-y-auto p-2">
+  <form @submit.prevent="handleSubmit" class="space-y-6 max-h-[80vh]  p-2">
     <!-- Basic Information -->
     <div>
       <Label for="title">Case Title *</Label>
@@ -95,23 +95,26 @@
           />
         </div>
 
-        <div>
+        <div class="relative">
           <Label for="court_date">Court Date</Label>
-          <Popover>
-            <PopoverTrigger as-child>
-              <Button variant="outline" class="w-full justify-start">
-                <CalendarIcon class="mr-2 h-4 w-4" />
-                {{ formData.court_date ? formatDate(formData.court_date) : 'Select court date' }}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-auto p-0">
-              <Calendar
-                mode="single"
-                :selected="formData.court_date ? new Date(formData.court_date) : undefined"
-                @select="onSelectCourtDate"
-              />
-            </PopoverContent>
-          </Popover>
+          <div class="relative">
+            <Input
+              id="court_date"
+              readonly
+              :value="formData.court_date ? formatDate(formData.court_date) : 'Click to select date'"
+              placeholder="Click to select date"
+              class="w-full cursor-pointer pr-10"
+              @click="showCalendar = !showCalendar"
+            />
+            <CalendarIcon class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+          <div v-if="showCalendar" class="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-full sm:w-auto">
+            <Calendar
+              mode="single"
+              :selected="formData.court_date ? new Date(formData.court_date) : undefined"
+              @select="(d) => { onSelectCourtDate(d); showCalendar = false }"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -162,7 +165,7 @@
       <Button
         type="submit"
         :disabled="isSubmitting"
-        class="bg-[#003aca] hover:bg-[#0031a0]"
+        class="bg-[#003aca] hover:bg-[#0031a0] h-10 px-2"
       >
         <Save class="w-4 h-4 mr-2" />
         {{ isSubmitting ? 'Creating Case...' : 'Submit Case Request' }}
@@ -190,6 +193,9 @@ const props = defineProps({
 
 const isSubmitting = ref(false);
 
+// local calendar visibility state
+const showCalendar = ref(false);
+
 const formData = ref({
   case_number: `CASE-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
   title: '',
@@ -204,7 +210,9 @@ const formData = ref({
 });
 
 const onSelectCourtDate = (date) => {
+  console.log('Date selected:', date);
   formData.value.court_date = date ? date.toISOString().split('T')[0] : '';
+  console.log('Court date set to:', formData.value.court_date);
 };
 
 const formatDate = (d) => {

@@ -74,7 +74,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'update:selected']);
+const emit = defineEmits(['update:modelValue', 'update:selected', 'select']);
 
 const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
@@ -98,6 +98,7 @@ const selectDate = (day) => {
   );
   emit('update:modelValue', selected);
   emit('update:selected', selected);
+  emit('select', selected);
 };
 
 const isSelected = (day) => {
