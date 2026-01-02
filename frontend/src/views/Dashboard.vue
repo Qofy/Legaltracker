@@ -483,7 +483,12 @@
       <!-- Customer Views -->
       <CustomerOverview v-else-if="selectedView === 'CustomerOverview' && isCustomer" />
 
-      <CustomerCaseDetails v-else-if="selectedView === 'CustomerCaseDetails' && isCustomer" />
+      <CustomerCaseDetails 
+        v-else-if="selectedView === 'CustomerCaseDetails' && isCustomer" 
+        :selected-case="selectedCase"
+        :current-user="user"
+        @back="selectedView = 'MyCases'"
+      />
 
       <CustomerMessages v-else-if="selectedView === 'CustomerMessages' && isCustomer" />
 
@@ -743,13 +748,12 @@ const getPriorityBadgeColor = (priority) => {
 
 // Local view selection for aside -> main content behavior
 const selectedView = ref('Dashboard');
+const selectedCase = ref(null);
 
 // Handler for viewing customer case details
 const handleViewCustomerCase = (caseItem) => {
-  // You could store the selected case and navigate to CustomerCaseDetails
-  // For now, we'll just log it
-  console.log('Viewing case:', caseItem);
-  // selectedView.value = 'CustomerCaseDetails';
+  selectedCase.value = caseItem;
+  selectedView.value = 'CustomerCaseDetails';
 };
 
 // Handler for contacting lawyer

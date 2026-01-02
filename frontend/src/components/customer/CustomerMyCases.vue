@@ -132,11 +132,11 @@
         </div>
       </div>
       
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div
           v-for="caseItem in filteredCases"
           :key="caseItem.id"
-          class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+          class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition cursor-pointer"
           @click="viewCaseDetails(caseItem)"
         >
           <div class="flex items-start justify-between mb-3">
@@ -298,8 +298,8 @@ const loadMyCases = async () => {
 
     // Load all cases and filter for customer cases
     const allCases = await Case.list();
-    const myCases = allCases.filter(c => 
-      c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(userId)
+    const myCases = allCases.filter(c =>
+      c.customers && Array.isArray(c.customers) && c.customers.some(customer => customer.id === userId)
     );
 
     // Load lawyer information for each case

@@ -1,19 +1,29 @@
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <svg class="w-7 h-7 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <div class="flex items-center gap-4">
+        <button 
+          @click="$emit('back')"
+          class="p-2 hover:bg-gray-100 rounded-md transition"
+        >
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
-          My Case Details
-        </h2>
-        <p class="text-gray-500 mt-1">View your case information and progress</p>
+        </button>
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Case Details
+          </h2>
+          <p class="text-gray-500 mt-1">View your case information and progress</p>
+        </div>
       </div>
     </div>
 
-    <!-- Case Selection (if multiple cases) -->
-    <div v-if="myCases.length > 1" class="bg-white rounded-lg border border-gray-200 p-4">
+    <!-- Case Selection (if multiple cases and no specific case passed) -->
+    <div v-if="!props.selectedCase && myCases.length > 1" class="bg-white rounded-lg border border-gray-200 p-4">
       <label class="block text-sm font-medium text-gray-700 mb-2">Select Case</label>
       <select v-model="selectedCaseId" @change="loadCaseDetails" class="w-full md:w-96 px-3 py-2 border border-gray-300 rounded-md">
         <option v-for="c in myCases" :key="c.id" :value="c.id">
@@ -23,54 +33,54 @@
     </div>
 
     <!-- Case Information -->
-    <div v-if="selectedCase" class="bg-white rounded-lg border border-gray-200 p-6">
+    <div v-if="currentCase" class="bg-white rounded-lg border border-gray-200 p-6">
       <div class="flex items-start justify-between mb-6">
         <div>
-          <h3 class="text-2xl font-bold text-gray-900">{{ selectedCase.title }}</h3>
-          <p class="text-sm text-gray-600 mt-1">Case #{{ selectedCase.case_number }}</p>
+          <h3 class="text-2xl font-bold text-gray-900">{{ currentCase.title }}</h3>
+          <p class="text-sm text-gray-600 mt-1">Case #{{ currentCase.case_number }}</p>
         </div>
-        <span :class="['px-3 py-1 rounded-full text-sm font-medium', getStatusBadge(selectedCase.status)]">
-          {{ selectedCase.status }}
+        <span :class="['px-3 py-1 rounded-full text-sm font-medium', getStatusBadge(currentCase.status)]">
+          {{ currentCase.status }}
         </span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <div>
           <p class="text-sm text-gray-600 mb-1">Case Type</p>
-          <p class="font-semibold text-gray-900 capitalize">{{ selectedCase.case_type || 'Civil' }}</p>
+          <p class="font-semibold text-gray-900 capitalize">{{ currentCase.case_type || 'Civil' }}</p>
         </div>
         <div>
           <p class="text-sm text-gray-600 mb-1">Priority</p>
-          <span :class="['px-2 py-1 rounded text-sm font-medium', getPriorityBadge(selectedCase.priority)]">
-            {{ selectedCase.priority }}
+          <span :class="['px-2 py-1 rounded text-sm font-medium', getPriorityBadge(currentCase.priority)]">
+            {{ currentCase.priority }}
           </span>
         </div>
         <div>
           <p class="text-sm text-gray-600 mb-1">Filing Date</p>
-          <p class="font-semibold text-gray-900">{{ formatDate(selectedCase.filing_date) }}</p>
+          <p class="font-semibold text-gray-900">{{ formatDate(currentCase.filing_date) }}</p>
         </div>
         <div>
           <p class="text-sm text-gray-600 mb-1">Last Updated</p>
-          <p class="font-semibold text-gray-900">{{ formatDate(selectedCase.updated_date) }}</p>
+          <p class="font-semibold text-gray-900">{{ formatDate(currentCase.updated_date) }}</p>
         </div>
         <div>
           <p class="text-sm text-gray-600 mb-1">Court</p>
-          <p class="font-semibold text-gray-900">{{ selectedCase.court || 'Not specified' }}</p>
+          <p class="font-semibold text-gray-900">{{ currentCase.court || 'Not specified' }}</p>
         </div>
         <div>
           <p class="text-sm text-gray-600 mb-1">Judge</p>
-          <p class="font-semibold text-gray-900">{{ selectedCase.judge || 'Not assigned' }}</p>
+          <p class="font-semibold text-gray-900">{{ currentCase.judge || 'Not assigned' }}</p>
         </div>
       </div>
 
       <div class="border-t border-gray-200 pt-4">
         <p class="text-sm text-gray-600 mb-2">Description</p>
-        <p class="text-gray-900">{{ selectedCase.description || 'No description available' }}</p>
+        <p class="text-gray-900">{{ currentCase.description || 'No description available' }}</p>
       </div>
     </div>
 
     <!-- Lawyer Information -->
-    <div v-if="selectedCase" class="bg-white rounded-lg border border-gray-200 p-6">
+    <div v-if="currentCase" class="bg-white rounded-lg border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -100,7 +110,7 @@
     </div>
 
     <!-- Case Timeline -->
-    <div v-if="selectedCase" class="bg-white rounded-lg border border-gray-200 p-6">
+    <div v-if="currentCase" class="bg-white rounded-lg border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -130,7 +140,7 @@
     </div>
 
     <!-- Upcoming Deadlines -->
-    <div v-if="selectedCase" class="bg-white rounded-lg border border-gray-200 p-6">
+    <div v-if="currentCase" class="bg-white rounded-lg border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -166,16 +176,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { Case, User, ActionItem } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+
+// Props
+const props = defineProps({
+  selectedCase: {
+    type: Object,
+    default: null
+  },
+  currentUser: {
+    type: Object,
+    default: null
+  }
+});
+
+// Emits
+defineEmits(['back']);
 
 const authStore = useAuthStore();
 
 const myCases = ref([]);
 const selectedCaseId = ref('');
-const selectedCase = ref(null);
+const currentCase = ref(null);
 const lawyerInfo = ref({});
 const timeline = ref([]);
 const deadlines = ref([]);
@@ -190,7 +215,7 @@ const loadMyCases = async () => {
       c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(userId)
     );
 
-    if (myCases.value.length > 0) {
+    if (myCases.value.length > 0 && !props.selectedCase) {
       selectedCaseId.value = myCases.value[0].id;
       await loadCaseDetails();
     }
@@ -199,78 +224,86 @@ const loadMyCases = async () => {
   }
 };
 
-const loadCaseDetails = async () => {
+const loadCaseDetails = async (caseToLoad = null) => {
   try {
-    if (!selectedCaseId.value) return;
-
-    selectedCase.value = myCases.value.find(c => c.id === selectedCaseId.value);
-
-    if (selectedCase.value) {
-      // Load lawyer information
-      if (selectedCase.value.lawyer_id) {
-        try {
-          const lawyer = await User.get(selectedCase.value.lawyer_id);
-          lawyerInfo.value = {
-            name: lawyer.full_name,
-            email: lawyer.email,
-            phone: lawyer.phone,
-            specializations: lawyer.specializations,
-          };
-        } catch (error) {
-          console.error('Failed to load lawyer info:', error);
-          lawyerInfo.value = { name: 'Not assigned' };
-        }
-      }
-
-      // Build timeline from case data and comments
-      timeline.value = [];
-
-      // Add case filing
-      if (selectedCase.value.filing_date) {
-        timeline.value.push({
-          id: 'filed',
-          title: 'Case Filed',
-          description: 'Your case has been officially filed',
-          date: selectedCase.value.filing_date
-        });
-      }
-
-      // Add case creation
-      timeline.value.push({
-        id: 'created',
-        title: 'Case Created',
-        description: lawyerInfo.value.name ? `Case assigned to ${lawyerInfo.value.name}` : 'Case created in system',
-        date: selectedCase.value.created_date
-      });
-
-      // Add status updates
-      if (selectedCase.value.updated_date && selectedCase.value.updated_date !== selectedCase.value.created_date) {
-        timeline.value.push({
-          id: 'updated',
-          title: 'Status Updated',
-          description: `Case status changed to ${selectedCase.value.status}`,
-          date: selectedCase.value.updated_date
-        });
-      }
-
-      // TODO: Add comments and other activities to timeline when comment API is integrated
-
-      // Sort timeline by date (newest first)
-      timeline.value.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      // Load deadlines
-      const allTasks = await ActionItem.list();
-      deadlines.value = allTasks
-        .filter(t => t.case_id === selectedCaseId.value && t.due_date)
-        .map(t => ({
-          id: t.id,
-          title: t.title,
-          description: t.description || 'No description',
-          due_date: t.due_date,
-          type: t.action_type || 'Task',
-        }))
-        .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    let targetCase = null;
+    
+    if (caseToLoad) {
+      targetCase = caseToLoad;
+    } else if (props.selectedCase) {
+      targetCase = props.selectedCase;
+    } else if (selectedCaseId.value) {
+      targetCase = myCases.value.find(c => c.id === selectedCaseId.value);
     }
+
+    if (!targetCase) return;
+
+    currentCase.value = targetCase;
+
+    // Load lawyer information
+    if (targetCase.lawyer_id) {
+      try {
+        const lawyer = await User.get(targetCase.lawyer_id);
+        lawyerInfo.value = {
+          name: lawyer.full_name,
+          email: lawyer.email,
+          phone: lawyer.phone,
+          specializations: lawyer.specializations,
+        };
+      } catch (error) {
+        console.error('Failed to load lawyer info:', error);
+        lawyerInfo.value = { name: 'Not assigned' };
+      }
+    }
+
+    // Build timeline from case data and comments
+    timeline.value = [];
+
+    // Add case filing
+    if (currentCase.value.filing_date) {
+      timeline.value.push({
+        id: 'filed',
+        title: 'Case Filed',
+        description: 'Your case has been officially filed',
+        date: currentCase.value.filing_date
+      });
+    }
+
+    // Add case creation
+    timeline.value.push({
+      id: 'created',
+      title: 'Case Created',
+      description: lawyerInfo.value.name ? `Case assigned to ${lawyerInfo.value.name}` : 'Case created in system',
+      date: currentCase.value.created_date
+    });
+
+    // Add status updates
+    if (currentCase.value.updated_date && currentCase.value.updated_date !== currentCase.value.created_date) {
+      timeline.value.push({
+        id: 'updated',
+        title: 'Status Updated',
+        description: `Case status changed to ${currentCase.value.status}`,
+        date: currentCase.value.updated_date
+      });
+    }
+
+    // TODO: Add comments and other activities to timeline when comment API is integrated
+
+    // Sort timeline by date (newest first)
+    timeline.value.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Load deadlines
+    const allTasks = await ActionItem.list();
+    deadlines.value = allTasks
+      .filter(t => t.case_id === currentCase.value.id && t.due_date)
+      .map(t => ({
+        id: t.id,
+        title: t.title,
+        description: t.description || 'No description',
+        due_date: t.due_date,
+        type: t.action_type || 'Task',
+      }))
+      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
   } catch (error) {
     console.error('Failed to load case details:', error);
   }
@@ -308,7 +341,18 @@ const isOverdue = (date) => {
   return new Date(date) < new Date();
 };
 
+// Watch for changes in selectedCase prop
+watch(() => props.selectedCase, (newCase) => {
+  if (newCase) {
+    loadCaseDetails(newCase);
+  }
+}, { immediate: true });
+
 onMounted(() => {
-  loadMyCases();
+  if (!props.selectedCase) {
+    loadMyCases();
+  } else {
+    loadCaseDetails(props.selectedCase);
+  }
 });
 </script>
