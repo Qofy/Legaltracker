@@ -440,7 +440,15 @@
 
       <Cases v-else-if="selectedView === 'Cases'" />
 
-      <MyCases v-else-if="selectedView === 'MyCases'" />
+      <MyCases v-else-if="selectedView === 'MyCases' && !isCustomer" />
+
+      <CustomerMyCases 
+        v-else-if="selectedView === 'MyCases' && isCustomer"
+        :current-user="user"
+        @newCase="selectedView = 'CustomerNewCase'"
+        @viewCase="handleViewCustomerCase"
+        @contactLawyer="handleContactLawyer"
+      />
 
       <Documents v-else-if="selectedView === 'Documents'" />
 
@@ -484,7 +492,7 @@
       <CustomerInvoices v-else-if="selectedView === 'CustomerInvoices' && isCustomer" />
 
       <!-- Customer New Case Form -->
-      <CustomerNewCaseForm v-else-if="selectedView === 'CustomerNewCase' && isCustomer" :current-user="user" :onSubmit="handleCustomerNewCase" :onCancel="() => { selectedView = 'CustomerOverview' }" />
+      <CustomerNewCaseForm v-else-if="selectedView === 'CustomerNewCase' && isCustomer" :current-user="user" :onSubmit="handleCustomerNewCase" :onCancel="() => { selectedView = 'Dashboard' }" />
       </div>
     </main>
 
@@ -538,6 +546,7 @@ import LawyerCalendar from '@/components/lawyer/LawyerCalendar.vue';
 import LawyerTasks from '@/components/lawyer/LawyerTasks.vue';
 import LawyerReports from '@/components/lawyer/LawyerReports.vue';
 import CustomerOverview from '@/components/customer/CustomerOverview.vue';
+import CustomerMyCases from '@/components/customer/CustomerMyCases.vue';
 import CustomerCaseDetails from '@/components/customer/CustomerCaseDetails.vue';
 import CustomerMessages from '@/components/customer/CustomerMessages.vue';
 import CustomerDocuments from '@/components/customer/CustomerDocuments.vue';
@@ -734,6 +743,26 @@ const getPriorityBadgeColor = (priority) => {
 
 // Local view selection for aside -> main content behavior
 const selectedView = ref('Dashboard');
+
+// Handler for viewing customer case details
+const handleViewCustomerCase = (caseItem) => {
+  // You could store the selected case and navigate to CustomerCaseDetails
+  // For now, we'll just log it
+  console.log('Viewing case:', caseItem);
+  // selectedView.value = 'CustomerCaseDetails';
+};
+
+// Handler for contacting lawyer
+const handleContactLawyer = (caseItem) => {
+  if (caseItem.lawyerInfo?.email) {
+    // Open email client or messaging system
+    const subject = encodeURIComponent(`Regarding Case: ${caseItem.title} (#${caseItem.case_number})`);
+    const body = encodeURIComponent(`Dear ${caseItem.lawyerInfo.name},\n\nI would like to discuss my case.\n\nCase Details:\nTitle: ${caseItem.title}\nCase Number: ${caseItem.case_number}\n\nThank you.`);
+    window.location.href = `mailto:${caseItem.lawyerInfo.email}?subject=${subject}&body=${body}`;
+  } else {
+    alert('Lawyer contact information not available');
+  }
+};
 
 // Handler for customer new-case submissions
 const handleCustomerNewCase = async (caseData) => {
