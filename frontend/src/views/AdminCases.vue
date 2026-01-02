@@ -23,6 +23,70 @@
         </p>
       </div>
 
+      <!-- Admin Tools Section -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800">Case Administration</h3>
+            <p class="text-sm text-gray-600 mt-1">Manage all cases across the system</p>
+          </div>
+          <div class="flex gap-3">
+            <Button @click="showBulkActions = !showBulkActions" variant="outline" class="h-10">
+              <Settings class="w-4 h-4 mr-2" />
+              Bulk Actions
+            </Button>
+            <Dialog v-model:open="showNewCase">
+              <DialogTrigger as-child>
+                <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10">
+                  <Plus class="w-4 h-4 mr-2" />
+                  New Case
+                </Button>
+              </DialogTrigger>
+              <DialogContent class="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Case</DialogTitle>
+                </DialogHeader>
+                <NewCaseForm
+                  :current-user="user"
+                  @submit="handleNewCase"
+                  @cancel="showNewCase = false"
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        <!-- Bulk Actions Panel -->
+        <div v-if="showBulkActions" class="mt-4 p-4 bg-gray-50 rounded-lg border">
+          <div class="flex items-center gap-4 flex-wrap">
+            <div class="flex items-center gap-2">
+              <Checkbox v-model:checked="selectAll" @update:checked="toggleSelectAll" />
+              <span class="text-sm font-medium">Select All ({{ selectedCases.length }} selected)</span>
+            </div>
+            <div class="flex gap-2">
+              <Button 
+                v-if="selectedCases.length > 0" 
+                @click="bulkAssignLawyer" 
+                size="sm" 
+                variant="outline"
+              >
+                <UserCheck class="w-4 h-4 mr-1" />
+                Assign Lawyer
+              </Button>
+              <Button 
+                v-if="selectedCases.length > 0" 
+                @click="bulkUpdateStatus" 
+                size="sm" 
+                variant="outline"
+              >
+                <Clock class="w-4 h-4 mr-1" />
+                Update Status
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Stats Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -138,6 +202,15 @@
               </option>
             </Select>
 
+            <!-- Priority Filter -->
+            <Select v-model="filters.priority" class="min-w-[120px]">
+              <option value="all">All Priorities</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </Select>
+
             <!-- Client Status Filter -->
             <Select v-model="filters.clientStatus" class="min-w-[140px]">
               <option value="all">All Client Status</option>
@@ -166,25 +239,68 @@
             <AlertCircle class="w-4 h-4 mr-1" />
             Client Issues ({{ clientIssues.length }})
           </Button>
+          <Button
+            @click="setQuickFilter('overdue')"
+            :variant="quickFilter === 'overdue' ? 'default' : 'outline'"
+            size="sm"
+          >
+            <Clock class="w-4 h-4 mr-1" />
+            Overdue ({{ overdueCases.length }})
+          </Button>
+          <Button
+            @click="setQuickFilter('urgent')"
+            :variant="quickFilter === 'urgent' ? 'default' : 'outline'"
+            size="sm"
+          >
+            <Flame class="w-4 h-4 mr-1" />
+            Urgent ({{ urgentCases.length }})
+          </Button>
         </div>
       </div>
 
-      <!-- Cases Table -->
+      <!-- Cases Table/Cards View -->
       <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div class="p-4 border-b border-gray-200">
-          <h3 class="font-semibold text-gray-800">
-            Cases ({{ filteredCases.length }})
-          </h3>
+        <!-- View Toggle -->
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <h3 class="font-semibold text-gray-800">
+              Cases ({{ filteredCases.length }})
+            </h3>
+            <div v-if="selectedCases.length > 0" class="text-sm text-gray-600">
+              {{ selectedCases.length }} selected
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <Button
+              @click="viewMode = 'table'"
+              :variant="viewMode === 'table' ? 'default' : 'outline'"
+              size="sm"
+            >
+              <List class="w-4 h-4" />
+            </Button>
+            <Button
+              @click="viewMode = 'cards'"
+              :variant="viewMode === 'cards' ? 'default' : 'outline'"
+              size="sm"
+            >
+              <Grid class="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Table View -->
+        <div v-if="viewMode === 'table'" class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50/80 border-b border-gray-200">
               <tr>
+                <th class="p-4 text-left">
+                  <Checkbox v-model:checked="selectAll" @update:checked="toggleSelectAll" />
+                </th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Case</th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Client</th>
-                <th class="p-4 text-left font-semibold text-gray-800 text-sm">Assigned Lawyer</th>
+                <th class="p-4 text-left font-semibold text-gray-800 text-sm">Lawyer</th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Status</th>
+                <th class="p-4 text-left font-semibold text-gray-800 text-sm">Priority</th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Client Status</th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Last Update</th>
                 <th class="p-4 text-right font-semibold text-gray-800 text-sm">Actions</th>
@@ -192,7 +308,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
               <tr v-if="filteredCases.length === 0">
-                <td colspan="7" class="p-8 text-center text-gray-500">
+                <td colspan="9" class="p-8 text-center text-gray-500">
                   <div class="flex flex-col items-center gap-3">
                     <FileText class="w-12 h-12 text-gray-300" />
                     <p class="font-medium">No cases found</p>
@@ -204,7 +320,14 @@
                 v-for="caseItem in filteredCases"
                 :key="caseItem.id"
                 class="hover:bg-blue-50/30 transition-colors"
+                :class="{ 'bg-blue-50/20': selectedCases.includes(caseItem.id) }"
               >
+                <td class="p-4">
+                  <Checkbox 
+                    :checked="selectedCases.includes(caseItem.id)"
+                    @update:checked="(checked) => toggleCaseSelection(caseItem.id, checked)"
+                  />
+                </td>
                 <td class="p-4">
                   <div>
                     <p class="font-semibold text-gray-900">{{ caseItem.title }}</p>
@@ -249,6 +372,11 @@
                   </Badge>
                 </td>
                 <td class="p-4">
+                  <Badge :class="getPriorityColor(caseItem.priority)" class="border">
+                    {{ caseItem.priority?.toUpperCase() || 'MEDIUM' }}
+                  </Badge>
+                </td>
+                <td class="p-4">
                   <div class="flex items-center gap-2">
                     <div 
                       class="w-2 h-2 rounded-full"
@@ -281,19 +409,52 @@
                       <Eye class="w-4 h-4" />
                     </Button>
                     <Button 
-                      v-if="caseItem.assigned_lawyer"
-                      @click="openLawyerAssignment(caseItem)" 
+                      @click="editCase(caseItem)" 
                       size="sm" 
                       variant="ghost"
                       class="h-8 w-8 p-0"
                     >
-                      <UserCheck class="w-4 h-4" />
+                      <Edit class="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      @click="openCaseActions(caseItem)" 
+                      size="sm" 
+                      variant="ghost"
+                      class="h-8 w-8 p-0"
+                    >
+                      <MoreVertical class="w-4 h-4" />
                     </Button>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Cards View -->
+        <div v-else class="p-6">
+          <div v-if="filteredCases.length === 0" class="text-center py-12">
+            <div class="inline-block p-4 bg-gray-100 rounded-full mb-4">
+              <FileText class="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No cases found</h3>
+            <p class="text-gray-500 mb-6">Try adjusting your filters or search criteria</p>
+          </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AdminCaseCard
+              v-for="caseItem in filteredCases"
+              :key="caseItem.id"
+              :case-data="caseItem"
+              :is-selected="selectedCases.includes(caseItem.id)"
+              :lawyers="lawyers"
+              @select="(checked) => toggleCaseSelection(caseItem.id, checked)"
+              @assign-lawyer="handleLawyerAssignment"
+              @update-status="handleStatusUpdate"
+              @update-client-status="updateClientStatus"
+              @view="viewCase"
+              @edit="editCase"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -357,6 +518,17 @@
               <option value="at_risk">At Risk</option>
             </Select>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Notes (optional):
+            </label>
+            <textarea
+              v-model="clientStatusNotes"
+              class="w-full p-3 border border-gray-300 rounded-md"
+              rows="3"
+              placeholder="Add any notes about the client status..."
+            ></textarea>
+          </div>
           <div class="flex gap-2 justify-end pt-4">
             <Button variant="outline" @click="showClientStatusUpdate = false">
               Cancel
@@ -372,19 +544,24 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { format } from 'date-fns';
 import { Case, User } from '@/services/entities';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Scale, Search, FileText, AlertTriangle, Clock, 
-  TrendingUp, AlertCircle, CheckCircle, UserCheck, Edit, Eye
+  Scale, Plus, Settings, Search, FileText, AlertTriangle, Clock, 
+  TrendingUp, AlertCircle, CheckCircle, UserCheck, Edit, Eye, 
+  MoreVertical, List, Grid, Flame
 } from 'lucide-vue-next';
+import NewCaseForm from '@/components/cases/NewCaseForm.vue';
+import AdminCaseCard from '@/components/admin/AdminCaseCard.vue';
 
 const router = useRouter();
 
@@ -392,22 +569,30 @@ const router = useRouter();
 const isLoading = ref(true);
 const allCases = ref([]);
 const lawyers = ref([]);
+const user = ref(null);
 const searchQuery = ref('');
+const viewMode = ref('table');
 const quickFilter = ref('');
+const showBulkActions = ref(false);
+const showNewCase = ref(false);
 const showLawyerAssignment = ref(false);
 const showClientStatusUpdate = ref(false);
+const selectedCases = ref([]);
+const selectAll = ref(false);
 
 // Assignment/Status update state
 const selectedCaseForAssignment = ref(null);
 const selectedCaseForStatus = ref(null);
 const selectedLawyerId = ref('');
 const newClientStatus = ref('satisfied');
+const clientStatusNotes = ref('');
 
 // Filters
 const filters = ref({
   status: 'all',
   assignment: 'all',
   lawyer: 'all',
+  priority: 'all',
   clientStatus: 'all'
 });
 
@@ -432,6 +617,17 @@ const clientIssues = computed(() =>
   allCases.value.filter(c => c.client_status === 'needs_attention' || c.client_status === 'at_risk')
 );
 
+const overdueCases = computed(() => 
+  allCases.value.filter(c => {
+    if (!c.due_date) return false;
+    return new Date(c.due_date) < new Date();
+  })
+);
+
+const urgentCases = computed(() => 
+  allCases.value.filter(c => c.priority === 'urgent')
+);
+
 const filteredCases = computed(() => {
   let filtered = [...allCases.value];
 
@@ -440,6 +636,10 @@ const filteredCases = computed(() => {
     filtered = unassignedCases.value;
   } else if (quickFilter.value === 'client_issues') {
     filtered = clientIssues.value;
+  } else if (quickFilter.value === 'overdue') {
+    filtered = overdueCases.value;
+  } else if (quickFilter.value === 'urgent') {
+    filtered = urgentCases.value;
   }
 
   // Search filter
@@ -470,6 +670,11 @@ const filteredCases = computed(() => {
     filtered = filtered.filter(c => c.assigned_lawyer?.id === filters.value.lawyer);
   }
 
+  // Priority filter
+  if (filters.value.priority !== 'all') {
+    filtered = filtered.filter(c => c.priority === filters.value.priority);
+  }
+
   // Client status filter
   if (filters.value.clientStatus !== 'all') {
     filtered = filtered.filter(c => c.client_status === filters.value.clientStatus);
@@ -482,11 +687,13 @@ const filteredCases = computed(() => {
 const loadData = async () => {
   isLoading.value = true;
   try {
-    const [casesData, lawyersData] = await Promise.all([
+    const [userData, casesData, lawyersData] = await Promise.all([
+      User.me(),
       Case.list('-updated_date'),
       User.list().then(users => users.filter(u => u.user_type === 'lawyer'))
     ]);
     
+    user.value = userData;
     allCases.value = casesData;
     lawyers.value = lawyersData;
   } catch (error) {
@@ -507,9 +714,27 @@ const setQuickFilter = (filter) => {
       status: 'all',
       assignment: 'all',
       lawyer: 'all',
+      priority: 'all',
       clientStatus: 'all'
     };
   }
+};
+
+const toggleSelectAll = (checked) => {
+  if (checked) {
+    selectedCases.value = filteredCases.value.map(c => c.id);
+  } else {
+    selectedCases.value = [];
+  }
+};
+
+const toggleCaseSelection = (caseId, checked) => {
+  if (checked) {
+    selectedCases.value.push(caseId);
+  } else {
+    selectedCases.value = selectedCases.value.filter(id => id !== caseId);
+  }
+  selectAll.value = selectedCases.value.length === filteredCases.value.length;
 };
 
 const openLawyerAssignment = (caseItem) => {
@@ -536,13 +761,15 @@ const confirmLawyerAssignment = async () => {
 const updateClientStatus = (caseItem) => {
   selectedCaseForStatus.value = caseItem;
   newClientStatus.value = caseItem.client_status || 'satisfied';
+  clientStatusNotes.value = '';
   showClientStatusUpdate.value = true;
 };
 
 const confirmClientStatusUpdate = async () => {
   try {
     await Case.update(selectedCaseForStatus.value.id, {
-      client_status: newClientStatus.value
+      client_status: newClientStatus.value,
+      client_status_notes: clientStatusNotes.value
     });
     await loadData(); // Refresh data
     showClientStatusUpdate.value = false;
@@ -553,8 +780,50 @@ const confirmClientStatusUpdate = async () => {
   }
 };
 
+const handleNewCase = async (caseData) => {
+  try {
+    await Case.create(caseData);
+    await loadData(); // Refresh data
+    showNewCase.value = false;
+  } catch (error) {
+    console.error('Failed to create case:', error);
+    alert('Failed to create case. Please try again.');
+  }
+};
+
+const handleLawyerAssignment = (caseData) => {
+  openLawyerAssignment(caseData.case);
+};
+
+const handleStatusUpdate = async (data) => {
+  try {
+    await Case.update(data.case.id, { status: data.status });
+    await loadData();
+  } catch (error) {
+    console.error('Failed to update status:', error);
+  }
+};
+
 const viewCase = (caseItem) => {
   router.push(`/case-details/${caseItem.id}`);
+};
+
+const editCase = (caseItem) => {
+  // Navigate to edit case or open edit dialog
+  router.push(`/case-details/${caseItem.id}?mode=edit`);
+};
+
+const openCaseActions = (caseItem) => {
+  // Show context menu or actions dropdown
+  console.log('Open actions for case:', caseItem);
+};
+
+const bulkAssignLawyer = () => {
+  console.log('Bulk assign lawyer to:', selectedCases.value);
+};
+
+const bulkUpdateStatus = () => {
+  console.log('Bulk update status for:', selectedCases.value);
 };
 
 // Utility functions
@@ -578,6 +847,16 @@ const getStatusColor = (status) => {
   }
 };
 
+const getPriorityColor = (priority) => {
+  switch (priority) {
+    case 'urgent': return 'bg-red-100 text-red-700 border-red-200';
+    case 'high': return 'bg-orange-100 text-orange-700 border-orange-200';
+    case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    case 'low': return 'bg-green-100 text-green-700 border-green-200';
+    default: return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+
 const getClientStatusColor = (status) => {
   switch (status) {
     case 'satisfied': return 'bg-green-400';
@@ -586,6 +865,16 @@ const getClientStatusColor = (status) => {
     default: return 'bg-green-400';
   }
 };
+
+// Watchers
+watch(selectedCases, (newVal) => {
+  selectAll.value = newVal.length > 0 && newVal.length === filteredCases.value.length;
+});
+
+watch(quickFilter, () => {
+  selectedCases.value = [];
+  selectAll.value = false;
+});
 
 // Lifecycle
 onMounted(() => {
