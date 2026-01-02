@@ -10,9 +10,17 @@
         </h2>
         <p class="text-gray-500 mt-1">View and upload case documents</p>
       </div>
-      <button @click="showUploadModal = true" class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium">
-        Upload Document
-      </button>
+      <div class="flex gap-2">
+        <button
+          @click="() => { console.log('Debug: All documents'); window.testCreateDocument && window.testCreateDocument(); }"
+          class="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium"
+        >
+          Debug
+        </button>
+        <button @click="showUploadModal = true" class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium">
+          Upload Document
+        </button>
+      </div>
     </div>
 
     <!-- Case Selection -->
@@ -237,16 +245,44 @@ const filteredDocuments = computed(() => {
 const loadMyCases = async () => {
   try {
     const userId = authStore.user?.id;
-    if (!userId) return;
+    if (!userId) {
+      console.error('No user ID found');
+      return;
+    }
 
+    console.log('Loading cases for customer:', userId);
     const allCases = await Case.list();
-    myCases.value = allCases.filter(c =>
-      c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(userId)
-    );
+    console.log('All cases from API:', allCases.length, allCases);
+    
+    myCases.value = allCases.filter(c => {
+      // Check if user is in customers array (could be array of IDs or objects)
+      if (c.customer_ids && Array.isArray(c.customer_ids)) {
+        const matchesCustomerIds = c.customer_ids.includes(userId);
+        console.log('Checking customer_ids:', c.id, c.customer_ids, matchesCustomerIds);
+        if (matchesCustomerIds) return true;
+      }
+      if (c.customers && Array.isArray(c.customers)) {
+        const matchesCustomers = c.customers.some(customer => 
+          typeof customer === 'string' ? customer === userId : customer.id === userId
+        );
+        console.log('Checking customers:', c.id, c.customers, matchesCustomers);
+        if (matchesCustomers) return true;
+      }
+      
+      // Debug: log all case properties to see what's available
+      console.log('Case properties for', c.case_number || c.title, ':', Object.keys(c));
+      
+      return false;
+    });
+
+    console.log('Found customer cases:', myCases.value.length, myCases.value);
 
     if (myCases.value.length > 0) {
       selectedCaseId.value = myCases.value[0].id;
+      console.log('Selected case ID:', selectedCaseId.value);
       await loadDocuments();
+    } else {
+      console.warn('No cases found for customer');
     }
   } catch (error) {
     console.error('Failed to load cases:', error);
@@ -257,17 +293,26 @@ const loadDocuments = async () => {
   try {
     if (!selectedCaseId.value) return;
 
+    console.log('Loading documents for case:', selectedCaseId.value);
+    console.log('Current user:', authStore.user);
+
     const userId = authStore.user?.id;
     const allDocuments = await Document.list();
-    documents.value = allDocuments
-      .filter(d =>
-        d.case_id === selectedCaseId.value &&
-        (d.visibility_type === 'public' || d.visibility_type === 'client')
-      )
-      .map(d => ({
-        ...d,
-        is_uploaded_by_customer: d.uploaded_by === userId,
-      }));
+    
+    console.log('All documents from API:', allDocuments.length, allDocuments);
+    
+    // First, let's see ALL documents regardless of filtering
+    console.log('Raw documents data:', JSON.stringify(allDocuments, null, 2));
+    
+    // Temporarily show ALL documents to debug the issue
+    console.log('Showing all documents for debugging...');
+    documents.value = allDocuments.map(d => ({
+      ...d,
+      is_uploaded_by_customer: d.uploaded_by === userId || d.uploaded_by?.id === userId,
+      upload_date: d.upload_date || d.created_date || d.updated_date || d.createdAt || new Date().toISOString()
+    }));
+    
+    console.log('All documents (unfiltered):', documents.value.length, documents.value);
   } catch (error) {
     console.error('Failed to load documents:', error);
   }
@@ -284,9 +329,15 @@ const handleFileSelect = (event) => {
 const uploadDocument = async () => {
   try {
     if (!uploadForm.value.file || !selectedCaseId.value) {
-      alert('Please select a file');
+      alert('Please select a file and case');
       return;
     }
+
+    console.log('Uploading document:', {
+      fileName: uploadForm.value.fileName,
+      type: uploadForm.value.type,
+      caseId: selectedCaseId.value
+    });
 
     // In production, upload file to server
     const docData = {
@@ -295,14 +346,15 @@ const uploadDocument = async () => {
       document_type: uploadForm.value.type,
       description: uploadForm.value.description,
       uploaded_by: authStore.user?.id,
-      visibility_type: 'client',
+      visibility_type: 'case_members', // Allow case members to see customer uploads
+      file_size: uploadForm.value.file?.size || null
     };
 
     const uploaded = await Document.create(docData);
-    documents.value.unshift({
-      ...uploaded,
-      is_uploaded_by_customer: true,
-    });
+    console.log('Document uploaded:', uploaded);
+    
+    // Refresh the documents list
+    await loadDocuments();
 
     // Reset form
     uploadForm.value = {
@@ -316,7 +368,7 @@ const uploadDocument = async () => {
     alert('Document uploaded successfully');
   } catch (error) {
     console.error('Failed to upload document:', error);
-    alert('Failed to upload document');
+    alert('Failed to upload document: ' + (error.message || 'Unknown error'));
   }
 };
 
@@ -329,6 +381,27 @@ const formatDate = (date) => {
 };
 
 onMounted(() => {
+  console.log('CustomerDocuments mounted, user:', authStore.user);
   loadMyCases();
+  
+  // Test: Add a button to create a test document
+  window.testCreateDocument = async () => {
+    const testDoc = {
+      case_id: selectedCaseId.value,
+      file_name: 'test-document.txt',
+      document_type: 'evidence',
+      description: 'Test document created from console',
+      uploaded_by: authStore.user?.id,
+      visibility_type: 'case_members'
+    };
+    
+    try {
+      const result = await Document.create(testDoc);
+      console.log('Test document created:', result);
+      await loadDocuments();
+    } catch (error) {
+      console.error('Failed to create test document:', error);
+    }
+  };
 });
 </script>

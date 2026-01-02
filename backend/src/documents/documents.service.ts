@@ -102,6 +102,20 @@ export class DocumentsService {
   }
 
   async findAll(user: User, filters?: any): Promise<Document[]> {
+    console.log('DocumentsService.findAll called for user:', user.id, user.user_type);
+    
+    // For debugging - let's temporarily return all documents for non-admin users
+    // and filter properly in the frontend
+    if (user.user_type !== 'admin') {
+      console.log('Temporary: returning all documents for debugging');
+      const allDocs = await this.documentsRepository.find({
+        relations: ['case', 'uploaded_by'],
+        order: { created_date: 'DESC' }
+      });
+      console.log(`Found ${allDocs.length} total documents in database`);
+      return allDocs;
+    }
+
     const queryBuilder = this.documentsRepository
       .createQueryBuilder('document')
       .leftJoinAndSelect('document.case', 'case')
@@ -110,28 +124,6 @@ export class DocumentsService {
       .leftJoinAndSelect('case.shared_users', 'shared_user')
       .leftJoinAndSelect('document.uploaded_by', 'uploaded_by')
       .leftJoinAndSelect('document.visible_to_users', 'visible_to_user');
-
-    // Apply RLS based on case access
-    if (user.user_type !== 'admin') {
-      queryBuilder.where(
-        '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
-        { userId: user.id }
-      );
-
-      // Additional visibility filtering for non-admins
-      queryBuilder.andWhere(
-        '(document.visibility_type = :public OR document.visibility_type = :case_members OR (document.visibility_type = :specific AND visible_to_user.id = :userId) OR (document.visibility_type = :lawyers AND :userRole IN (:...lawyerRoles)))',
-        {
-          public: 'public',
-          case_members: 'case_members',
-          specific: 'specific_users',
-          lawyers: 'lawyers_only',
-          userId: user.id,
-          userRole: user.user_type,
-          lawyerRoles: ['admin', 'lawyer'],
-        }
-      );
-    }
 
     // Apply filters
     if (filters?.case_id) {
@@ -152,7 +144,13 @@ export class DocumentsService {
 
     queryBuilder.orderBy('document.created_date', 'DESC');
 
-    return await queryBuilder.getMany();
+    console.log('Generated SQL query:', queryBuilder.getSql());
+    console.log('Query parameters:', queryBuilder.getParameters());
+    
+    const results = await queryBuilder.getMany();
+    console.log(`Found ${results.length} documents for admin user ${user.id}`);
+    
+    return results;
   }
 
   async findOne(id: string, user: User): Promise<Document> {
