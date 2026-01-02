@@ -222,12 +222,41 @@ const loadCaseDetails = async () => {
         }
       }
 
-      // Mock timeline data (in production, fetch from activity log)
-      timeline.value = [
-        { id: 1, title: 'Case Filed', description: 'Your case has been officially filed', date: selectedCase.value.filing_date },
-        { id: 2, title: 'Lawyer Assigned', description: 'A lawyer has been assigned to your case', date: selectedCase.value.created_date },
-        { id: 3, title: 'Initial Review', description: 'Initial case review completed', date: selectedCase.value.updated_date },
-      ];
+      // Build timeline from case data and comments
+      timeline.value = [];
+
+      // Add case filing
+      if (selectedCase.value.filing_date) {
+        timeline.value.push({
+          id: 'filed',
+          title: 'Case Filed',
+          description: 'Your case has been officially filed',
+          date: selectedCase.value.filing_date
+        });
+      }
+
+      // Add case creation
+      timeline.value.push({
+        id: 'created',
+        title: 'Case Created',
+        description: lawyerInfo.value.name ? `Case assigned to ${lawyerInfo.value.name}` : 'Case created in system',
+        date: selectedCase.value.created_date
+      });
+
+      // Add status updates
+      if (selectedCase.value.updated_date && selectedCase.value.updated_date !== selectedCase.value.created_date) {
+        timeline.value.push({
+          id: 'updated',
+          title: 'Status Updated',
+          description: `Case status changed to ${selectedCase.value.status}`,
+          date: selectedCase.value.updated_date
+        });
+      }
+
+      // TODO: Add comments and other activities to timeline when comment API is integrated
+
+      // Sort timeline by date (newest first)
+      timeline.value.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       // Load deadlines
       const allTasks = await ActionItem.list();

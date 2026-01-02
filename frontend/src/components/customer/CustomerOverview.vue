@@ -10,6 +10,15 @@
         </h2>
         <p class="text-gray-500 mt-1">Welcome back! Here's an overview of your case</p>
       </div>
+      <button
+        @click="showNewCaseModal = true"
+        class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium flex items-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Request New Case
+      </button>
     </div>
 
     <!-- Case Status Cards -->
@@ -225,14 +234,40 @@
         </div>
       </div>
     </div>
+
+    <!-- New Case Modal -->
+    <div
+      v-if="showNewCaseModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showNewCaseModal = false"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between mb-4 pb-4 border-b">
+          <h3 class="text-xl font-semibold text-gray-800">Request New Case</h3>
+          <button @click="showNewCaseModal = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="overflow-y-auto flex-1">
+          <CustomerNewCaseForm
+            :onSubmit="handleCreateCase"
+            :onCancel="() => showNewCaseModal = false"
+            :currentUser="authStore.user"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Case, ChatMessage, Document } from '@/services/entities';
+import { Case, ChatMessage, Document, ActionItem } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+import CustomerNewCaseForm from './CustomerNewCaseForm.vue';
 
 const authStore = useAuthStore();
 
@@ -243,6 +278,7 @@ const recentDocuments = ref([]);
 
 const unreadMessages = ref(0);
 const upcomingDeadlines = ref(0);
+const showNewCaseModal = ref(false);
 
 const invoiceStats = ref({
   total: 0,
@@ -286,24 +322,70 @@ const loadCustomerDashboard = async () => {
         .filter(d => caseIds.includes(d.case_id) && (d.visibility_type === 'public' || d.visibility_type === 'client'))
         .slice(0, 5);
 
-      // Mock important updates
-      importantUpdates.value = [
-        { id: 1, message: 'Your case status has been updated to "In Progress"', date: new Date() },
-        { id: 2, message: 'New document has been uploaded by your lawyer', date: new Date(Date.now() - 86400000) },
-        { id: 3, message: 'Upcoming court date scheduled for next week', date: new Date(Date.now() - 172800000) },
-      ];
+      // Load action items for deadlines
+      const allTasks = await ActionItem.list();
+      const caseTasks = allTasks.filter(t => caseIds.includes(t.case_id));
 
-      upcomingDeadlines.value = 2; // Mock data
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      upcomingDeadlines.value = caseTasks.filter(t => {
+        if (!t.due_date) return false;
+        const dueDate = new Date(t.due_date);
+        return dueDate <= sevenDaysFromNow && t.status !== 'completed';
+      }).length;
 
-      // Mock invoice stats
+      // Create important updates from recent activity
+      importantUpdates.value = [];
+
+      // Add case updates
+      myCases.value.slice(0, 3).forEach((c, index) => {
+        importantUpdates.value.push({
+          id: `case-${index}`,
+          message: `Your case "${c.title}" is currently ${c.status}`,
+          date: c.updated_date || c.created_date
+        });
+      });
+
+      // Add document updates
+      if (recentDocuments.value.length > 0) {
+        importantUpdates.value.push({
+          id: 'doc-1',
+          message: `New document uploaded: ${recentDocuments.value[0].file_name}`,
+          date: recentDocuments.value[0].upload_date
+        });
+      }
+
+      // TODO: Load real invoice data from backend when invoice API is ready
       invoiceStats.value = {
-        total: 5000,
-        paid: 3000,
-        pending: 2000,
+        total: 0,
+        paid: 0,
+        pending: 0,
       };
     }
   } catch (error) {
     console.error('Failed to load customer dashboard:', error);
+  }
+};
+
+const handleCreateCase = async (caseData) => {
+  try {
+    // Create the new case
+    const newCase = await Case.create(caseData);
+
+    // Add to local cases array
+    myCases.value.unshift(newCase);
+
+    // Close the modal
+    showNewCaseModal.value = false;
+
+    // Show success message
+    alert('Case request submitted successfully! A lawyer will review your case and contact you soon.');
+
+    // Reload dashboard to ensure consistency
+    await loadCustomerDashboard();
+  } catch (error) {
+    console.error('Failed to create case:', error);
+    alert('Failed to submit case request. Please try again.');
   }
 };
 

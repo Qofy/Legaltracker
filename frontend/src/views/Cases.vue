@@ -39,11 +39,11 @@
           <p class="text-sm text-gray-600 mt-1">Create new cases and manage existing ones</p>
         </div>
         <div>
-              <DialogTitle>Create New Case</DialogTitle>
-         <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10 px-2">
-              <Plus class="w-4 h-4 mr-2" />
-              New Case
-            </Button>
+          <DialogTitle>Create New Case</DialogTitle>
+          <Button @click="showNewCase = true" class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10 px-2">
+            <Plus class="w-4 h-4 mr-2" />
+            New Case
+          </Button>
         </div>
          
       </div>
@@ -363,15 +363,48 @@ const activeTab = ref('active');
 const showAISummary = ref(false);
 
 // ==================== COMPUTED ====================
-const activeCases = computed(() => cases.value.filter(c => c.status !== 'archived'));
-const archivedCases = computed(() => cases.value.filter(c => c.status === 'archived'));
+const activeCases = computed(() => {
+  // Active cases are those that are still ongoing
+  const activeStatuses = ['open', 'in_progress', 'on_hold'];
+  return cases.value.filter(c => activeStatuses.includes(c.status));
+});
+
+const archivedCases = computed(() => {
+  // Archived cases are those that are completed or closed
+  const archivedStatuses = ['closed', 'won', 'lost', 'archived'];
+  return cases.value.filter(c => archivedStatuses.includes(c.status));
+});
+
+// ==================== API IMPORTS ====================
+import { Case, User } from '@/services/entities';
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
 
 // ==================== METHODS ====================
 const loadUserAndCases = async () => {
   isLoading.value = true;
   try {
-    // TODO: Replace with actual API calls when ready
-    console.log('TODO: Load user and cases from API');
+    // Load current user
+    user.value = await User.me();
+
+    // Load cases based on user role
+    if (user.value.user_type === 'admin') {
+      // Admin sees all cases
+      cases.value = await Case.list('-updated_date');
+    } else if (user.value.user_type === 'lawyer') {
+      // Lawyer sees only assigned cases
+      const allCases = await Case.list('-updated_date');
+      cases.value = allCases.filter(c => c.lawyer_id === user.value.id);
+    } else if (user.value.user_type === 'customer') {
+      // Customer sees only their cases
+      const allCases = await Case.list('-updated_date');
+      cases.value = allCases.filter(c =>
+        c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(user.value.id)
+      );
+    }
+
+    applyFilters();
   } catch (error) {
     console.error('Failed to load data:', error);
   }
@@ -436,10 +469,20 @@ const applyFilters = () => {
 
 const handleNewCase = async (caseData) => {
   try {
-    console.log('TODO: Create new case:', caseData);
+    // Create the new case
+    const newCase = await Case.create(caseData);
+
+    // Add to local cases array
+    cases.value.unshift(newCase);
+
+    // Close the dialog
     showNewCase.value = false;
+
+    // Reload to ensure consistency
+    await loadUserAndCases();
   } catch (error) {
     console.error('Failed to create case:', error);
+    alert('Failed to create case. Please try again.');
   }
 };
 

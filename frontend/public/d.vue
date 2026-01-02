@@ -10,18 +10,12 @@
         <p class="mt-2 text-sm text-gray-500">Welcome back, {{ user?.full_name?.split(' ')[0] || 'User' }}</p>
       </header>
 
-      
-
-        <!-- Admin-only navigation -->
-        <div v-if="isAdmin" class="my-2 pt-2">
-          <p class="text-xs text-gray-500 font-semibold px-3 mb-2 text-center">ADMIN PANEL</p>
-          <!-- <div class="w-30 h-30 mx-auto my-1 flex flex-col items-center justify-center">
-
+      <div class="w-30 h-30 mx-auto my-1 flex flex-col items-center justify-center">
         <div class="w-14 h-14 bg-gray-100 flex items-center justify-center rounded-full">
           <UserIcon class="text-[#003aca]" />
         </div>
         <h2 class="font-semibold text-gray-700 mt-2">Profile</h2>
-      </div> -->
+      </div>
 
       <nav class="px-3 py-4 space-y-2">
         <button type="button" @click="selectedView = 'Dashboard'" :class="['nav-link', {active: selectedView === 'Dashboard'}]">
@@ -37,15 +31,14 @@
           </span>
           <span class="nav-text">Cases</span>
         </button>
-        
-        <button type="button" @click="selectedView = 'CustomerNewCase'" :class="['nav-link', {active: selectedView === 'CustomerNewCase'}]">
+
+        <button type="button" @click="selectedView = 'MyCases'" :class="['nav-link', {active: selectedView === 'MyCases'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
             <FileText class="nav-icon" size="20" />
           </span>
-          <span class="nav-text">New Case</span>
+          <span class="nav-text">My Cases</span>
+          
         </button>
-
-       
 
         <button type="button" @click="selectedView = 'Documents'" :class="['nav-link', {active: selectedView === 'Documents'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
@@ -88,6 +81,11 @@
           </span>
           <span class="nav-text">Help</span>
         </button>
+
+        <!-- Admin-only navigation -->
+        <div v-if="isAdmin" class="border-t border-gray-200 my-2 pt-2">
+          <p class="text-xs text-gray-500 font-semibold px-3 mb-2">ADMIN PANEL</p>
+
           <button type="button" @click="selectedView = 'AdminOverview'" :class="['nav-link', {active: selectedView === 'AdminOverview'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -122,13 +120,6 @@
             </span>
             <span class="nav-text">System Logs</span>
           </button>
-           <button type="button" @click="selectedView = 'GuestAccess'" :class="['nav-link', {active: selectedView === 'GuestAccess'}]">
-          <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-            <House class="nav-icon" size="20" />
-          </span>
-          <span class="nav-text">Guest Access</span>
-        </button>
-      </nav>
         </div>
 
         <!-- Lawyer-only navigation -->
@@ -159,7 +150,7 @@
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
             </span>
-            <span class="nav-text">Cases</span>
+            <span class="nav-text">My Tasks</span>
           </button>
 
           <button type="button" @click="selectedView = 'LawyerReports'" :class="['nav-link', {active: selectedView === 'LawyerReports'}]">
@@ -173,10 +164,10 @@
         </div>
 
         <!-- Customer-only navigation -->
-        <div v-if="isCustomer" class="my-2 pt-2 text-center">
+        <div v-if="isCustomer" class="border-t border-gray-200 my-2 pt-2">
           <p class="text-xs text-gray-500 font-semibold px-3 mb-2">CLIENT PANEL</p>
-          
-             <button type="button" @click="selectedView = 'CustomerOverview'" :class="['nav-link', {active: selectedView === 'CustomerOverview'}]">
+
+          <button type="button" @click="selectedView = 'CustomerOverview'" :class="['nav-link', {active: selectedView === 'CustomerOverview'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -185,21 +176,16 @@
             <span class="nav-text">My Dashboard</span>
           </button>
 
-           <button type="button" @click="selectedView = 'MyCases'" :class="['nav-link', {active: selectedView === 'MyCases'}]">
-          <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-            <FileText class="nav-icon" size="20" />
-          </span>
-          <span class="nav-text">My Cases</span>
-        </button>
-         
-         <button type="button" @click="selectedView = 'CustomerNewCase'" :class="['nav-link', {active: selectedView === 'CustomerNewCase'}]">
-          <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-            <FileText class="nav-icon" size="20" />
-          </span>
-          <span class="nav-text">Cases</span>
-        </button>
+          <button type="button" @click="selectedView = 'CustomerCaseDetails'" :class="['nav-link', {active: selectedView === 'CustomerCaseDetails'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Case</span>
+          </button>
 
-         <button type="button" @click="selectedView = 'CustomerMessages'" :class="['nav-link', {active: selectedView === 'CustomerMessages'}]">
+          <button type="button" @click="selectedView = 'CustomerMessages'" :class="['nav-link', {active: selectedView === 'CustomerMessages'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
@@ -226,7 +212,14 @@
             <span class="nav-text">Invoices</span>
           </button>
         </div>
-      
+
+        <button type="button" @click="selectedView = 'GuestAccess'" :class="['nav-link', {active: selectedView === 'GuestAccess'}]">
+          <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+            <House class="nav-icon" size="20" />
+          </span>
+          <span class="nav-text">Guest Access</span>
+        </button>
+      </nav>
     </aside>
 
      <!----------------Ai Assistant------------------------------->
@@ -248,7 +241,7 @@
   </div>
 </div>
 <!------------- MAin---------------->
-    <main class="flex-1 p-6 overflow-x-hidden ">
+    <main class="flex-1 p-6 overflow-x-hidden">
       <div class="max-w-7xl mx-auto">
         <div v-if="selectedView === 'Dashboard'">
           <div class="flex items-center justify-between mb-6">
@@ -477,9 +470,6 @@
       <CustomerDocuments v-else-if="selectedView === 'CustomerDocuments' && isCustomer" />
 
       <CustomerInvoices v-else-if="selectedView === 'CustomerInvoices' && isCustomer" />
-
-      <!-- Customer New Case Form -->
-      <CustomerNewCaseForm v-else-if="selectedView === 'CustomerNewCase' && isCustomer" :current-user="user" :onSubmit="handleCustomerNewCase" :onCancel="() => { selectedView = 'CustomerOverview' }" />
       </div>
     </main>
 
@@ -513,7 +503,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import Cases from './Cases.vue';
-import CustomerNewCaseForm from '@/components/customer/CustomerNewCaseForm.vue'
 import MyCases from './MyCases.vue';
 import Documents from './Documents.vue';
 import DocumentViewer from './DocumentViewer.vue';
@@ -729,20 +718,6 @@ const getPriorityBadgeColor = (priority) => {
 
 // Local view selection for aside -> main content behavior
 const selectedView = ref('Dashboard');
-
-// Handler for customer new-case submissions
-const handleCustomerNewCase = async (caseData) => {
-  try {
-    await Case.create(caseData);
-    // Reload dashboard data to include the newly created case
-    await loadDashboardData();
-    selectedView.value = 'CustomerOverview';
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to create customer case:', err);
-    alert('Failed to create case. Please try again.');
-  }
-};
 
 // `createPageUrl` is imported above and available to the template
 
