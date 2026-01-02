@@ -110,24 +110,24 @@
           <!-- Admin-specific Filters -->
           <div class="flex gap-2 flex-wrap">
             <!-- Status Filter -->
-            <Select v-model="filters.status" class="min-w-[140px]">
+            <select v-model="filters.status" class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
               <option value="all">All Statuses</option>
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="on_hold">On Hold</option>
               <option value="closed">Closed</option>
               <option value="archived">Archived</option>
-            </Select>
+            </select>
 
             <!-- Assignment Filter -->
-            <Select v-model="filters.assignment" class="min-w-[140px]">
+            <select v-model="filters.assignment" class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
               <option value="all">All Assignments</option>
               <option value="assigned">Assigned</option>
               <option value="unassigned">Unassigned</option>
-            </Select>
+            </select>
 
             <!-- Lawyer Filter -->
-            <Select v-model="filters.lawyer" class="min-w-[150px]">
+            <select v-model="filters.lawyer" class="min-w-[150px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
               <option value="all">All Lawyers</option>
               <option 
                 v-for="lawyer in lawyers" 
@@ -136,15 +136,15 @@
               >
                 {{ lawyer.full_name }}
               </option>
-            </Select>
+            </select>
 
             <!-- Client Status Filter -->
-            <Select v-model="filters.clientStatus" class="min-w-[140px]">
+            <select v-model="filters.clientStatus" class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
               <option value="all">All Client Status</option>
               <option value="satisfied">Satisfied</option>
               <option value="needs_attention">Needs Attention</option>
               <option value="at_risk">At Risk</option>
-            </Select>
+            </select>
           </div>
         </div>
 
