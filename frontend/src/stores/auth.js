@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref(localStorage.getItem('refreshToken'))
 
   const isAuthenticated = computed(() => !!accessToken.value)
-  const userType = computed(() => user.value?.userType)
+  const userType = computed(() => user.value?.user_type || user.value?.userType)
 
   const login = async (credentials) => {
     try {

@@ -23,17 +23,21 @@ async function seedDemoData() {
   const actionItemRepository = dataSource.getRepository(ActionItem);
 
   try {
-    // Get existing users
-    const admin = await userRepository.findOne({ where: { email: 'admin@legalhub.com' } });
-    const lawyer = await userRepository.findOne({ where: { email: 'lawyer@legalhub.com' } });
-    const customer = await userRepository.findOne({ where: { email: 'customer@legalhub.com' } });
+    // Find any users with the appropriate roles
+    const lawyer = await userRepository.findOne({ where: { user_type: 'lawyer' } });
+    const customer = await userRepository.findOne({ where: { user_type: 'customer' } });
 
-    if (!admin || !lawyer || !customer) {
-      console.error('❌ Default users not found. Run seed script first.');
+    if (!lawyer || !customer) {
+      console.error('❌ Demo data requires at least one lawyer and one customer.');
+      console.error('   Please create users via the signup page at http://localhost:5173/signup');
+      console.error('   You need:');
+      console.error('   - At least 1 user with role "Lawyer"');
+      console.error('   - At least 1 user with role "Customer"');
       process.exit(1);
     }
 
-    console.log('✅ Found default users');
+    console.log(`✅ Found lawyer: ${lawyer.email}`);
+    console.log(`✅ Found customer: ${customer.email}`);
 
     // Create demo cases
     const demoCase1 = caseRepository.create({
@@ -166,9 +170,9 @@ async function seedDemoData() {
     console.log(`   - Documents: 3`);
     console.log(`   - Messages: 4`);
     console.log(`   - Tasks/Deadlines: 3`);
-    console.log('\n🔐 Login as customer:');
-    console.log('   Email: customer@legalhub.com');
-    console.log('   Password: Customer123!');
+    console.log('\n🔐 Login credentials:');
+    console.log(`   Lawyer: ${lawyer.email}`);
+    console.log(`   Customer: ${customer.email}`);
 
   } catch (error) {
     console.error('❌ Error seeding demo data:', error);

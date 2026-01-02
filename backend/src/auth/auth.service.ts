@@ -32,7 +32,16 @@ export class AuthService {
     };
   }
 
-  async register(userData: { email: string; password: string; full_name: string; user_type?: string }) {
+  async register(userData: {
+    email: string;
+    password: string;
+    full_name: string;
+    user_type?: string;
+    phone?: string;
+    bar_number?: string;
+    firm_name?: string;
+    specializations?: string;
+  }) {
     const existingUser = await this.usersService.findByEmail(userData.email);
     if (existingUser) {
       throw new UnauthorizedException('Email already exists');
@@ -43,6 +52,10 @@ export class AuthService {
       password: userData.password,
       full_name: userData.full_name,
       user_type: userData.user_type as any || 'customer',
+      phone: userData.phone,
+      bar_number: userData.bar_number,
+      firm_name: userData.firm_name,
+      specializations: userData.specializations,
     });
 
     return this.login(user);

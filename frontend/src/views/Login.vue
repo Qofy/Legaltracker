@@ -50,6 +50,15 @@
             {{ loading ? 'Signing in...' : 'Sign in' }}
           </button>
         </div>
+
+        <div class="text-center mt-4">
+          <p class="text-sm text-gray-600">
+            Don't have an account?
+            <router-link to="/signup" class="font-medium text-primary-600 hover:text-primary-500">
+              Sign up here
+            </router-link>
+          </p>
+        </div>
       </form>
 
       <div class="mt-6">

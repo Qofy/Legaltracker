@@ -261,7 +261,12 @@
           </div>
           <div class="flex items-center gap-3">
             <button class="px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">AI Analysis</button>
-            <button class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium">New Case</button>
+            <button 
+              @click="isCustomer ? selectedView = 'CustomerNewCase' : selectedView = 'Cases'" 
+              class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium"
+            >
+              New Case
+            </button>
           </div>
         </div>
 
@@ -736,7 +741,7 @@ const handleCustomerNewCase = async (caseData) => {
     await Case.create(caseData);
     // Reload dashboard data to include the newly created case
     await loadDashboardData();
-    selectedView.value = 'CustomerOverview';
+    selectedView.value = 'Dashboard'; // Show dashboard so customer can see their new case
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('Failed to create customer case:', err);
