@@ -7,8 +7,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           My Dashboard
+          <button
+            v-if="!isLoading"
+            @click="refreshDashboard"
+            class="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+            title="Refresh Dashboard"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </h2>
-        <p class="text-gray-500 mt-1">Welcome back! Here's an overview of your case</p>
+        <p class="text-gray-500 mt-1">
+          {{ isLoading ? 'Loading dashboard...' : 'Welcome back! Here\'s an overview of your case' }}
+        </p>
       </div>
       <button
         @click="showNewCaseModal = true"
@@ -30,8 +42,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <p class="text-3xl font-bold text-gray-900">{{ myCases.length }}</p>
-        <p class="text-xs text-gray-500 mt-1">{{ activeCases }} active</p>
+        <div v-if="isLoading" class="animate-pulse">
+          <div class="h-8 bg-gray-200 rounded mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-20"></div>
+        </div>
+        <div v-else>
+          <p class="text-3xl font-bold text-gray-900">{{ myCases.length }}</p>
+          <p class="text-xs text-gray-500 mt-1">{{ activeCases }} active</p>
+        </div>
       </div>
 
       <div class="bg-white rounded-lg border border-gray-200 p-5">
@@ -41,8 +59,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
           </svg>
         </div>
-        <p class="text-3xl font-bold text-gray-900">{{ unreadMessages }}</p>
-        <p class="text-xs text-gray-500 mt-1">from your lawyer</p>
+        <div v-if="isLoading" class="animate-pulse">
+          <div class="h-8 bg-gray-200 rounded mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-24"></div>
+        </div>
+        <div v-else>
+          <p class="text-3xl font-bold text-gray-900">{{ unreadMessages }}</p>
+          <p class="text-xs text-gray-500 mt-1">from your lawyer</p>
+        </div>
       </div>
 
       <div class="bg-white rounded-lg border border-gray-200 p-5">
@@ -52,8 +76,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <p class="text-3xl font-bold text-gray-900">{{ upcomingDeadlines }}</p>
-        <p class="text-xs text-gray-500 mt-1">next 7 days</p>
+        <div v-if="isLoading" class="animate-pulse">
+          <div class="h-8 bg-gray-200 rounded mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-16"></div>
+        </div>
+        <div v-else>
+          <p class="text-3xl font-bold text-gray-900">{{ upcomingDeadlines }}</p>
+          <p class="text-xs text-gray-500 mt-1">next 7 days</p>
+        </div>
       </div>
     </div>
 
@@ -279,6 +309,7 @@ const recentDocuments = ref([]);
 const unreadMessages = ref(0);
 const upcomingDeadlines = ref(0);
 const showNewCaseModal = ref(false);
+const isLoading = ref(true);
 
 const invoiceStats = ref({
   total: 0,
@@ -290,70 +321,140 @@ const activeCases = computed(() => {
   return myCases.value.filter(c => c.status === 'open' || c.status === 'in_progress').length;
 });
 
-const loadCustomerDashboard = async () => {
+const loadCustomerDashboard = async (showLoader = true) => {
   try {
+    if (showLoader) isLoading.value = true;
+    
     const userId = authStore.user?.id;
     if (!userId) return;
 
+    console.log('Loading customer dashboard for user:', userId);
+
     // Fetch all cases and filter for customer's cases
     const allCases = await Case.list();
-    myCases.value = allCases.filter(c =>
-      c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(userId)
-    );
+    console.log('All cases:', allCases.length);
+    
+    myCases.value = allCases.filter(c => {
+      // Check multiple possible customer relationship structures
+      if (c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(userId)) {
+        return true;
+      }
+      if (c.customers && Array.isArray(c.customers)) {
+        return c.customers.some(customer => 
+          typeof customer === 'string' ? customer === userId : customer.id === userId
+        );
+      }
+      return false;
+    });
+
+    console.log('Customer cases found:', myCases.value.length);
 
     if (myCases.value.length > 0) {
       const caseIds = myCases.value.map(c => c.id);
 
-      // Fetch messages for customer's cases
-      const allMessages = await ChatMessage.list('-created_date', 10);
-      recentMessages.value = allMessages
-        .filter(m => caseIds.includes(m.case_id))
-        .slice(0, 5)
-        .map(m => ({
-          ...m,
-          sender_name: 'Your Lawyer', // In production, fetch from user data
-        }));
+      // Fetch messages for customer's cases with better filtering
+      try {
+        const allMessages = await ChatMessage.list('-created_date', 20);
+        recentMessages.value = allMessages
+          .filter(m => caseIds.includes(m.case_id))
+          .slice(0, 5)
+          .map(m => ({
+            ...m,
+            sender_name: m.sender_name || (m.sent_by_customer ? 'You' : 'Your Lawyer'),
+          }));
 
-      unreadMessages.value = 3; // Mock data - implement read/unread tracking
+        // Count unread messages (messages not sent by customer and not marked as read)
+        unreadMessages.value = allMessages
+          .filter(m => caseIds.includes(m.case_id) && !m.sent_by_customer && !m.is_read)
+          .length;
+      } catch (error) {
+        console.warn('Could not load messages:', error);
+        recentMessages.value = [];
+        unreadMessages.value = 0;
+      }
 
-      // Fetch documents for customer's cases
-      const allDocuments = await Document.list();
-      recentDocuments.value = allDocuments
-        .filter(d => caseIds.includes(d.case_id) && (d.visibility_type === 'public' || d.visibility_type === 'client'))
-        .slice(0, 5);
+      // Fetch documents for customer's cases with improved filtering
+      try {
+        const allDocuments = await Document.list();
+        recentDocuments.value = allDocuments
+          .filter(d => {
+            const matchesCase = caseIds.includes(d.case_id);
+            const visibilityAllowed = !d.visibility_type || 
+              d.visibility_type === 'public' || 
+              d.visibility_type === 'client' || 
+              d.visibility_type === 'case_members';
+            return matchesCase && visibilityAllowed;
+          })
+          .sort((a, b) => new Date(b.created_date || b.upload_date) - new Date(a.created_date || a.upload_date))
+          .slice(0, 5);
+      } catch (error) {
+        console.warn('Could not load documents:', error);
+        recentDocuments.value = [];
+      }
 
-      // Load action items for deadlines
-      const allTasks = await ActionItem.list();
-      const caseTasks = allTasks.filter(t => caseIds.includes(t.case_id));
+      // Load action items for deadlines with better calculation
+      try {
+        const allTasks = await ActionItem.list();
+        const caseTasks = allTasks.filter(t => caseIds.includes(t.case_id));
 
-      const sevenDaysFromNow = new Date();
-      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-      upcomingDeadlines.value = caseTasks.filter(t => {
-        if (!t.due_date) return false;
-        const dueDate = new Date(t.due_date);
-        return dueDate <= sevenDaysFromNow && t.status !== 'completed';
-      }).length;
+        const now = new Date();
+        const sevenDaysFromNow = new Date();
+        sevenDaysFromNow.setDate(now.getDate() + 7);
+        
+        upcomingDeadlines.value = caseTasks.filter(t => {
+          if (!t.due_date || t.status === 'completed') return false;
+          const dueDate = new Date(t.due_date);
+          return dueDate >= now && dueDate <= sevenDaysFromNow;
+        }).length;
+      } catch (error) {
+        console.warn('Could not load action items:', error);
+        upcomingDeadlines.value = 0;
+      }
 
-      // Create important updates from recent activity
+      // Create important updates from recent activity with better logic
       importantUpdates.value = [];
 
-      // Add case updates
-      myCases.value.slice(0, 3).forEach((c, index) => {
-        importantUpdates.value.push({
-          id: `case-${index}`,
-          message: `Your case "${c.title}" is currently ${c.status}`,
-          date: c.updated_date || c.created_date
+      // Add recent case status changes (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      myCases.value
+        .filter(c => new Date(c.updated_date || c.created_date) >= sevenDaysAgo)
+        .slice(0, 2)
+        .forEach((c, index) => {
+          const isNew = new Date(c.created_date) >= sevenDaysAgo;
+          importantUpdates.value.push({
+            id: `case-${index}`,
+            message: isNew ? 
+              `New case "${c.title}" has been created and is ${c.status}` :
+              `Case "${c.title}" status updated to ${c.status}`,
+            date: c.updated_date || c.created_date
+          });
         });
-      });
 
-      // Add document updates
+      // Add recent document updates
       if (recentDocuments.value.length > 0) {
-        importantUpdates.value.push({
-          id: 'doc-1',
-          message: `New document uploaded: ${recentDocuments.value[0].file_name}`,
-          date: recentDocuments.value[0].upload_date
+        recentDocuments.value.slice(0, 2).forEach((doc, index) => {
+          importantUpdates.value.push({
+            id: `doc-${index}`,
+            message: `New document available: ${doc.file_name}`,
+            date: doc.created_date || doc.upload_date
+          });
         });
       }
+
+      // Add upcoming deadline alerts
+      if (upcomingDeadlines.value > 0) {
+        importantUpdates.value.push({
+          id: 'deadline-alert',
+          message: `You have ${upcomingDeadlines.value} upcoming deadline${upcomingDeadlines.value > 1 ? 's' : ''} in the next 7 days`,
+          date: new Date().toISOString()
+        });
+      }
+
+      // Sort updates by date (most recent first)
+      importantUpdates.value.sort((a, b) => new Date(b.date) - new Date(a.date));
+      importantUpdates.value = importantUpdates.value.slice(0, 5);
 
       // TODO: Load real invoice data from backend when invoice API is ready
       invoiceStats.value = {
@@ -361,19 +462,47 @@ const loadCustomerDashboard = async () => {
         paid: 0,
         pending: 0,
       };
+    } else {
+      // No cases found - reset all data
+      recentMessages.value = [];
+      importantUpdates.value = [];
+      recentDocuments.value = [];
+      unreadMessages.value = 0;
+      upcomingDeadlines.value = 0;
+      
+      // Add welcome message for new customers
+      importantUpdates.value = [{
+        id: 'welcome',
+        message: 'Welcome! Submit your first case request to get started.',
+        date: new Date().toISOString()
+      }];
     }
   } catch (error) {
     console.error('Failed to load customer dashboard:', error);
+    // Set default empty states on error
+    myCases.value = [];
+    recentMessages.value = [];
+    importantUpdates.value = [{
+      id: 'error',
+      message: 'Unable to load dashboard data. Please refresh the page.',
+      date: new Date().toISOString()
+    }];
+    recentDocuments.value = [];
+    unreadMessages.value = 0;
+    upcomingDeadlines.value = 0;
+  } finally {
+    isLoading.value = false;
   }
+};
+
+const refreshDashboard = async () => {
+  await loadCustomerDashboard(true);
 };
 
 const handleCreateCase = async (caseData) => {
   try {
     // Create the new case
     const newCase = await Case.create(caseData);
-
-    // Add to local cases array
-    myCases.value.unshift(newCase);
 
     // Close the modal
     showNewCaseModal.value = false;
@@ -382,7 +511,7 @@ const handleCreateCase = async (caseData) => {
     alert('Case request submitted successfully! A lawyer will review your case and contact you soon.');
 
     // Reload dashboard to ensure consistency
-    await loadCustomerDashboard();
+    await loadCustomerDashboard(false); // Don't show loader for refresh after creation
   } catch (error) {
     console.error('Failed to create case:', error);
     alert('Failed to submit case request. Please try again.');

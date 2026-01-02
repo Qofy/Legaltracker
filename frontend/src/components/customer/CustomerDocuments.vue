@@ -11,12 +11,7 @@
         <p class="text-gray-500 mt-1">View and upload case documents</p>
       </div>
       <div class="flex gap-2">
-        <button
-          @click="() => { console.log('Debug: All documents'); window.testCreateDocument && window.testCreateDocument(); }"
-          class="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium"
-        >
-          Debug
-        </button>
+      
         <button @click="showUploadModal = true" class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] text-sm font-medium">
           Upload Document
         </button>
@@ -130,13 +125,13 @@
               </td>
               <td class="px-4 py-3 text-sm text-gray-600">{{ formatDate(doc.upload_date) }}</td>
               <td class="px-4 py-3">
-                <button class="text-blue-600 hover:text-blue-700 mr-3">
+                <button @click.prevent="viewDocument(doc)" class="text-blue-600 hover:text-blue-700 mr-3">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
-                <button class="text-gray-600 hover:text-gray-700">
+                <button @click.prevent="downloadDocument(doc)" class="text-gray-600 hover:text-gray-700">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
@@ -188,6 +183,35 @@
         </div>
       </div>
     </div>
+    
+    <!-- Viewer Modal -->
+    <div v-if="showViewerModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" @click.self="closeViewer">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto p-4">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800">{{ viewedDocument?.file_name }}</h3>
+            <p class="text-sm text-gray-500">{{ viewedDocument?.document_type || 'Document' }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="downloadDocument(viewedDocument)" class="px-3 py-2 bg-gray-100 rounded text-sm">Download</button>
+            <button @click="closeViewer" class="px-3 py-2 bg-gray-200 rounded text-sm">Close</button>
+          </div>
+        </div>
+
+        <div class="border-t pt-4">
+          <div v-if="isPreviewPdf(viewedDocument)" class="w-full h-[70vh]">
+            <iframe :src="`https://docs.google.com/gview?url=${encodeURIComponent(viewedDocument.file_url)}&embedded=true`" class="w-full h-full" frameborder="0"></iframe>
+          </div>
+          <div v-else-if="isPreviewImage(viewedDocument)" class="flex justify-center">
+            <img :src="viewedDocument.file_url" :alt="viewedDocument.file_name" class="max-h-[70vh] object-contain" />
+          </div>
+          <div v-else class="p-8 text-center">
+            <p class="text-gray-600 mb-4">Preview not available for this file type.</p>
+            <a :href="viewedDocument.file_url" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline">Open in new tab</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -206,6 +230,10 @@ const searchQuery = ref('');
 const filterType = ref('');
 const showUploadModal = ref(false);
 const fileInput = ref(null);
+
+// Viewer state
+const showViewerModal = ref(false);
+const viewedDocument = ref(null);
 
 const uploadForm = ref({
   type: 'evidence',
@@ -316,6 +344,50 @@ const loadDocuments = async () => {
   } catch (error) {
     console.error('Failed to load documents:', error);
   }
+};
+
+const viewDocument = (doc) => {
+  if (!doc) return;
+  viewedDocument.value = doc;
+  showViewerModal.value = true;
+};
+
+const closeViewer = () => {
+  showViewerModal.value = false;
+  viewedDocument.value = null;
+};
+
+const isPreviewPdf = (doc) => {
+  if (!doc) return false;
+  return doc.file_type === 'pdf' || (doc.file_name && doc.file_name.toLowerCase().endsWith('.pdf'));
+};
+
+const isPreviewImage = (doc) => {
+  if (!doc) return false;
+  return doc.file_type === 'image' || /\.(png|jpe?g|gif|bmp|webp)$/i.test(doc.file_name || '');
+};
+
+const downloadDocument = (doc) => {
+  if (!doc || !doc.file_url) {
+    // If no file_url, try to fetch via API download endpoint
+    const downloadHref = `/api/documents/${doc?.id}/download`;
+    const a = document.createElement('a');
+    a.href = downloadHref;
+    a.download = doc?.file_name || 'document';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return;
+  }
+
+  const a = document.createElement('a');
+  a.href = doc.file_url;
+  a.download = doc.file_name || 'document';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
 const handleFileSelect = (event) => {
