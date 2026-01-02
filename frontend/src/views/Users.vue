@@ -30,27 +30,57 @@
         </Dialog>
       </div>
 
-      <Tabs default-value="customers">
-        <TabsList class="grid w-full grid-cols-2">
-          <TabsTrigger value="customers">Customers</TabsTrigger>
-          <TabsTrigger value="lawyers">Lawyers</TabsTrigger>
+      <Tabs default-value="customers" class="w-full">
+        <TabsList class="grid w-full max-w-md grid-cols-2 mb-8 bg-gray-100 p-1 rounded-lg h-12">
+          <TabsTrigger 
+            value="customers" 
+            class="data-[state=active]:bg-white data-[state=active]:text-[#003aca] data-[state=active]:shadow-sm rounded-md transition-all duration-200 font-medium flex items-center gap-2 h-10"
+          >
+            <UsersIcon class="w-4 h-4" />
+            Customers ({{ customers.length }})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="lawyers"
+            class="data-[state=active]:bg-white data-[state=active]:text-[#003aca] data-[state=active]:shadow-sm rounded-md transition-all duration-200 font-medium flex items-center gap-2 h-10"
+          >
+            <Scale class="w-4 h-4" />
+            Lawyers ({{ lawyers.length }})
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="customers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Customers ({{ customers.length }})</CardTitle>
+        
+        <TabsContent value="customers" class="mt-0">
+          <Card class="border-0 shadow-lg bg-white">
+            <CardHeader class="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+              <CardTitle class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <UsersIcon class="w-4 h-4 text-[#003aca]" />
+                </div>
+                Customer Management
+                <Badge variant="secondary" class="ml-auto bg-blue-100 text-blue-700">
+                  {{ customers.length }} Total
+                </Badge>
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent class="p-6">
               <UsersTable :users="customers" @edit="handleEdit" />
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="lawyers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lawyers ({{ lawyers.length }})</CardTitle>
+        
+        <TabsContent value="lawyers" class="mt-0">
+          <Card class="border-0 shadow-lg bg-white">
+            <CardHeader class="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-100">
+              <CardTitle class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Scale class="w-4 h-4 text-[#003aca]" />
+                </div>
+                Lawyer Management
+                <Badge variant="secondary" class="ml-auto bg-purple-100 text-purple-700">
+                  {{ lawyers.length }} Total
+                </Badge>
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent class="p-6">
               <UsersTable :users="lawyers" @edit="handleEdit" />
             </CardContent>
           </Card>
@@ -79,9 +109,10 @@ import { User, Invitation } from '@/services/entities';
 import { SendEmail } from '@/integrations/Core';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Users as UsersIcon, UserPlus } from 'lucide-vue-next';
+import { Users as UsersIcon, UserPlus, Scale } from 'lucide-vue-next';
 import { useToast } from '@/components/ui/use-toast';
 import InviteUserForm from '../components/users/InviteUserForm.vue';
 import UsersTable from '../components/users/UsersTable.vue';

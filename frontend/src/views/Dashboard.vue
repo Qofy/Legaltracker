@@ -588,6 +588,14 @@ const loadDashboardData = async () => {
     const userData = await User.me();
     user.value = userData;
 
+    // Default the selected view based on the authenticated user's role.
+    // This ensures customers land on the customer dashboard after a browser refresh.
+    if (!selectedView.value || selectedView.value === 'Dashboard') {
+      if (userData.user_type === 'customer') selectedView.value = 'CustomerOverview';
+      else if (userData.user_type === 'lawyer') selectedView.value = 'LawyerOverview';
+      else if (userData.user_type === 'admin') selectedView.value = 'AdminOverview';
+    }
+
     let userCases = [];
     if (userData.user_type === 'lawyer' || userData.user_type === 'admin') {
       userCases = await Case.filter(userData.user_type === 'admin' ? {} : { lawyer_id: userData.id }, '-updated_date', 10);
