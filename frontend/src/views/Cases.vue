@@ -168,6 +168,111 @@
         </div>
       </div>
 
+      <!-- Lawyer Assignment Section (Admin Only) -->
+      <div v-if="isAdmin && unassignedCases.length > 0" class="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <UserCheck class="w-5 h-5 text-blue-600" />
+                Quick Lawyer Assignment
+              </h3>
+              <p class="text-sm text-gray-600 mt-1">Assign lawyers to unassigned cases quickly</p>
+            </div>
+            <Badge class="bg-red-100 text-red-700 border-red-200">
+              {{ unassignedCases.length }} Unassigned
+            </Badge>
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <div class="space-y-4">
+            <!-- Bulk Assignment -->
+            <div class="flex items-center gap-4 pb-4 border-b border-gray-100">
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Bulk Assign Lawyer
+                </label>
+                <select
+                  v-model="bulkAssignLawyer"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">Select a lawyer...</option>
+                  <option v-for="lawyer in lawyers" :key="lawyer.id" :value="lawyer.id">
+                    {{ lawyer.full_name }} ({{ assignedCasesCount(lawyer.id) }} cases)
+                  </option>
+                </select>
+              </div>
+              <div class="pt-6">
+                <Button 
+                  @click="bulkAssignUnassigned" 
+                  :disabled="!bulkAssignLawyer || selectedCasesForBulk.length === 0"
+                  class="px-4 py-2"
+                >
+                  Assign Selected ({{ selectedCasesForBulk.length }})
+                </Button>
+              </div>
+            </div>
+
+            <!-- Unassigned Cases List -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="font-medium text-gray-700">Unassigned Cases</h4>
+                <div class="flex items-center gap-2">
+                  <Button 
+                    @click="toggleSelectAll" 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    {{ allSelected ? 'Deselect All' : 'Select All' }}
+                  </Button>
+                </div>
+              </div>
+              
+              <div class="max-h-64 overflow-y-auto space-y-2">
+                <div 
+                  v-for="caseItem in unassignedCases" 
+                  :key="caseItem.id"
+                  class="flex items-center gap-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    :value="caseItem.id"
+                    v-model="selectedCasesForBulk"
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="font-medium text-gray-900 truncate">{{ caseItem.title }}</p>
+                        <p class="text-sm text-gray-500">#{{ caseItem.case_number }} • {{ caseItem.case_type }}</p>
+                        <p class="text-xs text-gray-400">
+                          Client: {{ caseItem.customers?.[0]?.full_name || 'No client' }}
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2 ml-4">
+                        <Badge :class="getStatusColor(caseItem.status)" class="text-xs">
+                          {{ caseItem.status.replace('_', ' ').toUpperCase() }}
+                        </Badge>
+                        <select
+                          @change="quickAssignLawyer(caseItem.id, $event.target.value)"
+                          class="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                        >
+                          <option value="">Quick assign...</option>
+                          <option v-for="lawyer in lawyers" :key="lawyer.id" :value="lawyer.id">
+                            {{ lawyer.full_name }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Cases Table -->
       <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div class="p-4 border-b border-gray-200">
@@ -406,6 +511,10 @@ const selectedCaseForStatus = ref(null);
 const selectedLawyerId = ref('');
 const newClientStatus = ref('satisfied');
 
+// Bulk assignment state
+const bulkAssignLawyer = ref('');
+const selectedCasesForBulk = ref([]);
+
 // Filters
 const filters = ref({
   status: 'all',
@@ -461,6 +570,10 @@ const closedCases = computed(() =>
 
 const clientIssues = computed(() => 
   displayedCases.value.filter(c => c.client_status === 'needs_attention' || c.client_status === 'at_risk')
+);
+
+const allSelected = computed(() => 
+  selectedCasesForBulk.value.length === unassignedCases.value.length && unassignedCases.value.length > 0
 );
 
 const filteredCases = computed(() => {
@@ -586,6 +699,58 @@ const confirmClientStatusUpdate = async () => {
 
 const viewCase = (caseItem) => {
   router.push(`/case-details/${caseItem.id}`);
+};
+
+// Bulk assignment methods
+const assignedCasesCount = (lawyerId) => {
+  return displayedCases.value.filter(c => c.assigned_lawyer?.id === lawyerId).length;
+};
+
+const toggleSelectAll = () => {
+  if (allSelected.value) {
+    selectedCasesForBulk.value = [];
+  } else {
+    selectedCasesForBulk.value = unassignedCases.value.map(c => c.id);
+  }
+};
+
+const quickAssignLawyer = async (caseId, lawyerId) => {
+  if (!lawyerId) return;
+  
+  try {
+    await Case.update(caseId, { assigned_lawyer_id: lawyerId });
+    await loadData();
+    // Remove from selection if it was selected
+    selectedCasesForBulk.value = selectedCasesForBulk.value.filter(id => id !== caseId);
+  } catch (error) {
+    console.error('Failed to assign lawyer:', error);
+    alert('Failed to assign lawyer. Please try again.');
+  }
+};
+
+const bulkAssignUnassigned = async () => {
+  if (!bulkAssignLawyer.value || selectedCasesForBulk.value.length === 0) return;
+  
+  const confirmed = confirm(`Assign ${selectedCasesForBulk.value.length} cases to the selected lawyer?`);
+  if (!confirmed) return;
+  
+  try {
+    const promises = selectedCasesForBulk.value.map(caseId =>
+      Case.update(caseId, { assigned_lawyer_id: bulkAssignLawyer.value })
+    );
+    
+    await Promise.all(promises);
+    await loadData();
+    
+    // Clear selections
+    selectedCasesForBulk.value = [];
+    bulkAssignLawyer.value = '';
+    
+    alert(`Successfully assigned ${promises.length} cases!`);
+  } catch (error) {
+    console.error('Failed to bulk assign cases:', error);
+    alert('Failed to assign some cases. Please try again.');
+  }
 };
 
 // Utility functions

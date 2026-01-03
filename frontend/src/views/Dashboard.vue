@@ -502,7 +502,7 @@
     </main>
 
  <!---------------------------------------Comment------------------------------------------>
- <div class="w-72 border-gray-400 border-l flex flex-col">
+ <div class="w-50 border-gray-400 border-l flex flex-col">
   <div class="bg-white h-23 text-gray-600 border-b border-gray-400 px-4 py-3 flex justify-center items-center gap-2.5">
   <MessageCircle class="w-4 h-4 text-blue-600" />
     <h2 class="font-semibold">Comments</h2>

@@ -350,19 +350,28 @@
                   </div>
                 </td>
                 <td class="p-4">
-                  <div v-if="caseItem.assigned_lawyer">
-                    <p class="font-medium text-gray-900">{{ caseItem.assigned_lawyer.full_name }}</p>
-                    <p class="text-sm text-gray-500">{{ caseItem.assigned_lawyer.email }}</p>
-                  </div>
-                  <div v-else class="flex items-center gap-2">
-                    <Badge class="bg-red-100 text-red-700 border-red-200">Unassigned</Badge>
-                    <Button 
-                      @click="openLawyerAssignment(caseItem)" 
-                      size="sm" 
+                  <div v-if="getAssignedLawyer(caseItem)">
+                    <p class="font-medium text-gray-900">{{ getAssignedLawyer(caseItem).full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ getAssignedLawyer(caseItem).email }}</p>
+                    <Button
+                      @click="openLawyerAssignment(caseItem)"
+                      size="sm"
                       variant="outline"
-                      class="h-6 px-2 text-xs"
+                      class="h-7 px-3 text-xs mt-1 border-blue-300 text-blue-700 hover:bg-blue-50"
                     >
-                      Assign
+                      <Edit class="w-3 h-3 mr-1" />
+                      Reassign
+                    </Button>
+                  </div>
+                  <div v-else class="flex flex-col gap-2">
+                    <Badge class="bg-red-100 text-red-700 border-red-200 w-fit">Unassigned</Badge>
+                    <Button
+                      @click="openLawyerAssignment(caseItem)"
+                      size="sm"
+                      class="h-7 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <UserCheck class="w-3 h-3 mr-1" />
+                      Assign Lawyer
                     </Button>
                   </div>
                 </td>
@@ -400,29 +409,32 @@
                 </td>
                 <td class="p-4 text-right">
                   <div class="flex items-center justify-end gap-1">
-                    <Button 
-                      @click="viewCase(caseItem)" 
-                      size="sm" 
+                    <Button
+                      @click="viewCase(caseItem)"
+                      size="sm"
                       variant="ghost"
                       class="h-8 w-8 p-0"
+                      title="View case details"
                     >
-                      <Eye class="w-4 h-4" />
+                      <Eye class="w-4 h-4 text-blue-600" />
                     </Button>
-                    <Button 
-                      @click="editCase(caseItem)" 
-                      size="sm" 
+                    <Button
+                      @click="editCase(caseItem)"
+                      size="sm"
                       variant="ghost"
                       class="h-8 w-8 p-0"
+                      title="Edit case"
                     >
-                      <Edit class="w-4 h-4" />
+                      <Edit class="w-4 h-4 text-gray-600" />
                     </Button>
-                    <Button 
-                      @click="openCaseActions(caseItem)" 
-                      size="sm" 
+                    <Button
+                      @click="openCaseActions(caseItem)"
+                      size="sm"
                       variant="ghost"
                       class="h-8 w-8 p-0"
+                      title="More actions"
                     >
-                      <MoreVertical class="w-4 h-4" />
+                      <MoreVertical class="w-4 h-4 text-gray-600" />
                     </Button>
                   </div>
                 </td>
@@ -749,11 +761,13 @@ const toggleCaseSelection = (caseId, checked) => {
 };
 
 const openLawyerAssignment = (caseItem) => {
+  console.log('Opening lawyer assignment for case:', caseItem);
   selectedCaseForAssignment.value = caseItem;
   // Get the first owner (lawyer) if exists
   const currentOwner = caseItem.owners && caseItem.owners.length > 0 ? caseItem.owners[0] : null;
   selectedLawyerId.value = currentOwner?.id || '';
   showLawyerAssignment.value = true;
+  console.log('Lawyer assignment dialog opened');
 };
 
 const confirmLawyerAssignment = async () => {
@@ -820,8 +834,11 @@ const handleStatusUpdate = async (data) => {
 };
 
 const viewCase = (caseItem) => {
+  console.log('View case clicked:', caseItem);
+  console.log('Opening modal for case:', caseItem.title);
   selectedCaseForView.value = caseItem;
   showCaseDetailsModal.value = true;
+  console.log('Modal should now be visible');
 };
 
 const editCase = (caseItem) => {
@@ -853,6 +870,14 @@ const bulkUpdateStatus = () => {
 };
 
 // Utility functions
+const getAssignedLawyer = (caseItem) => {
+  if (caseItem.owners && caseItem.owners.length > 0) {
+    // Get the first lawyer owner
+    return caseItem.owners.find(owner => owner.user_type === 'lawyer') || caseItem.owners[0];
+  }
+  return null;
+};
+
 const formatDate = (date) => {
   if (!date) return 'N/A';
   try {
