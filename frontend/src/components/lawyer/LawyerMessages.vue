@@ -20,11 +20,14 @@
         <ul class="space-y-2">
           <li v-for="c in cases" :key="c.id" class="flex items-center justify-between p-2 rounded hover:bg-gray-50">
             <div>
-              <div class="font-medium text-gray-900 text-sm">{{ c.title }}</div>
+                <div class="font-medium text-gray-900 text-sm">{{ c.title }}</div>
               <div class="text-xs text-gray-500">Client: <span class="font-medium">{{ displayClients(c) }}</span></div>
             </div>
             <div>
-              <button @click="openCase(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">Open</button>
+                <div class="flex items-center gap-2">
+                  <button @click="openCase(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">Open</button>
+                  <span v-if="getUnread(c.id) > 0" class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-600 text-white">{{ getUnread(c.id) }}</span>
+                </div>
             </div>
           </li>
         </ul>
@@ -53,14 +56,14 @@
             <div v-if="messages.length === 0" class="text-center text-gray-500 py-8">No messages for this case yet.</div>
 
             <div v-for="m in messages" :key="m.id" :class="['flex', m.sender_id === authStore.user?.id ? 'justify-end' : 'justify-start']">
-              <div :class="[
-                'max-w-2xl px-4 py-3 rounded-lg',
-                m.sender_id === authStore.user?.id ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
-              ]">
-                <p class="text-sm">{{ m.message }}</p>
-                <p class="text-xs mt-1 text-gray-200" v-if="m.sender_id === authStore.user?.id">You • {{ formatTime(m.created_date) }}</p>
-                <p class="text-xs mt-1 text-gray-500" v-else>{{ getSenderName(m.sender_id) }} • {{ formatTime(m.created_date) }}</p>
-              </div>
+                <div :class="[
+                  'max-w-2xl px-4 py-3 rounded-lg',
+                  m.sender_id === authStore.user?.id ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                ]">
+                  <p class="text-sm">{{ m.content || m.message }}</p>
+                  <p class="text-xs mt-1 text-gray-200" v-if="m.sender_id === authStore.user?.id">You • {{ formatTime(m.created_date) }}</p>
+                  <p class="text-xs mt-1 text-gray-500" v-else>{{ getSenderName(m.sender_id) }} • {{ formatTime(m.created_date) }}</p>
+                </div>
             </div>
           </div>
         </div>
@@ -80,10 +83,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { Case, ChatMessage, User } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+import { initSocket, getSocket } from '@/plugins/socket';
 
 const authStore = useAuthStore();
 
@@ -93,6 +97,7 @@ const messages = ref([]);
 const newMessage = ref('');
 const messagesContainer = ref(null);
 const messageInput = ref(null);
+const unreadMap = ref({}); // caseId -> count
 
 const userCache = ref({}); // cache user names by id
 
@@ -101,6 +106,8 @@ const loadAssignedCases = async () => {
     // backend RLS should return the cases assigned to this lawyer
     const list = await Case.list();
     cases.value = list || [];
+    // initialize unreadMap entries for these cases
+    cases.value.forEach(c => { unreadMap.value[c.id] = unreadMap.value[c.id] || 0; });
     // preload any nested customer objects or user ids
     const customerIds = new Set();
     cases.value.forEach(c => {
@@ -120,8 +127,24 @@ const loadAssignedCases = async () => {
 };
 
 const openCase = async (c) => {
+  try {
+    const socket = getSocket();
+    // leave previous case room
+    if (socket && activeCase.value && activeCase.value.id) {
+      socket.emit('leave_case', activeCase.value.id);
+    }
+  } catch (e) {}
+
   activeCase.value = c;
   await loadMessagesForCase(c.id);
+  // join case room
+  try {
+    const socket = getSocket();
+    if (socket && c && c.id) socket.emit('join_case', c.id);
+  } catch (e) {}
+
+  // reset unread count for this case
+  if (c && c.id) unreadMap.value[c.id] = 0;
 };
 
 const loadMessagesForCase = async (caseId) => {
@@ -147,8 +170,7 @@ const sendMessage = async () => {
   if (!activeCase.value || !newMessage.value.trim()) return;
   const payload = {
     case_id: activeCase.value.id,
-    sender_id: authStore.user?.id,
-    message: newMessage.value.trim(),
+    content: newMessage.value.trim(),
   };
   try {
     const sent = await ChatMessage.create(payload);
@@ -157,6 +179,13 @@ const sendMessage = async () => {
     await nextTick();
     scrollToBottom();
     if (messageInput.value) messageInput.value.focus();
+    // emit via socket so other participants receive the message in realtime
+    try {
+      const socket = getSocket();
+      if (socket) socket.emit('client:new_message', sent);
+    } catch (e) {
+      // ignore socket emit failures
+    }
   } catch (e) {
     console.error('Failed to send message', e);
     alert('Failed to send message');
@@ -182,8 +211,39 @@ const displayClients = (c) => {
   return 'No client listed';
 };
 
+// expose unread helper for template
+const getUnread = (caseId) => {
+  return unreadMap.value[caseId] || 0;
+};
+
 onMounted(() => {
   loadAssignedCases();
+  // initialize socket connection
+  try {
+    initSocket(authStore.token);
+    const socket = getSocket();
+    if (socket) {
+      socket.on('new_message', (msg) => {
+        // avoid duplicates
+        if (!msg || !msg.id) return;
+        if (messages.value.find(m => m.id === msg.id)) return;
+        // if the incoming message belongs to the currently open case, append it
+        if (activeCase.value && msg.case_id === activeCase.value.id) {
+          messages.value.push(msg);
+          nextTick().then(scrollToBottom);
+        }
+      });
+    }
+  } catch (e) {
+    console.debug('Socket init error', e);
+  }
+});
+
+onUnmounted(() => {
+  const socket = getSocket();
+  if (socket) {
+    socket.off('new_message');
+  }
 });
 </script>
 

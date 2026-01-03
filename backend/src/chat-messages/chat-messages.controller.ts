@@ -21,8 +21,14 @@ export class ChatMessagesController {
     return await this.chatMessagesService.findOne(id, req.user);
   }
 
+  @Get()
+  async findAll(@Request() req) {
+    return await this.chatMessagesService.findAll(req.user);
+  }
+
   @Post()
   async create(@Body() createDto: any, @Request() req) {
+    console.debug('[ChatMessagesController] create received body:', JSON.stringify(createDto));
     return await this.chatMessagesService.create(createDto, req.user);
   }
 

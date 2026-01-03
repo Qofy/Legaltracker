@@ -38,7 +38,10 @@
           </span></div>
         </div>
         <div>
-          <button @click.prevent="startConversationForCase(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">Message</button>
+          <div class="flex items-center gap-2">
+            <button @click.prevent="startConversationForCase(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">Message</button>
+            <span v-if="unreadMap[c.id] > 0" class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-600 text-white">{{ unreadMap[c.id] }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -80,7 +83,7 @@
               ? 'bg-blue-600 text-white rounded-br-none'
               : 'bg-gray-100 text-gray-900 rounded-bl-none'
           ]">
-            <p class="text-sm">{{ message.message }}</p>
+            <p class="text-sm">{{ message.content || message.message }}</p>
             <p :class="['text-xs mt-1', message.is_from_customer ? 'text-blue-100' : 'text-gray-500']">
               {{ formatTime(message.created_date) }}
             </p>
@@ -133,11 +136,12 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import { Case, ChatMessage, User } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
 import {SendHorizontal} from "lucide-vue-next"
+import { initSocket, getSocket } from '@/plugins/socket';
 
 const authStore = useAuthStore();
 
@@ -149,6 +153,7 @@ const lawyerName = ref('Your Lawyer');
 const messagesContainer = ref(null);
 const lawyerMap = ref({}); // cached lawyers by case id
 const messageInput = ref(null);
+const unreadMap = ref({});
 
 const loadMyCases = async () => {
   try {
@@ -206,6 +211,8 @@ const loadMyCases = async () => {
       }));
 
       selectedCaseId.value = myCases.value[0].id;
+      // initialize unread map
+      myCases.value.forEach(c => { unreadMap.value[c.id] = unreadMap.value[c.id] || 0; });
       await loadMessages();
     }
   } catch (error) {
@@ -215,10 +222,23 @@ const loadMyCases = async () => {
 
 const startConversationForCase = async (caseItem) => {
   if (!caseItem) return;
+  try {
+    const socket = getSocket();
+    if (socket && selectedCaseId.value) socket.emit('leave_case', selectedCaseId.value);
+  } catch (e) {}
+
   selectedCaseId.value = caseItem.id;
   await loadMessages();
   await nextTick();
   if (messageInput.value) messageInput.value.focus();
+  // join case room
+  try {
+    const socket = getSocket();
+    if (socket && caseItem && caseItem.id) socket.emit('join_case', caseItem.id);
+  } catch (e) {}
+
+  // reset unread for this case
+  if (caseItem && caseItem.id) unreadMap.value[caseItem.id] = 0;
 };
 
 const loadMessages = async () => {
@@ -269,8 +289,7 @@ const sendMessage = async () => {
   try {
     const messageData = {
       case_id: selectedCaseId.value,
-      sender_id: authStore.user?.id,
-      message: newMessage.value.trim(),
+      content: newMessage.value.trim(),
     };
 
     const sentMessage = await ChatMessage.create(messageData);
@@ -286,6 +305,13 @@ const sendMessage = async () => {
     scrollToBottom();
     // focus input
     if (messageInput.value) messageInput.value.focus();
+    // emit via socket so lawyer and other clients receive realtime update
+    try {
+      const socket = getSocket();
+      if (socket) socket.emit('client:new_message', sentMessage);
+    } catch (e) {
+      // ignore socket emit errors
+    }
   } catch (error) {
     console.error('Failed to send message:', error);
     alert('Failed to send message. Please try again.');
@@ -308,5 +334,30 @@ const formatTime = (date) => {
 
 onMounted(() => {
   loadMyCases();
+  try {
+    initSocket(authStore.token);
+    const socket = getSocket();
+    if (socket) {
+      socket.on('new_message', (msg) => {
+        if (!msg || !msg.id) return;
+        // only add if it belongs to the selected case and not a duplicate
+        if (msg.case_id === selectedCaseId.value && !messages.value.find(m => m.id === msg.id)) {
+          messages.value.push({ ...msg, is_from_customer: msg.sender_id === authStore.user?.id });
+          nextTick().then(scrollToBottom);
+        }
+        else if (msg.case_id) {
+          // increment unread count for background cases
+          unreadMap.value[msg.case_id] = (unreadMap.value[msg.case_id] || 0) + 1;
+        }
+      });
+    }
+  } catch (e) {
+    console.debug('Socket init error', e);
+  }
+});
+
+onUnmounted(() => {
+  const socket = getSocket();
+  if (socket) socket.off('new_message');
 });
 </script>

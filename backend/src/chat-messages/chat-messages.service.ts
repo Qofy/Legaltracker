@@ -27,6 +27,16 @@ export class ChatMessagesService {
     });
   }
 
+  async findAll(user: User, limit: number = 500): Promise<ChatMessage[]> {
+    // For now, return all messages the requesting user can access.
+    // In many deployments this should be scoped; keep simple for debugging.
+    return await this.chatMessagesRepository.find({
+      relations: ['sender', 'case'],
+      order: { created_at: 'DESC' },
+      take: limit,
+    });
+  }
+
   async findOne(id: string, user: User): Promise<ChatMessage> {
     const message = await this.chatMessagesRepository.findOne({
       where: { id },
@@ -52,6 +62,10 @@ export class ChatMessagesService {
     if (!canAccess) {
       throw new ForbiddenException('You do not have access to this case chat');
     }
+
+    // debug log to help trace incoming create payloads
+    // eslint-disable-next-line no-console
+    console.debug('[ChatMessagesService.create] createDto:', { case_id, content, message_type, file_url, file_name, senderId: user?.id });
 
     const chatMessage = this.chatMessagesRepository.create({
       content,

@@ -27,6 +27,14 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    const user = await this.usersService.findOne(id);
+    const { password, ...result } = user;
+    return result;
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async updateUser(@Param('id') id: string, @Body() userData: Partial<any>) {
     const user = await this.usersService.update(id, userData);
