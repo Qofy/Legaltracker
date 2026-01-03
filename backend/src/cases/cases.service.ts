@@ -95,7 +95,9 @@ export class CasesService {
       .leftJoinAndSelect('case.shared_users', 'shared_user');
 
     // Apply RLS
-    if (user.user_type === 'admin' || user.user_type === 'lawyer') {
+    if (user.user_type === 'admin') {
+      // Admins can see all cases - no filtering needed
+    } else if (user.user_type === 'lawyer') {
       queryBuilder.where('owner.id = :userId OR shared_user.id = :userId', { userId: user.id });
     } else if (user.user_type === 'customer') {
       queryBuilder.where('customer.id = :userId', { userId: user.id });

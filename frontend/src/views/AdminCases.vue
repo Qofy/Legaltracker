@@ -540,6 +540,14 @@
         </div>
       </DialogContent>
     </Dialog>
+
+    <!-- Case Details Modal -->
+    <AdminCaseDetailsModal
+      v-model:open="showCaseDetailsModal"
+      :case-data="selectedCaseForView"
+      @assign-lawyer="handleModalAssignLawyer"
+      @edit="handleModalEdit"
+    />
   </div>
 </template>
 
@@ -562,6 +570,7 @@ import {
 } from 'lucide-vue-next';
 import NewCaseForm from '@/components/cases/NewCaseForm.vue';
 import AdminCaseCard from '@/components/admin/AdminCaseCard.vue';
+import AdminCaseDetailsModal from '@/components/admin/AdminCaseDetailsModal.vue';
 
 const router = useRouter();
 
@@ -577,6 +586,8 @@ const showBulkActions = ref(false);
 const showNewCase = ref(false);
 const showLawyerAssignment = ref(false);
 const showClientStatusUpdate = ref(false);
+const showCaseDetailsModal = ref(false);
+const selectedCaseForView = ref(null);
 const selectedCases = ref([]);
 const selectAll = ref(false);
 
@@ -739,19 +750,23 @@ const toggleCaseSelection = (caseId, checked) => {
 
 const openLawyerAssignment = (caseItem) => {
   selectedCaseForAssignment.value = caseItem;
-  selectedLawyerId.value = caseItem.assigned_lawyer?.id || '';
+  // Get the first owner (lawyer) if exists
+  const currentOwner = caseItem.owners && caseItem.owners.length > 0 ? caseItem.owners[0] : null;
+  selectedLawyerId.value = currentOwner?.id || '';
   showLawyerAssignment.value = true;
 };
 
 const confirmLawyerAssignment = async () => {
   try {
+    // Assign lawyer by adding them to owners array
     await Case.update(selectedCaseForAssignment.value.id, {
-      assigned_lawyer_id: selectedLawyerId.value
+      owner_ids: [selectedLawyerId.value]
     });
     await loadData(); // Refresh data
     showLawyerAssignment.value = false;
     selectedCaseForAssignment.value = null;
     selectedLawyerId.value = '';
+    alert('Lawyer assigned successfully!');
   } catch (error) {
     console.error('Failed to assign lawyer:', error);
     alert('Failed to assign lawyer. Please try again.');
@@ -805,12 +820,23 @@ const handleStatusUpdate = async (data) => {
 };
 
 const viewCase = (caseItem) => {
-  router.push(`/case-details/${caseItem.id}`);
+  selectedCaseForView.value = caseItem;
+  showCaseDetailsModal.value = true;
 };
 
 const editCase = (caseItem) => {
   // Navigate to edit case or open edit dialog
   router.push(`/case-details/${caseItem.id}?mode=edit`);
+};
+
+const handleModalAssignLawyer = (caseItem) => {
+  showCaseDetailsModal.value = false;
+  openLawyerAssignment(caseItem);
+};
+
+const handleModalEdit = (caseItem) => {
+  showCaseDetailsModal.value = false;
+  editCase(caseItem);
 };
 
 const openCaseActions = (caseItem) => {

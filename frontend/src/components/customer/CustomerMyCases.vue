@@ -184,6 +184,15 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- Submit for Review button for draft cases -->
+            <button
+              v-if="caseItem.status === 'draft'"
+              @click.stop="submitCase(caseItem)"
+              class="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 flex items-center gap-1 font-medium"
+            >
+              <FileText class="w-3 h-3" />
+              Submit for Review
+            </button>
             <button 
               @click.stop="viewCaseDetails(caseItem)"
               class="flex-1 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 transition flex items-center justify-center gap-1"
@@ -244,6 +253,7 @@ const priorityFilter = ref('all');
 // Options for selects
 const statusOptions = [
   { value: 'all', label: 'All Status' },
+  { value: 'draft', label: 'Draft' },
   { value: 'open', label: 'Open' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'closed', label: 'Closed' },
@@ -393,6 +403,27 @@ const viewCaseDetails = (caseItem) => {
 
 const contactLawyer = (caseItem) => {
   emit('contactLawyer', caseItem);
+};
+
+const submitCase = async (caseItem) => {
+  if (!confirm('Are you sure you want to submit this case for legal review? Once submitted, it will be visible to administrators for lawyer assignment.')) {
+    return;
+  }
+  
+  try {
+    await Case.update(caseItem.id, {
+      status: 'open',
+      submitted_at: new Date().toISOString()
+    });
+    
+    // Refresh cases to show updated status
+    await loadMyCases();
+    
+    alert('Case submitted successfully! An administrator will review it and assign a lawyer soon.');
+  } catch (error) {
+    console.error('Failed to submit case:', error);
+    alert('Failed to submit case. Please try again.');
+  }
 };
 
 // Lifecycle

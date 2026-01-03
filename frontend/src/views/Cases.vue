@@ -16,27 +16,25 @@
       <div class="mb-6">
         <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
           <Scale class="w-7 h-7 text-[#003aca]" />
-          Admin Case Management
+          {{ pageTitle }}
         </h2>
         <p class="text-gray-600 mt-1">
-          Oversee all cases, assign lawyers, and manage client statuses
+          {{ pageSubtitle }}
         </p>
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Cases</p>
-            <div class="p-2 bg-blue-50 rounded-lg">
-              <FileText class="w-4 h-4 text-blue-600" />
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Cases</p>
+              <div class="p-2 bg-blue-50 rounded-lg">
+                <FileText class="w-4 h-4 text-blue-600" />
+              </div>
             </div>
-          </div>
-          <p class="text-2xl font-bold text-gray-900">{{ allCases.length }}</p>
-          <p class="text-xs text-gray-500 mt-1">All system cases</p>
-        </div>
-
-        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+            <p class="text-2xl font-bold text-gray-900">{{ displayedCases.length }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ isLawyer ? 'Assigned to you' : 'All system cases' }}</p>
+          </div>        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between mb-2">
             <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Unassigned</p>
             <div class="p-2 bg-red-50 rounded-lg">
@@ -151,6 +149,7 @@
         <!-- Quick Filters -->
         <div class="flex gap-2 flex-wrap">
           <Button
+            v-if="isAdmin"
             @click="setQuickFilter('unassigned')"
             :variant="quickFilter === 'unassigned' ? 'default' : 'outline'"
             size="sm"
@@ -234,6 +233,7 @@
                   <div v-else class="flex items-center gap-2">
                     <Badge class="bg-red-100 text-red-700 border-red-200">Unassigned</Badge>
                     <Button 
+                      v-if="isAdmin"
                       @click="openLawyerAssignment(caseItem)" 
                       size="sm" 
                       variant="outline"
@@ -258,6 +258,7 @@
                       {{ caseItem.client_status || 'satisfied' }}
                     </span>
                     <Button 
+                      v-if="isAdmin"
                       @click="updateClientStatus(caseItem)" 
                       size="sm" 
                       variant="ghost"
@@ -281,7 +282,7 @@
                       <Eye class="w-4 h-4" />
                     </Button>
                     <Button 
-                      v-if="caseItem.assigned_lawyer"
+                      v-if="caseItem.assigned_lawyer && isAdmin"
                       @click="openLawyerAssignment(caseItem)" 
                       size="sm" 
                       variant="ghost"
@@ -376,6 +377,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { format } from 'date-fns';
 import { Case, User } from '@/services/entities';
+import { useAuthStore } from '@/stores/auth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -387,6 +389,7 @@ import {
 } from 'lucide-vue-next';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 // Reactive data
 const isLoading = ref(true);
@@ -412,28 +415,56 @@ const filters = ref({
 });
 
 // Computed properties
+const isAdmin = computed(() => authStore.user?.user_type === 'admin');
+const isLawyer = computed(() => authStore.user?.user_type === 'lawyer');
+
+const pageTitle = computed(() => {
+  if (isAdmin.value) return 'Admin Case Management';
+  if (isLawyer.value) return 'My Assigned Cases';
+  return 'Cases';
+});
+
+const pageSubtitle = computed(() => {
+  if (isAdmin.value) return 'Oversee all cases, assign lawyers, and manage client statuses';
+  if (isLawyer.value) return 'View and manage cases assigned to you';
+  return 'Your cases overview';
+});
+
+const displayedCases = computed(() => {
+  let cases = [...allCases.value];
+  
+  // Filter by user role
+  if (isLawyer.value) {
+    // Lawyers only see cases assigned to them
+    cases = cases.filter(c => c.assigned_lawyer?.id === authStore.user?.id);
+  }
+  // Admin sees all cases by default
+  
+  return cases;
+});
+
 const unassignedCases = computed(() => 
-  allCases.value.filter(c => !c.assigned_lawyer)
+  displayedCases.value.filter(c => !c.assigned_lawyer)
 );
 
 const openCases = computed(() => 
-  allCases.value.filter(c => c.status === 'open')
+  displayedCases.value.filter(c => c.status === 'open')
 );
 
 const inProgressCases = computed(() => 
-  allCases.value.filter(c => c.status === 'in_progress')
+  displayedCases.value.filter(c => c.status === 'in_progress')
 );
 
 const closedCases = computed(() => 
-  allCases.value.filter(c => c.status === 'closed')
+  displayedCases.value.filter(c => c.status === 'closed')
 );
 
 const clientIssues = computed(() => 
-  allCases.value.filter(c => c.client_status === 'needs_attention' || c.client_status === 'at_risk')
+  displayedCases.value.filter(c => c.client_status === 'needs_attention' || c.client_status === 'at_risk')
 );
 
 const filteredCases = computed(() => {
-  let filtered = [...allCases.value];
+  let filtered = [...displayedCases.value];
 
   // Apply quick filter first
   if (quickFilter.value === 'unassigned') {

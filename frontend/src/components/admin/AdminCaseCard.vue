@@ -34,7 +34,7 @@
         <Badge :class="getPriorityColor(caseData.priority)" class="border text-xs">
           {{ caseData.priority?.toUpperCase() || 'MEDIUM' }}
         </Badge>
-        <div v-if="!caseData.assigned_lawyer" class="ml-auto">
+        <div v-if="!hasAssignedLawyer" class="ml-auto">
           <Badge class="bg-red-100 text-red-700 border-red-200 text-xs">
             <AlertTriangle class="w-3 h-3 mr-1" />
             Unassigned
@@ -86,29 +86,38 @@
           </Button>
         </div>
         
-        <div v-if="caseData.assigned_lawyer" class="flex items-center gap-3">
+        <div v-if="assignedLawyer" class="flex items-center gap-3">
           <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
             <span class="text-blue-700 font-semibold text-xs">
-              {{ getInitials(caseData.assigned_lawyer.full_name) }}
+              {{ getInitials(assignedLawyer.full_name) }}
             </span>
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-medium text-gray-900 truncate">
-              {{ caseData.assigned_lawyer.full_name }}
+              {{ assignedLawyer.full_name }}
             </p>
-            <p class="text-xs text-gray-500 truncate">{{ caseData.assigned_lawyer.email }}</p>
+            <p class="text-xs text-gray-500 truncate">{{ assignedLawyer.email }}</p>
+            <Button
+              @click="$emit('assign-lawyer', { case: caseData })"
+              size="sm"
+              variant="ghost"
+              class="mt-1 h-6 text-xs px-2"
+            >
+              <Edit class="w-3 h-3 mr-1" />
+              Reassign
+            </Button>
           </div>
         </div>
-        
+
         <div v-else class="flex items-center gap-2">
           <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
             <UserX class="w-4 h-4 text-gray-400" />
           </div>
           <div class="flex-1">
             <p class="text-sm text-gray-500">No lawyer assigned</p>
-            <Button 
-              @click="$emit('assign-lawyer', { case: caseData })" 
-              size="sm" 
+            <Button
+              @click="$emit('assign-lawyer', { case: caseData })"
+              size="sm"
               variant="outline"
               class="mt-1 h-6 text-xs"
             >
@@ -186,18 +195,19 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  AlertTriangle, UserX, UserCheck, Eye, Edit, Flame, 
-  AlertCircle 
+import {
+  AlertTriangle, UserX, UserCheck, Eye, Edit, Flame,
+  AlertCircle
 } from 'lucide-vue-next';
 
-defineProps({
+const props = defineProps({
   caseData: {
     type: Object,
     required: true
@@ -214,12 +224,23 @@ defineProps({
 
 defineEmits([
   'select',
-  'assign-lawyer', 
+  'assign-lawyer',
   'update-status',
   'update-client-status',
   'view',
   'edit'
 ]);
+
+// Computed property to get the assigned lawyer from owners array
+const assignedLawyer = computed(() => {
+  if (props.caseData.owners && props.caseData.owners.length > 0) {
+    // Get the first lawyer owner
+    return props.caseData.owners.find(owner => owner.user_type === 'lawyer') || props.caseData.owners[0];
+  }
+  return null;
+});
+
+const hasAssignedLawyer = computed(() => !!assignedLawyer.value);
 
 // Utility functions
 const getInitials = (name) => {

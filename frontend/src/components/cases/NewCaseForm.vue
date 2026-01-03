@@ -286,7 +286,13 @@ const formatDate = (d) => {
 const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
-    const dataWithOwner = { ...formData.value, owner_ids: props.currentUser ? [props.currentUser.id] : [] };
+    // Set default status based on user type - customers create drafts, others create open cases
+    const defaultStatus = props.currentUser?.user_type === 'customer' ? 'draft' : 'open';
+    const dataWithOwner = { 
+      ...formData.value, 
+      owner_ids: props.currentUser ? [props.currentUser.id] : [],
+      status: formData.value.status || defaultStatus
+    };
     await props.onSubmit(dataWithOwner);
   } catch (err) {
     // eslint-disable-next-line no-console
