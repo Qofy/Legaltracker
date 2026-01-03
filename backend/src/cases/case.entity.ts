@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../users/user.entity';
 
 @Entity('cases')
@@ -59,6 +59,7 @@ export class Case {
   assigned_lawyer_id: string;
 
   @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'assigned_lawyer_id' })
   assigned_lawyer: User;
 
   // Row-level security relations

@@ -159,7 +159,7 @@
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
             </span>
-            <span class="nav-text">Cases</span>
+            <span class="nav-text">My Tasks</span>
           </button>
 
           <button type="button" @click="selectedView = 'LawyerReports'" :class="['nav-link', {active: selectedView === 'LawyerReports'}]">
@@ -598,10 +598,7 @@ const loadDashboardData = async () => {
 
     let userCases = [];
     if (userData.user_type === 'lawyer' || userData.user_type === 'admin') {
-      // For lawyers and admins, use Case.list() which applies proper backend RLS filtering
-      userCases = await Case.list('-updated_date');
-      // Limit to 10 for dashboard display
-      userCases = userCases.slice(0, 10);
+      userCases = await Case.filter(userData.user_type === 'admin' ? {} : { lawyer_id: userData.id }, '-updated_date', 10);
     } else if (userData.user_type === 'customer') {
       userCases = await Case.list('-updated_date', 10);
       userCases = userCases.filter(c => c.customer_ids?.includes(userData.id));

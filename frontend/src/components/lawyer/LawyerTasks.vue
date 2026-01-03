@@ -15,6 +15,29 @@
       </button>
     </div>
 
+    <!-- Assigned Cases for Lawyer -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Assigned Cases</h3>
+        <router-link to="/my-cases" class="text-sm text-blue-600 hover:underline">See all</router-link>
+      </div>
+
+      <div v-if="cases.length === 0" class="text-sm text-gray-500">You have no assigned cases.</div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-for="c in cases" :key="c.id" class="p-4 border rounded-md flex items-start justify-between">
+          <div>
+            <div class="font-semibold text-gray-900">{{ c.title }}</div>
+            <div class="text-xs text-gray-500 mt-1">Case #: {{ c.case_number || '—' }}</div>
+            <div class="text-xs text-gray-500 mt-1">Status: <span class="font-medium">{{ c.status }}</span></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <router-link :to="{ name: 'CaseDetails', params: { id: c.id } }" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">View</router-link>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Task Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="bg-white rounded-lg border border-gray-200 p-5">
@@ -282,21 +305,63 @@ const filteredTasks = computed(() => {
 const loadTasks = async () => {
   try {
     const userId = authStore.user?.id;
-    if (!userId) return;
+    console.log('Loading tasks for user ID:', userId);
+    if (!userId) {
+      console.log('No user ID found, exiting');
+      return;
+    }
 
-    // Fetch lawyer's cases
-    cases.value = await Case.filter({ lawyer_id: userId });
+    // Fetch lawyer's assigned cases - use Case.list() to get properly filtered cases from backend
+    cases.value = await Case.list();
     const caseIds = cases.value.map(c => c.id);
+
+    console.log('Lawyer assigned cases:', cases.value.length);
+    console.log('Case IDs:', caseIds);
+    console.log('Assigned cases details:', cases.value);
+
+    // Fetch all tasks first to see what's available
+    const allTasks = await ActionItem.list();
+    console.log('Total tasks in system:', allTasks.length);
+    console.log('All tasks:', allTasks);
 
     if (caseIds.length > 0) {
       // Fetch all tasks for lawyer's cases
-      const allTasks = await ActionItem.list();
       tasks.value = allTasks
-        .filter(t => caseIds.includes(t.case_id))
+        .filter(t => {
+          console.log(`Checking task ${t.id} with case_id ${t.case_id} against case IDs:`, caseIds);
+          return caseIds.includes(t.case_id);
+        })
         .map(t => ({
           ...t,
           case_title: cases.value.find(c => c.id === t.case_id)?.title || 'Unknown Case',
         }));
+        
+      console.log('Tasks found for assigned cases:', tasks.value.length);
+      console.log('Filtered tasks:', tasks.value);
+    } else {
+      console.log('No assigned cases found for lawyer');
+      tasks.value = [];
+    }
+    // Merge any locally stored pending tasks (safety fallback)
+    try {
+      const pendingKey = `action_items_pending_${authStore.user?.id}`;
+      const raw = localStorage.getItem(pendingKey);
+      const pending = raw ? JSON.parse(raw) : [];
+      if (pending.length > 0) {
+        console.debug('[LawyerTasks] merging pending local tasks', pending.length);
+        // Add any pending tasks that are not already present
+        const serverIds = tasks.value.map(t => t.id);
+        const toAdd = pending.filter(p => !serverIds.includes(p.id));
+        if (toAdd.length > 0) tasks.value = tasks.value.concat(toAdd.map(p => ({ ...p, case_title: cases.value.find(c => c.id === p.case_id)?.title || 'Unknown Case' })));
+
+        // Remove pending entries that now exist on server
+        const remainingPending = pending.filter(p => !serverIds.includes(p.id));
+        if (remainingPending.length !== pending.length) {
+          localStorage.setItem(pendingKey, JSON.stringify(remainingPending));
+        }
+      }
+    } catch (e) {
+      console.debug('[LawyerTasks] failed to merge pending local tasks', e);
     }
   } catch (error) {
     console.error('Failed to load tasks:', error);
@@ -313,6 +378,20 @@ const createTask = async () => {
     const created = await ActionItem.create(newTask.value);
     const caseTitle = cases.value.find(c => c.id === newTask.value.case_id)?.title || 'Unknown Case';
     tasks.value.push({ ...created, case_title: caseTitle });
+
+    // Save created task to localStorage as a fallback so it survives refreshes
+    try {
+      const pendingKey = `action_items_pending_${authStore.user?.id}`;
+      const raw = localStorage.getItem(pendingKey);
+      const pending = raw ? JSON.parse(raw) : [];
+      // Avoid duplicates
+      if (!pending.find(p => p.id === created.id)) {
+        pending.push({ ...created, case_title: caseTitle });
+        localStorage.setItem(pendingKey, JSON.stringify(pending));
+      }
+    } catch (e) {
+      console.debug('[LawyerTasks] failed to save pending task to localStorage', e);
+    }
 
     // Reset form
     newTask.value = {

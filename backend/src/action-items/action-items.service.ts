@@ -20,7 +20,7 @@ export class ActionItemsService {
   async canAccessActionItem(actionItemId: string, user: User): Promise<boolean> {
     const actionItem = await this.actionItemsRepository.findOne({
       where: { id: actionItemId },
-      relations: ['case', 'case.owners', 'case.customers', 'case.shared_users'],
+      relations: ['case', 'case.owners', 'case.customers', 'case.shared_users', 'case.assigned_lawyer'],
     });
 
     if (!actionItem) return false;
@@ -28,11 +28,13 @@ export class ActionItemsService {
     if (user.user_type === 'admin') return true;
 
     const caseItem = actionItem.case;
+    if (!caseItem) return false;
     const isOwner = caseItem.owners?.some(owner => owner.id === user.id);
     const isCustomer = caseItem.customers?.some(customer => customer.id === user.id);
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
+    const isAssignedLawyer = caseItem.assigned_lawyer?.id === user.id;
 
-    return isOwner || isCustomer || isShared;
+    return isOwner || isCustomer || isShared || isAssignedLawyer;
   }
 
   // Check if user can edit an action item
@@ -41,16 +43,20 @@ export class ActionItemsService {
 
     const actionItem = await this.actionItemsRepository.findOne({
       where: { id: actionItemId },
-      relations: ['case', 'case.owners', 'created_by'],
+      relations: ['case', 'case.owners', 'created_by', 'case.assigned_lawyer'],
     });
 
     if (!actionItem) return false;
 
+    // Ensure case relation exists
+    if (!actionItem.case) return false;
+
     // Action item can be edited by case owners or the creator
     const isOwner = actionItem.case.owners?.some(owner => owner.id === user.id);
     const isCreator = actionItem.created_by?.id === user.id;
+    const isAssignedLawyer = actionItem.case.assigned_lawyer?.id === user.id;
 
-    return isOwner || isCreator;
+    return isOwner || isCreator || isAssignedLawyer;
   }
 
   async create(createActionItemDto: any, user: User): Promise<ActionItem> {
@@ -59,7 +65,7 @@ export class ActionItemsService {
     // Verify user has access to the case
     const caseItem = await this.casesRepository.findOne({
       where: { id: case_id },
-      relations: ['owners', 'customers', 'shared_users'],
+      relations: ['owners', 'customers', 'shared_users', 'assigned_lawyer'],
     });
 
     if (!caseItem) {
@@ -69,10 +75,20 @@ export class ActionItemsService {
     const isOwner = caseItem.owners?.some(owner => owner.id === user.id);
     const isCustomer = caseItem.customers?.some(customer => customer.id === user.id);
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
+    const isAssignedLawyer = caseItem.assigned_lawyer?.id === user.id;
 
-    if (!isOwner && !isCustomer && !isShared && user.user_type !== 'admin') {
+    if (!isOwner && !isCustomer && !isShared && !isAssignedLawyer && user.user_type !== 'admin') {
       throw new ForbiddenException('You do not have permission to create action items for this case');
     }
+
+    // Logging for debugging persistence issues
+    console.debug('[ActionItemsService.create] createActionItemDto:', createActionItemDto);
+    console.debug('[ActionItemsService.create] user:', { id: user?.id, user_type: user?.user_type });
+    console.debug('[ActionItemsService.create] caseItem found:', {
+      id: caseItem?.id,
+      title: caseItem?.title,
+      assigned_lawyer_id: caseItem?.assigned_lawyer?.id,
+    });
 
     const newActionItem = this.actionItemsRepository.create({
       ...actionItemData,
@@ -90,7 +106,14 @@ export class ActionItemsService {
       }
     }
 
-    return await this.actionItemsRepository.save(newActionItem);
+    try {
+      const saved = await this.actionItemsRepository.save(newActionItem);
+      console.debug('[ActionItemsService.create] saved action item:', { id: saved.id, case_id: saved.case_id });
+      return saved;
+    } catch (err) {
+      console.error('[ActionItemsService.create] failed to save action item', { err, payload: newActionItem });
+      throw err;
+    }
   }
 
   async findAll(user: User, filters?: any): Promise<ActionItem[]> {
@@ -100,13 +123,14 @@ export class ActionItemsService {
       .leftJoinAndSelect('case.owners', 'owner')
       .leftJoinAndSelect('case.customers', 'customer')
       .leftJoinAndSelect('case.shared_users', 'shared_user')
+      .leftJoinAndSelect('case.assigned_lawyer', 'assigned_lawyer')
       .leftJoinAndSelect('action_item.assigned_to', 'assigned_to')
       .leftJoinAndSelect('action_item.created_by', 'created_by');
 
     // Apply RLS based on case access
     if (user.user_type !== 'admin') {
       queryBuilder.where(
-        '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
+        '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId OR assigned_lawyer.id = :userId)',
         { userId: user.id }
       );
     }
@@ -174,7 +198,19 @@ export class ActionItemsService {
       }
     }
 
-    return await this.actionItemsRepository.save(actionItem);
+    try {
+      const saved = await this.actionItemsRepository.save(actionItem);
+      return saved;
+    } catch (err) {
+      console.error('[ActionItemsService.update] Failed to save action item', {
+        id,
+        userId: user?.id,
+        payload: updateActionItemDto,
+        actionItemBeforeSave: actionItem,
+        error: err,
+      });
+      throw err;
+    }
   }
 
   async remove(id: string, user: User): Promise<void> {

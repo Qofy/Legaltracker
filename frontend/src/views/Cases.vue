@@ -630,7 +630,7 @@ const filteredCases = computed(() => {
 const loadData = async () => {
   isLoading.value = true;
   try {
-    console.log('Loading cases for user:', authStore.user?.user_type, authStore.user?.full_name);
+    console.log('Loading data from server...');
     const [casesData, lawyersData] = await Promise.all([
       Case.list('-updated_date'),
       User.list().then(users => users.filter(u => u.user_type === 'lawyer'))
@@ -638,11 +638,6 @@ const loadData = async () => {
     
     console.log('Server returned cases:', casesData.length);
     console.log('Cases with assigned lawyers:', casesData.filter(c => c.assigned_lawyer || c.assigned_lawyer_id).length);
-    console.log('First few cases:', casesData.slice(0, 2).map(c => ({
-      title: c.title,
-      assigned_lawyer: c.assigned_lawyer?.full_name,
-      assigned_lawyer_id: c.assigned_lawyer_id
-    })));
     
     allCases.value = casesData;
     lawyers.value = lawyersData;

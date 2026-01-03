@@ -772,10 +772,14 @@ const openLawyerAssignment = (caseItem) => {
 
 const confirmLawyerAssignment = async () => {
   try {
-    // Assign lawyer by adding them to owners array
+    console.log('Assigning lawyer:', selectedLawyerId.value, 'to case:', selectedCaseForAssignment.value.id);
+    // Assign lawyer by updating both owner_ids and assigned_lawyer_id
+    // This ensures compatibility with both RLS systems
     await Case.update(selectedCaseForAssignment.value.id, {
-      owner_ids: [selectedLawyerId.value]
+      owner_ids: [selectedLawyerId.value],
+      assigned_lawyer_id: selectedLawyerId.value
     });
+    console.log('Lawyer assignment saved successfully');
     await loadData(); // Refresh data
     showLawyerAssignment.value = false;
     selectedCaseForAssignment.value = null;
