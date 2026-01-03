@@ -34,7 +34,7 @@ export class CasesService {
   async canAccessCase(caseId: string, user: User): Promise<boolean> {
     const caseItem = await this.casesRepository.findOne({
       where: { id: caseId },
-      relations: ['owners', 'customers', 'shared_users'],
+      relations: ['owners', 'customers', 'shared_users', 'assigned_lawyer'],
     });
 
     if (!caseItem) return false;
@@ -44,8 +44,9 @@ export class CasesService {
     const isOwner = caseItem.owners?.some(owner => owner.id === user.id);
     const isCustomer = caseItem.customers?.some(customer => customer.id === user.id);
     const isShared = caseItem.shared_users?.some(sharedUser => sharedUser.id === user.id);
+    const isAssigned = caseItem.assigned_lawyer && (caseItem.assigned_lawyer.id === user.id || caseItem.assigned_lawyer_id === user.id);
 
-    return isOwner || isCustomer || isShared;
+    return isOwner || isCustomer || isShared || isAssigned;
   }
 
   // Check if user can edit a case
