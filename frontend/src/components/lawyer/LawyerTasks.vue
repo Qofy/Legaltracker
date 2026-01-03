@@ -31,9 +31,9 @@
             <div class="text-xs text-gray-500 mt-1">Case #: {{ c.case_number || '—' }}</div>
             <div class="text-xs text-gray-500 mt-1">Status: <span class="font-medium">{{ c.status }}</span></div>
           </div>
-          <div class="flex items-center gap-2">
-            <router-link :to="{ name: 'CaseDetails', params: { id: c.id } }" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">View</router-link>
-          </div>
+            <div class="flex items-center gap-2">
+              <button @click="openCaseModal(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">View</button>
+            </div>
         </div>
       </div>
     </div>
@@ -235,6 +235,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Case Details Modal -->
+    <div v-if="showCaseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="closeCaseModal">
+      <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Case Details</h3>
+          <div class="flex items-center gap-2">
+            <button @click="openFullCase" class="px-3 py-1 text-sm text-blue-600 hover:underline">Open full case</button>
+            <button @click="closeCaseModal" class="px-3 py-1 text-sm text-gray-600">Close</button>
+          </div>
+        </div>
+        <div v-if="selectedCase">
+          <CaseOverview :case-data="selectedCase" :lawyer="selectedCase.assigned_lawyer || null" :customers="selectedCase.customers || selectedCase.customer_ids || []" />
+        </div>
+        <div v-else class="text-center text-gray-500">No case selected.</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -243,13 +260,21 @@ import { ref, computed, onMounted } from 'vue';
 import { ActionItem, Case } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+import { useRouter } from 'vue-router';
+import CaseOverview from '@/components/casedetails/CaseOverview.vue';
 
 const authStore = useAuthStore();
+
+const router = useRouter();
 
 const activeTab = ref('all');
 const searchQuery = ref('');
 const priorityFilter = ref('');
 const showCreateTask = ref(false);
+
+// Case details modal state
+const showCaseModal = ref(false);
+const selectedCase = ref(null);
 
 const tasks = ref([]);
 const cases = ref([]);
@@ -453,4 +478,29 @@ const getStatusBadge = (status) => {
 onMounted(() => {
   loadTasks();
 });
+
+const openCaseModal = async (c) => {
+  try {
+    // fetch full case details in case we need customers and other nested data
+    const full = await Case.get(c.id);
+    selectedCase.value = full || c;
+  } catch (e) {
+    console.debug('[LawyerTasks] failed to fetch full case details, falling back to case list item', e);
+    selectedCase.value = c;
+  }
+  showCaseModal.value = true;
+};
+
+const closeCaseModal = () => {
+  showCaseModal.value = false;
+  selectedCase.value = null;
+};
+
+const openFullCase = () => {
+  if (!selectedCase.value) return;
+  // capture id before closing modal (closing clears selectedCase)
+  const id = selectedCase.value.id;
+  closeCaseModal();
+  router.push({ name: 'CaseDetails', params: { id } });
+};
 </script>

@@ -82,9 +82,7 @@
             :disabled="!newMessage.trim()"
             class="px-6 py-2 bg-[#003aca] text-white rounded-lg hover:bg-[#0031a0] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
+            <SendHorizontal size="20"/>
             Send
           </button>
         </div>
@@ -117,6 +115,7 @@ import { ref, nextTick, onMounted } from 'vue';
 import { Case, ChatMessage, User } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+import {SendHorizontal} from "lucide-vue-next"
 
 const authStore = useAuthStore();
 
