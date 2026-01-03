@@ -21,7 +21,8 @@
           <li v-for="c in cases" :key="c.id" class="flex items-center justify-between p-2 rounded hover:bg-gray-50">
             <div>
                 <div class="font-medium text-gray-900 text-sm">{{ c.title }}</div>
-              <div class="text-xs text-gray-500">Client: <span class="font-medium">{{ displayClients(c) }}</span></div>
+                <div class="text-xs text-gray-500">Client: <span class="font-medium">{{ displayClients(c) }}</span></div>
+                <div class="text-xs text-gray-400 mt-1">Last: <span class="font-medium">{{ lastMessageMap[c.id] ? formatTime(lastMessageMap[c.id]) : '—' }}</span></div>
             </div>
             <div>
                 <div class="flex items-center gap-2">
@@ -56,13 +57,17 @@
             <div v-if="messages.length === 0" class="text-center text-gray-500 py-8">No messages for this case yet.</div>
 
             <div v-for="m in messages" :key="m.id" :class="['flex', (m.sender_id === authStore.user?.id) ? 'justify-end' : 'justify-start']">
-                <div :class="[
-                  'max-w-2xl px-4 py-3 rounded-lg',
-                  (m.sender_id === authStore.user?.id) ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
-                ]">
-                  <p class="text-sm">{{ m.content || m.message }}</p>
-                  <p class="text-xs mt-1 text-gray-200" v-if="m.sender_id === authStore.user?.id">You • {{ formatTime(m.created_date) }}</p>
-                  <p class="text-xs mt-1 text-gray-500" v-else>{{ getSenderName(m.sender_id) }} • {{ formatTime(m.created_date) }}</p>
+                <div :class="[(m.sender_id === authStore.user?.id) ? 'items-end flex flex-col' : 'items-start flex flex-col']">
+                  <div :class="[
+                    'max-w-2xl px-4 py-3 rounded-lg',
+                    (m.sender_id === authStore.user?.id) ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                  ]">
+                    <p class="text-sm">{{ m.content || m.message }}</p>
+                  </div>
+                  <div class="mt-1">
+                    <p v-if="m.sender_id === authStore.user?.id" class="text-xs text-gray-200">You • {{ formatTime(m.created_date) }}</p>
+                    <p v-else class="text-xs text-gray-500">{{ getSenderName(m.sender_id) }} • {{ formatTime(m.created_date) }}</p>
+                  </div>
                 </div>
             </div>
           </div>
@@ -98,6 +103,7 @@ const newMessage = ref('');
 const messagesContainer = ref(null);
 const messageInput = ref(null);
 const unreadMap = ref({}); // caseId -> count
+const lastMessageMap = ref({}); // caseId -> most recent message created_date
 
 const userCache = ref({}); // cache user names by id
 
@@ -108,6 +114,16 @@ const loadAssignedCases = async () => {
     cases.value = list || [];
     // initialize unreadMap entries for these cases
     cases.value.forEach(c => { unreadMap.value[c.id] = unreadMap.value[c.id] || 0; });
+    // load last message timestamps for cases
+    await Promise.all(cases.value.map(async (c) => {
+      try {
+        const msgs = await ChatMessage.filter({ case_id: c.id }, '-created_date', 1);
+        if (msgs && msgs.length > 0) lastMessageMap.value[c.id] = msgs[0].created_date;
+        else lastMessageMap.value[c.id] = null;
+      } catch (e) {
+        lastMessageMap.value[c.id] = null;
+      }
+    }));
     // preload any nested customer objects or user ids
     const customerIds = new Set();
     cases.value.forEach(c => {
@@ -232,6 +248,8 @@ onMounted(() => {
           messages.value.push(msg);
           nextTick().then(scrollToBottom);
         }
+        // update last message timestamp
+        if (msg.case_id) lastMessageMap.value[msg.case_id] = msg.created_date || msg.created_at || new Date().toISOString();
       });
     }
   } catch (e) {

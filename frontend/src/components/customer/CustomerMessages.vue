@@ -36,6 +36,7 @@
               || (c.lawyer_id || c.assigned_lawyer_id || c.assignedLawyerId || c.lawyerId ? 'Loading...' : 'No lawyer assigned')
             }}
           </span></div>
+          <div class="text-xs text-gray-400 mt-1">Last: <span class="font-medium">{{ lastMessageMap[c.id] ? formatTime(lastMessageMap[c.id]) : '—' }}</span></div>
         </div>
         <div>
           <div class="flex items-center gap-2">
@@ -77,16 +78,18 @@
 
         <div v-else v-for="message in messages" :key="message.id"
              :class="['flex', (message.sender_id === authStore.user?.id) ? 'justify-end' : 'justify-start']">
-          <div :class="[
-            'max-w-sm px-4 py-3 rounded-lg',
-            (message.sender_id === authStore.user?.id)
-              ? 'bg-blue-600 text-white rounded-br-none'
-              : 'bg-gray-100 text-gray-900 rounded-bl-none'
-          ]">
-            <p class="text-sm">{{ message.content || message.message }}</p>
-            <p :class="['text-xs mt-1', (message.sender_id === authStore.user?.id) ? 'text-blue-100' : 'text-gray-500']">
-              {{ formatTime(message.created_date) }}
-            </p>
+          <div :class="[(message.sender_id === authStore.user?.id) ? 'items-end flex flex-col' : 'items-start flex flex-col']">
+            <div :class="[
+              'max-w-sm px-4 py-3 rounded-lg',
+              (message.sender_id === authStore.user?.id)
+                ? 'bg-blue-600 text-white rounded-br-none'
+                : 'bg-gray-100 text-gray-900 rounded-bl-none'
+            ]">
+              <p class="text-sm">{{ message.content || message.message }}</p>
+            </div>
+            <div class="mt-1">
+              <p :class="['text-xs', (message.sender_id === authStore.user?.id) ? 'text-blue-100' : 'text-gray-500']">{{ formatTime(message.created_date) }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -152,6 +155,7 @@ const newMessage = ref('');
 const lawyerName = ref('Your Lawyer');
 const messagesContainer = ref(null);
 const lawyerMap = ref({}); // cached lawyers by case id
+const lastMessageMap = ref({}); // caseId -> most recent message created_date
 const messageInput = ref(null);
 const unreadMap = ref({});
 
@@ -213,6 +217,16 @@ const loadMyCases = async () => {
       selectedCaseId.value = myCases.value[0].id;
       // initialize unread map
       myCases.value.forEach(c => { unreadMap.value[c.id] = unreadMap.value[c.id] || 0; });
+      // load last message timestamps for each case
+      await Promise.all(myCases.value.map(async (c) => {
+        try {
+          const msgs = await ChatMessage.filter({ case_id: c.id }, '-created_date', 1);
+          if (msgs && msgs.length > 0) lastMessageMap.value[c.id] = msgs[0].created_date;
+          else lastMessageMap.value[c.id] = null;
+        } catch (e) {
+          lastMessageMap.value[c.id] = null;
+        }
+      }));
       await loadMessages();
     }
   } catch (error) {
@@ -349,6 +363,8 @@ onMounted(() => {
           // increment unread count for background cases
           unreadMap.value[msg.case_id] = (unreadMap.value[msg.case_id] || 0) + 1;
         }
+        // update last message timestamp for the case
+        if (msg.case_id) lastMessageMap.value[msg.case_id] = msg.created_date || msg.created_at || new Date().toISOString();
       });
     }
   } catch (e) {
