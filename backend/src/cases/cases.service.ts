@@ -92,7 +92,8 @@ export class CasesService {
       .createQueryBuilder('case')
       .leftJoinAndSelect('case.owners', 'owner')
       .leftJoinAndSelect('case.customers', 'customer')
-      .leftJoinAndSelect('case.shared_users', 'shared_user');
+      .leftJoinAndSelect('case.shared_users', 'shared_user')
+      .leftJoinAndSelect('case.assigned_lawyer', 'assigned_lawyer');
 
     // Apply RLS
     if (user.user_type === 'admin') {
@@ -128,7 +129,7 @@ export class CasesService {
   async findOne(id: string, user: User): Promise<Case> {
     const caseItem = await this.casesRepository.findOne({
       where: { id },
-      relations: ['owners', 'customers', 'shared_users'],
+      relations: ['owners', 'customers', 'shared_users', 'assigned_lawyer'],
     });
 
     if (!caseItem) {
@@ -150,10 +151,22 @@ export class CasesService {
     }
 
     const caseItem = await this.findOne(id, user);
-    const { customer_ids, owner_ids, shared_with_users, ...caseData } = updateCaseDto;
+    const { customer_ids, owner_ids, shared_with_users, assigned_lawyer_id, ...caseData } = updateCaseDto;
 
     // Update case data
     Object.assign(caseItem, caseData);
+
+    // Handle assigned lawyer
+    if (assigned_lawyer_id !== undefined) {
+      caseItem.assigned_lawyer_id = assigned_lawyer_id;
+      if (assigned_lawyer_id) {
+        caseItem.assigned_lawyer = await this.usersRepository.findOne({ 
+          where: { id: assigned_lawyer_id } 
+        });
+      } else {
+        caseItem.assigned_lawyer = null;
+      }
+    }
 
     // Update relations if provided
     if (customer_ids !== undefined) {

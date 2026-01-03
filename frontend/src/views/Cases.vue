@@ -332,6 +332,9 @@
                 </td>
                 <td class="p-4">
                   <div v-if="caseItem.assigned_lawyer">
+                    <div class="flex items-center gap-2 mb-1">
+                      <Badge class="bg-green-100 text-green-700 border-green-200 text-xs">Assigned</Badge>
+                    </div>
                     <p class="font-medium text-gray-900">{{ caseItem.assigned_lawyer.full_name }}</p>
                     <p class="text-sm text-gray-500">{{ caseItem.assigned_lawyer.email }}</p>
                   </div>
@@ -552,9 +555,11 @@ const displayedCases = computed(() => {
   return cases;
 });
 
-const unassignedCases = computed(() => 
-  displayedCases.value.filter(c => !c.assigned_lawyer)
-);
+const unassignedCases = computed(() => {
+  const filtered = displayedCases.value.filter(c => !c.assigned_lawyer && !c.assigned_lawyer_id);
+  console.log('Unassigned cases count:', filtered.length);
+  return filtered;
+});
 
 const openCases = computed(() => 
   displayedCases.value.filter(c => c.status === 'open')
@@ -626,10 +631,14 @@ const filteredCases = computed(() => {
 const loadData = async () => {
   isLoading.value = true;
   try {
+    console.log('Loading data from server...');
     const [casesData, lawyersData] = await Promise.all([
       Case.list('-updated_date'),
       User.list().then(users => users.filter(u => u.user_type === 'lawyer'))
     ]);
+    
+    console.log('Server returned cases:', casesData.length);
+    console.log('Cases with assigned lawyers:', casesData.filter(c => c.assigned_lawyer || c.assigned_lawyer_id).length);
     
     allCases.value = casesData;
     lawyers.value = lawyersData;
@@ -664,13 +673,34 @@ const openLawyerAssignment = (caseItem) => {
 
 const confirmLawyerAssignment = async () => {
   try {
-    await Case.update(selectedCaseForAssignment.value.id, {
+    const lawyer = lawyers.value.find(l => l.id === selectedLawyerId.value);
+    const caseId = selectedCaseForAssignment.value.id;
+    
+    console.log('Dialog assignment:', { caseId, lawyerId: selectedLawyerId.value, lawyer: lawyer?.full_name });
+    
+    await Case.update(caseId, {
       assigned_lawyer_id: selectedLawyerId.value
     });
-    await loadData(); // Refresh data
+    
+    // Update the case locally immediately
+    const caseIndex = allCases.value.findIndex(c => c.id === caseId);
+    if (caseIndex !== -1) {
+      allCases.value[caseIndex] = {
+        ...allCases.value[caseIndex],
+        assigned_lawyer: lawyer,
+        assigned_lawyer_id: selectedLawyerId.value
+      };
+    }
+    
     showLawyerAssignment.value = false;
+    const caseName = selectedCaseForAssignment.value.title;
     selectedCaseForAssignment.value = null;
     selectedLawyerId.value = '';
+    
+    // Refresh from server after delay
+    setTimeout(() => loadData(), 500);
+    
+    console.log('Dialog assignment successful');
   } catch (error) {
     console.error('Failed to assign lawyer:', error);
     alert('Failed to assign lawyer. Please try again.');
@@ -718,12 +748,27 @@ const quickAssignLawyer = async (caseId, lawyerId) => {
   if (!lawyerId) return;
   
   try {
-    await Case.update(caseId, { assigned_lawyer_id: lawyerId });
+    // Find lawyer name for confirmation message
+    const lawyer = lawyers.value.find(l => l.id === lawyerId);
+    const caseItem = allCases.value.find(c => c.id === caseId);
+    
+    console.log('Assigning lawyer:', { caseId, lawyerId, lawyer: lawyer?.full_name });
+    
+    // Make the server update first
+    const updateResponse = await Case.update(caseId, { assigned_lawyer_id: lawyerId });
+    console.log('Server update response:', updateResponse);
+    
+    // Reload data from server immediately to see what was saved
     await loadData();
-    // Remove from selection if it was selected
+    
+    // Remove from bulk selection if it was selected
     selectedCasesForBulk.value = selectedCasesForBulk.value.filter(id => id !== caseId);
+    
+    console.log('Assignment completed - check if case still appears in unassigned list');
+    
   } catch (error) {
     console.error('Failed to assign lawyer:', error);
+    console.error('Error details:', error.response?.data || error.message);
     alert('Failed to assign lawyer. Please try again.');
   }
 };
@@ -731,22 +776,40 @@ const quickAssignLawyer = async (caseId, lawyerId) => {
 const bulkAssignUnassigned = async () => {
   if (!bulkAssignLawyer.value || selectedCasesForBulk.value.length === 0) return;
   
-  const confirmed = confirm(`Assign ${selectedCasesForBulk.value.length} cases to the selected lawyer?`);
+  const lawyer = lawyers.value.find(l => l.id === bulkAssignLawyer.value);
+  const confirmed = confirm(`Assign ${selectedCasesForBulk.value.length} cases to ${lawyer?.full_name || 'selected lawyer'}?`);
   if (!confirmed) return;
   
   try {
+    console.log('Bulk assignment:', { lawyerId: bulkAssignLawyer.value, caseIds: selectedCasesForBulk.value, lawyer: lawyer?.full_name });
+    
     const promises = selectedCasesForBulk.value.map(caseId =>
       Case.update(caseId, { assigned_lawyer_id: bulkAssignLawyer.value })
     );
     
     await Promise.all(promises);
-    await loadData();
     
+    // Update cases locally immediately
+    selectedCasesForBulk.value.forEach(caseId => {
+      const caseIndex = allCases.value.findIndex(c => c.id === caseId);
+      if (caseIndex !== -1) {
+        allCases.value[caseIndex] = {
+          ...allCases.value[caseIndex],
+          assigned_lawyer: lawyer,
+          assigned_lawyer_id: bulkAssignLawyer.value
+        };
+      }
+    });
+    
+    const assignedCount = promises.length;
     // Clear selections
     selectedCasesForBulk.value = [];
     bulkAssignLawyer.value = '';
     
-    alert(`Successfully assigned ${promises.length} cases!`);
+    // Refresh from server after delay
+    setTimeout(() => loadData(), 500);
+    
+    console.log('Bulk assignment successful');
   } catch (error) {
     console.error('Failed to bulk assign cases:', error);
     alert('Failed to assign some cases. Please try again.');

@@ -51,6 +51,16 @@ export class Case {
   @Column({ type: 'simple-json', nullable: true })
   tags: string[];
 
+  @Column({ nullable: true })
+  client_status: string; // satisfied, needs_attention, at_risk
+
+  // Assigned lawyer relation
+  @Column({ nullable: true })
+  assigned_lawyer_id: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  assigned_lawyer: User;
+
   // Row-level security relations
   @ManyToMany(() => User)
   @JoinTable({ name: 'case_owners' })
