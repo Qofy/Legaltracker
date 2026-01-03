@@ -22,6 +22,27 @@
       </select>
     </div>
 
+    <!-- Cases & Lawyers quick list -->
+    <div v-if="myCases.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div v-for="c in myCases" :key="c.id" class="bg-white rounded-lg border border-gray-200 p-3 flex items-center justify-between">
+        <div>
+          <div class="font-semibold">{{ c.title }}</div>
+          <div class="text-xs text-gray-500">Case #: {{ c.case_number || '—' }}</div>
+          <div class="text-xs text-gray-500 mt-1">Lawyer: <span class="font-medium">
+            {{
+              (lawyerMap[c.id] && (lawyerMap[c.id].full_name || lawyerMap[c.id].name || lawyerMap[c.id].email))
+              || (c.lawyer && (c.lawyer.full_name || c.lawyer.name))
+              || (c.assigned_lawyer && (c.assigned_lawyer.full_name || c.assigned_lawyer.name))
+              || (c.lawyer_id || c.assigned_lawyer_id || c.assignedLawyerId || c.lawyerId ? 'Loading...' : 'No lawyer assigned')
+            }}
+          </span></div>
+        </div>
+        <div>
+          <button @click.prevent="startConversationForCase(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">Message</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Messages Container -->
     <div class="bg-white rounded-lg border border-gray-200 flex flex-col" style="height: calc(100vh - 300px);">
       <!-- Messages Header -->
@@ -71,6 +92,7 @@
       <div class="p-4 border-t border-gray-200">
         <div class="flex items-end gap-3">
           <textarea
+            ref="messageInput"
             v-model="newMessage"
             @keydown.enter.prevent="sendMessage"
             rows="2"
@@ -125,6 +147,8 @@ const messages = ref([]);
 const newMessage = ref('');
 const lawyerName = ref('Your Lawyer');
 const messagesContainer = ref(null);
+const lawyerMap = ref({}); // cached lawyers by case id
+const messageInput = ref(null);
 
 const loadMyCases = async () => {
   try {
@@ -132,11 +156,55 @@ const loadMyCases = async () => {
     if (!userId) return;
 
     const allCases = await Case.list();
-    myCases.value = allCases.filter(c =>
-      c.customer_ids && Array.isArray(c.customer_ids) && c.customer_ids.includes(userId)
-    );
+    myCases.value = allCases.filter(c => {
+      // support multiple shapes: c.customer_ids (array of ids), c.customers (array of objects), or comma-separated string
+      const customersField = c.customer_ids || c.customers || c.customerIds || c.customers_list;
+      if (Array.isArray(customersField)) {
+        // elements might be ids or objects
+        return customersField.some((item) => {
+          if (!item) return false;
+          if (typeof item === 'string') return item === userId;
+          if (typeof item === 'object') return item.id === userId || item._id === userId;
+          return false;
+        });
+      }
+      if (typeof customersField === 'string') {
+        return customersField.split(',').map(s => s.trim()).includes(userId);
+      }
+      return false;
+    });
+
+    console.debug('[CustomerMessages] myCases loaded:', myCases.value.length, myCases.value.map(c => ({ id: c.id, title: c.title })));
 
     if (myCases.value.length > 0) {
+      // preload lawyer info for each case (if available)
+      // cases may use different field names for assigned lawyer: lawyer_id, assigned_lawyer_id, assignedLawyerId, lawyerId
+      const possibleLawyerField = (c) => c.lawyer_id || c.assigned_lawyer_id || c.assignedLawyerId || c.lawyerId || (c.lawyer && (c.lawyer.id || c.lawyer._id));
+
+      // If case already contains nested lawyer object, use it
+      myCases.value.forEach(c => {
+        if (c.lawyer && (c.lawyer.full_name || c.lawyer.name || c.lawyer.email)) {
+          lawyerMap.value[c.id] = c.lawyer;
+        } else if (c.assigned_lawyer && (c.assigned_lawyer.full_name || c.assigned_lawyer.name)) {
+          lawyerMap.value[c.id] = c.assigned_lawyer;
+        }
+      });
+
+      const uniqueLawyerIds = Array.from(new Set(myCases.value.map(c => possibleLawyerField(c)).filter(Boolean)));
+      console.debug('[CustomerMessages] detected lawyer ids for preload:', uniqueLawyerIds);
+
+      await Promise.all(uniqueLawyerIds.map(async (lid) => {
+        try {
+          const u = await User.get(lid);
+          // assign to any cases that reference this lawyer id in any of the known fields
+          myCases.value.forEach(c => {
+            if (possibleLawyerField(c) === lid) lawyerMap.value[c.id] = u;
+          });
+        } catch (e) {
+          // ignore failures for individual lawyer fetches
+        }
+      }));
+
       selectedCaseId.value = myCases.value[0].id;
       await loadMessages();
     }
@@ -145,19 +213,35 @@ const loadMyCases = async () => {
   }
 };
 
+const startConversationForCase = async (caseItem) => {
+  if (!caseItem) return;
+  selectedCaseId.value = caseItem.id;
+  await loadMessages();
+  await nextTick();
+  if (messageInput.value) messageInput.value.focus();
+};
+
 const loadMessages = async () => {
   try {
     if (!selectedCaseId.value) return;
 
     const selectedCase = myCases.value.find(c => c.id === selectedCaseId.value);
 
-    // Load lawyer name
-    if (selectedCase && selectedCase.lawyer_id) {
-      try {
-        const lawyer = await User.get(selectedCase.lawyer_id);
-        lawyerName.value = lawyer.full_name;
-      } catch (error) {
-        console.error('Failed to load lawyer:', error);
+    // Load lawyer name (use cached lawyer when possible)
+    if (selectedCase) {
+      const cached = lawyerMap.value[selectedCase.id];
+      if (cached) {
+        lawyerName.value = cached.full_name || cached.name || cached.email || 'Your Lawyer';
+      } else if (selectedCase.lawyer_id) {
+        try {
+          const lawyer = await User.get(selectedCase.lawyer_id);
+          lawyerMap.value[selectedCase.id] = lawyer;
+          lawyerName.value = lawyer.full_name || lawyer.name || lawyer.email || 'Your Lawyer';
+        } catch (error) {
+          console.error('Failed to load lawyer:', error);
+        }
+      } else {
+        lawyerName.value = 'No lawyer assigned';
       }
     }
 
@@ -200,6 +284,8 @@ const sendMessage = async () => {
     // Scroll to bottom
     await nextTick();
     scrollToBottom();
+    // focus input
+    if (messageInput.value) messageInput.value.focus();
   } catch (error) {
     console.error('Failed to send message:', error);
     alert('Failed to send message. Please try again.');
