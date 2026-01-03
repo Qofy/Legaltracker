@@ -99,7 +99,11 @@ export class CasesService {
     if (user.user_type === 'admin') {
       // Admins can see all cases - no filtering needed
     } else if (user.user_type === 'lawyer') {
-      queryBuilder.where('owner.id = :userId OR shared_user.id = :userId', { userId: user.id });
+      // Lawyers can see cases they own, are shared with, OR are assigned to
+      queryBuilder.where(
+        'owner.id = :userId OR shared_user.id = :userId OR case.assigned_lawyer_id = :userId', 
+        { userId: user.id }
+      );
     } else if (user.user_type === 'customer') {
       queryBuilder.where('customer.id = :userId', { userId: user.id });
     }

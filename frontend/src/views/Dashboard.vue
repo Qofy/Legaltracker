@@ -598,7 +598,10 @@ const loadDashboardData = async () => {
 
     let userCases = [];
     if (userData.user_type === 'lawyer' || userData.user_type === 'admin') {
-      userCases = await Case.filter(userData.user_type === 'admin' ? {} : { lawyer_id: userData.id }, '-updated_date', 10);
+      // For lawyers and admins, use Case.list() which applies proper backend RLS filtering
+      userCases = await Case.list('-updated_date');
+      // Limit to 10 for dashboard display
+      userCases = userCases.slice(0, 10);
     } else if (userData.user_type === 'customer') {
       userCases = await Case.list('-updated_date', 10);
       userCases = userCases.filter(c => c.customer_ids?.includes(userData.id));
