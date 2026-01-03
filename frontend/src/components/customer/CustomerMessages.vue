@@ -76,15 +76,15 @@
         </div>
 
         <div v-else v-for="message in messages" :key="message.id"
-             :class="['flex', message.is_from_customer ? 'justify-end' : 'justify-start']">
+             :class="['flex', (message.sender_id === authStore.user?.id) ? 'justify-end' : 'justify-start']">
           <div :class="[
             'max-w-sm px-4 py-3 rounded-lg',
-            message.is_from_customer
+            (message.sender_id === authStore.user?.id)
               ? 'bg-blue-600 text-white rounded-br-none'
               : 'bg-gray-100 text-gray-900 rounded-bl-none'
           ]">
             <p class="text-sm">{{ message.content || message.message }}</p>
-            <p :class="['text-xs mt-1', message.is_from_customer ? 'text-blue-100' : 'text-gray-500']">
+            <p :class="['text-xs mt-1', (message.sender_id === authStore.user?.id) ? 'text-blue-100' : 'text-gray-500']">
               {{ formatTime(message.created_date) }}
             </p>
           </div>

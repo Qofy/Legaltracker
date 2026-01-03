@@ -55,10 +55,10 @@
           <div v-else>
             <div v-if="messages.length === 0" class="text-center text-gray-500 py-8">No messages for this case yet.</div>
 
-            <div v-for="m in messages" :key="m.id" :class="['flex', m.sender_id === authStore.user?.id ? 'justify-end' : 'justify-start']">
+            <div v-for="m in messages" :key="m.id" :class="['flex', (m.sender_id === authStore.user?.id) ? 'justify-end' : 'justify-start']">
                 <div :class="[
                   'max-w-2xl px-4 py-3 rounded-lg',
-                  m.sender_id === authStore.user?.id ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                  (m.sender_id === authStore.user?.id) ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
                 ]">
                   <p class="text-sm">{{ m.content || m.message }}</p>
                   <p class="text-xs mt-1 text-gray-200" v-if="m.sender_id === authStore.user?.id">You • {{ formatTime(m.created_date) }}</p>
