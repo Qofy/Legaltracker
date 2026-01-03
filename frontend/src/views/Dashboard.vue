@@ -162,6 +162,15 @@
             <span class="nav-text">My Tasks</span>
           </button>
 
+          <button type="button" @click="selectedView = 'LawyerMessages'" :class="['nav-link', {active: selectedView === 'LawyerMessages'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Messages</span>
+          </button>
+
           <button type="button" @click="selectedView = 'LawyerReports'" :class="['nav-link', {active: selectedView === 'LawyerReports'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -478,6 +487,8 @@
 
       <LawyerTasks v-else-if="selectedView === 'LawyerTasks' && isLawyer" />
 
+      <LawyerMessages v-else-if="selectedView === 'LawyerMessages' && isLawyer" />
+
       <LawyerReports v-else-if="selectedView === 'LawyerReports' && isLawyer" />
 
       <!-- Customer Views -->
@@ -550,6 +561,7 @@ import LawyerOverview from '@/components/lawyer/LawyerOverview.vue';
 import LawyerCalendar from '@/components/lawyer/LawyerCalendar.vue';
 import LawyerTasks from '@/components/lawyer/LawyerTasks.vue';
 import LawyerReports from '@/components/lawyer/LawyerReports.vue';
+import LawyerMessages from '@/components/lawyer/LawyerMessages.vue';
 import CustomerOverview from '@/components/customer/CustomerOverview.vue';
 import CustomerMyCases from '@/components/customer/CustomerMyCases.vue';
 import CustomerCaseDetails from '@/components/customer/CustomerCaseDetails.vue';
