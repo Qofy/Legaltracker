@@ -584,6 +584,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { Case, Comment, ActionItem } from '@/services/entities';
 import { User } from '@/services/entities';
+import { useTheme } from '@/stores/useTheme'
 import { createPageUrl } from '@/utils';
 import { useAuthStore } from '@/stores/auth';
 import { FileText, MessageCircle, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar, Plus, Scale, House, Users as UsersIcon, Settings as SettingsIcon, HelpCircle, File, Search, UserIcon, ChevronDown } from 'lucide-vue-next';
@@ -654,6 +655,9 @@ const loadDashboardData = async () => {
   try {
     const userData = await User.me();
     user.value = userData;
+
+      // inform theme store of the current user's role so theme is applied only for admins
+      try { const themeStore = useTheme(); themeStore.setRole(userData.user_type) } catch (e) {}
 
     // Default the selected view based on the authenticated user's role.
     // This ensures customers land on the customer dashboard after a browser refresh.

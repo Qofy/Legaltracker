@@ -305,7 +305,7 @@
                   <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
               </div>
-              <div class="mt-4">
+              <div v-if="user?.user_type === 'admin'" class="mt-4">
                 <Label for="theme_preference">Theme</Label>
                 <div class="mt-2 grid grid-cols-3 gap-2">
                   <button
@@ -407,6 +407,9 @@ const loadUserSettings = async () => {
   try {
     const userData = await User.me();
     user.value = userData;
+
+    // inform theme store about the current user's role so dark mode only applies to admins
+    try { const themeStoreLocal = useTheme(); themeStoreLocal.setRole(userData.user_type) } catch (e) {}
 
     settings.value = {
       ...settings.value,
