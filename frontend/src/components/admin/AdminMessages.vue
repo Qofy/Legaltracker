@@ -1,220 +1,407 @@
 <template>
-  <div class="flex h-full min-h-screen">
-    <!-- Conversations list -->
-    <aside class="w-80 border-r border-gray-200 bg-white p-4">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold">Conversations</h3>
-          <Button size="sm" variant="ghost" @click="refresh">Refresh</Button>
+  <div class="flex h-[calc(100vh-12rem)] bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+    <!-- Users List Sidebar -->
+    <div class="w-80 border-r border-gray-200 flex flex-col">
+      <!-- Header -->
+      <div class="p-4 border-b border-gray-200 bg-gray-50">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <MessageSquare class="w-5 h-5 text-blue-600" />
+          Messages
+        </h2>
+        <p class="text-xs text-gray-500 mt-1">Select a user to start messaging</p>
+      </div>
+
+      <!-- Search Users -->
+      <div class="p-3 border-b border-gray-200">
+        <div class="relative">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search users..."
+            class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
         </div>
+      </div>
 
-        <!-- Select lawyer and client to open their case conversation -->
-        <div class="mb-3 space-y-2">
-          <div class="text-xs text-gray-500">Pick Lawyer</div>
-          <select v-model="selectedLawyerId" class="w-full px-2 py-1 border rounded-md bg-white">
-            <option value="">— Select lawyer —</option>
-            <option v-for="l in lawyers" :key="l.id" :value="l.id">{{ l.full_name || l.name || l.email }}</option>
-          </select>
-
-          <div class="text-xs text-gray-500">Pick Client</div>
-          <select v-model="selectedClientId" class="w-full px-2 py-1 border rounded-md bg-white">
-            <option value="">— Select client —</option>
-            <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.full_name || c.name || c.email }}</option>
-          </select>
-
-          <div class="flex gap-2">
-            <Button size="sm" @click="openSelectedPair">Open Conversation</Button>
-            <Button size="sm" variant="outline" @click="clearSelection">Clear</Button>
-          </div>
+      <!-- Users List -->
+      <div class="flex-1 overflow-y-auto">
+        <div v-if="isLoadingUsers" class="p-4 text-center text-sm text-gray-500">
+          Loading users...
         </div>
-
-        <div class="space-y-2 overflow-y-auto" style="max-height: calc(100vh - 240px);">
-        <div
-          v-for="conv in conversations"
-          :key="conv.caseId || conv.id"
-          @click="selectConversation(conv)
-          "
-          :class="['p-3 rounded-md cursor-pointer flex items-start gap-3', selectedCaseId === conv.caseId ? 'bg-blue-50' : 'hover:bg-gray-100']"
-        >
-          <div class="flex-1">
-            <div class="flex items-center justify-between">
-              <div class="font-medium text-sm">{{ conv.title || ('Case ' + conv.caseId) }}</div>
-              <div class="text-xs text-gray-500">{{ conv.count }}</div>
+        <div v-else-if="filteredUsers.length === 0" class="p-4 text-center text-sm text-gray-500">
+          No users found
+        </div>
+        <div v-else>
+          <button
+            v-for="user in filteredUsers"
+            :key="user.id"
+            @click="selectUser(user)"
+            :class="[
+              'w-full p-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-100',
+              selectedUser?.id === user.id ? 'bg-blue-50 hover:bg-blue-50' : ''
+            ]"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                {{ getUserInitials(user) }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-medium text-gray-900 truncate">{{ user.full_name }}</p>
+                  <span
+                    :class="[
+                      'px-2 py-0.5 text-xs rounded-full',
+                      user.user_type === 'lawyer' ? 'bg-purple-100 text-purple-700' :
+                      user.user_type === 'customer' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
+                    ]"
+                  >
+                    {{ user.user_type }}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+              </div>
             </div>
-            <div class="text-xs text-gray-500 truncate mt-1">{{ conv.lastMessagePreview }}</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col">
+      <!-- No User Selected -->
+      <div v-if="!selectedUser" class="flex-1 flex items-center justify-center text-gray-400">
+        <div class="text-center">
+          <MessageCircle class="w-16 h-16 mx-auto mb-3 opacity-50" />
+          <p class="text-lg font-medium">Select a user to start messaging</p>
+          <p class="text-sm mt-1">Choose from the list on the left</p>
+        </div>
+      </div>
+
+      <!-- Chat with Selected User -->
+      <template v-else>
+        <!-- Chat Header -->
+        <div class="p-4 border-b border-gray-200 bg-gray-50">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+              {{ getUserInitials(selectedUser) }}
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">{{ selectedUser.full_name }}</p>
+              <p class="text-xs text-gray-500">{{ selectedUser.email }}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
 
-    <!-- Chat area -->
-    <section class="flex-1 flex flex-col bg-gray-50">
-      <div class="p-4 border-b bg-white">
-        <h3 class="text-lg font-semibold">{{ currentConversationTitle }}</h3>
-        <p class="text-sm text-gray-500">Messages for selected conversation</p>
-      </div>
+        <!-- Messages List -->
+        <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div v-if="isLoadingMessages" class="text-center text-sm text-gray-500">
+            Loading messages...
+          </div>
+          <div v-else-if="currentMessages.length === 0" class="text-center text-sm text-gray-500 py-8">
+            No messages yet. Start the conversation!
+          </div>
+          <div v-else v-for="message in currentMessages" :key="message.id" class="flex items-start gap-3">
+            <!-- Message from others -->
+            <div v-if="message.sender_id !== currentUserId" class="flex-1">
+              <div class="flex items-start gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                  {{ getUserInitials(message.sender || selectedUser) }}
+                </div>
+                <div class="flex-1">
+                  <div class="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-200 max-w-md">
+                    <p class="text-sm text-gray-900">{{ message.content }}</p>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1 ml-1">{{ formatMessageTime(message.created_at) }}</p>
+                </div>
+              </div>
+            </div>
 
-      <div class="flex-1 overflow-y-auto p-4" ref="messagesContainer">
-        <div v-if="messages.length === 0" class="flex items-center justify-center h-full text-gray-500">
-          <p>No messages for this conversation.</p>
-        </div>
-        <div v-else class="space-y-3">
-          <div v-for="m in messages" :key="m.id" class="p-3 rounded-md" :class="m.sender_id === me?.id ? 'bg-blue-600 text-white self-end' : 'bg-white text-gray-800'">
-            <div class="text-xs text-gray-500 mb-1">{{ formatDate(m.created_at) }} — {{ m.sender_name || m.sender_id }}</div>
-            <div class="whitespace-pre-wrap">{{ m.content }}</div>
+            <!-- Message from admin (current user) -->
+            <div v-else class="flex-1 flex justify-end">
+              <div class="flex items-start gap-2 flex-row-reverse">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                  {{ getUserInitials(message.sender || currentUser) }}
+                </div>
+                <div class="flex-1 flex flex-col items-end">
+                  <div class="bg-blue-600 text-white rounded-lg rounded-tr-none p-3 shadow-sm max-w-md relative">
+                    <!-- Yellow Star Indicator for Admin -->
+                    <div class="absolute -top-2 -right-2">
+                      <Star class="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
+                    </div>
+                    <p class="text-sm">{{ message.content }}</p>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="p-4 bg-white border-t">
-        <div class="flex items-center gap-2">
-          <input v-model="newMessage" @keydown.enter="sendMessage" placeholder="Type a message and press Enter" class="flex-1 px-3 py-2 border rounded-md bg-white" />
-          <Button @click="sendMessage">Send</Button>
+        <!-- Message Input -->
+        <div class="p-4 border-t border-gray-200 bg-white">
+          <div class="flex items-end gap-3">
+            <div class="flex-1">
+              <textarea
+                v-model="newMessage"
+                @keydown.enter.exact.prevent="sendMessage"
+                placeholder="Type your message... (Press Enter to send)"
+                rows="2"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              ></textarea>
+            </div>
+            <button
+              @click="sendMessage"
+              :disabled="!newMessage.trim() || isSending"
+              class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Send class="w-4 h-4" />
+              <span>Send</span>
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+            <Star class="w-3 h-3 text-yellow-400 fill-yellow-400" />
+            Messages from admin are marked with a yellow star
+          </p>
         </div>
-      </div>
-    </section>
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue'
-import { ChatMessage } from '@/services/entities'
-import { Case, User } from '@/services/entities'
-import { Button } from '@/components/ui/button'
-import { format } from 'date-fns'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { User, DirectMessage } from '@/services/entities';
+import { useAuthStore } from '@/stores/auth';
+import { MessageSquare, MessageCircle, Search, Send, Star } from 'lucide-vue-next';
+import { format } from 'date-fns';
 
-const conversations = ref([])
-const selectedCaseId = ref(null)
-const casesList = ref([])
-const messages = ref([])
-const me = ref(null)
-const newMessage = ref('')
-const messagesContainer = ref(null)
-const lawyers = ref([])
-const clients = ref([])
-const selectedLawyerId = ref('')
-const selectedClientId = ref('')
+const authStore = useAuthStore();
 
-const currentConversationTitle = computed(() => {
-  const conv = conversations.value.find(c => c.caseId === selectedCaseId.value)
-  return conv ? (conv.title || ('Case ' + conv.caseId)) : '—'
-})
+const currentUser = ref(null);
+const currentUserId = computed(() => authStore.user?.id || currentUser.value?.id);
 
-const formatDate = (d) => {
-  try { return format(new Date(d), 'PPP p') } catch (e) { return d }
-}
+const users = ref([]);
+const selectedUser = ref(null);
+const searchQuery = ref('');
+const messages = ref([]);
+const newMessage = ref('');
+const isLoadingUsers = ref(true);
+const isLoadingMessages = ref(false);
+const isSending = ref(false);
+const messagesContainer = ref(null);
+let pollingInterval = null;
 
-const buildConversations = (casesList, msgs) => {
-  const map = new Map()
-  msgs.forEach(m => {
-    const cid = m.case_id || 'none'
-    if (!map.has(cid)) map.set(cid, { caseId: cid, count: 0, lastMessageAt: 0, lastMessagePreview: '', title: '' })
-    const item = map.get(cid)
-    item.count += 1
-    if (new Date(m.created_at).getTime() > item.lastMessageAt) {
-      item.lastMessageAt = new Date(m.created_at).getTime()
-      item.lastMessagePreview = m.content.substring(0, 120)
-    }
-  })
-  // enrich with case titles
-  const out = []
-  for (const [cid, val] of map.entries()) {
-    const c = casesList.find(x => String(x.id) === String(cid))
-    val.title = c ? (c.case_number + ' — ' + c.title) : (cid === 'none' ? 'General' : ('Case ' + cid))
-    out.push(val)
+// Filtered users based on search
+const filteredUsers = computed(() => {
+  if (!searchQuery.value.trim()) return users.value;
+  const query = searchQuery.value.toLowerCase();
+  return users.value.filter(user =>
+    user.full_name?.toLowerCase().includes(query) ||
+    user.email?.toLowerCase().includes(query)
+  );
+});
+
+// Messages for current conversation
+const currentMessages = computed(() => {
+  if (!selectedUser.value) return [];
+
+  // Filter messages between admin and selected user
+  return messages.value
+    .filter(msg => {
+      const isBetweenUsers =
+        (msg.sender_id === currentUserId.value && msg.recipient_id === selectedUser.value.id) ||
+        (msg.sender_id === selectedUser.value.id && msg.recipient_id === currentUserId.value);
+      return isBetweenUsers;
+    })
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+});
+
+const getUserInitials = (user) => {
+  if (!user) return '?';
+  const names = (user.full_name || user.email || '?').split(' ');
+  if (names.length >= 2) {
+    return (names[0][0] + names[1][0]).toUpperCase();
   }
-  // sort by lastMessageAt desc
-  out.sort((a,b) => b.lastMessageAt - a.lastMessageAt)
-  conversations.value = out
-}
+  return (names[0][0] || '?').toUpperCase();
+};
 
-const load = async () => {
+const formatMessageTime = (timestamp) => {
+  if (!timestamp) return '';
   try {
-    me.value = await User.me()
-    const [casesRes, allMessages, lawyersRes, clientsRes] = await Promise.all([
-      Case.list(),
-      ChatMessage.list('-created_date'),
-      User.filter({ user_type: 'lawyer' }),
-      User.filter({ user_type: 'customer' })
-    ])
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
 
-    casesList.value = casesRes || []
-    lawyers.value = lawyersRes || []
-    clients.value = clientsRes || []
-    buildConversations(casesList.value, allMessages || [])
-  } catch (err) {
-    console.error('Failed to load admin messages:', err)
+    if (diffInHours < 24) {
+      return format(date, 'h:mm a');
+    } else if (diffInHours < 48) {
+      return 'Yesterday ' + format(date, 'h:mm a');
+    } else {
+      return format(date, 'MMM d, h:mm a');
+    }
+  } catch (e) {
+    return '';
   }
-}
+};
 
-const clearSelection = () => {
-  selectedLawyerId.value = ''
-  selectedClientId.value = ''
-}
+const loadUsers = async () => {
+  isLoadingUsers.value = true;
+  try {
+    currentUser.value = await User.me();
+    const allUsers = await User.list();
 
-const openSelectedPair = async () => {
-  if (!selectedLawyerId.value || !selectedClientId.value) {
-    alert('Please select both a lawyer and a client')
-    return
+    // Filter out current admin user and only show lawyers and customers
+    users.value = allUsers.filter(u =>
+      u.id !== currentUserId.value &&
+      (u.user_type === 'lawyer' || u.user_type === 'customer')
+    );
+
+    console.log('Loaded users for messaging:', users.value.length);
+  } catch (error) {
+    console.error('Failed to load users:', error);
+  } finally {
+    isLoadingUsers.value = false;
   }
-
-  // try to find an existing case that links the chosen lawyer and client
-  const found = casesList.value.find(c => {
-    const lawMatch = String(c.lawyer_id) === String(selectedLawyerId.value) || String(c.assigned_lawyer_id) === String(selectedLawyerId.value)
-    const custIds = (c.customer_ids || []).map(x => String(x))
-    const ownerIds = (c.owner_ids || []).map(x => String(x))
-    const clientMatch = custIds.includes(String(selectedClientId.value)) || ownerIds.includes(String(selectedClientId.value))
-    return lawMatch && clientMatch
-  })
-
-  if (found) {
-    selectedCaseId.value = found.id
-    await loadMessages()
-  } else {
-    alert('No case found linking the selected lawyer and client.')
-  }
-}
-
-const selectConversation = async (conv) => {
-  selectedCaseId.value = conv.caseId
-  await loadMessages()
-}
+};
 
 const loadMessages = async () => {
-  if (!selectedCaseId.value) { messages.value = []; return }
+  isLoadingMessages.value = true;
   try {
-    const msgs = await ChatMessage.filter({ case_id: selectedCaseId.value }, '-created_at')
-    messages.value = msgs || []
-    await nextTick()
-    if (messagesContainer.value) messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  } catch (err) {
-    console.error('Failed to load messages for case:', err)
+    // Load all messages from the backend
+    const allMessages = await DirectMessage.list();
+    messages.value = allMessages || [];
+    console.log('Loaded messages from backend:', messages.value.length);
+  } catch (error) {
+    console.error('Failed to load messages:', error);
+    messages.value = [];
+  } finally {
+    isLoadingMessages.value = false;
   }
-}
+};
+
+const selectUser = async (user) => {
+  selectedUser.value = user;
+  isLoadingMessages.value = true;
+
+  try {
+    // Load conversation with this specific user
+    const conversation = await DirectMessage.getConversation(user.id);
+    messages.value = conversation || [];
+    console.log('Loaded conversation with', user.full_name, ':', messages.value.length, 'messages');
+  } catch (error) {
+    console.error('Failed to load conversation:', error);
+  } finally {
+    isLoadingMessages.value = false;
+  }
+
+  await nextTick();
+  scrollToBottom();
+};
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || !selectedCaseId.value) return
+  if (!newMessage.value.trim() || !selectedUser.value || isSending.value) return;
+
+  isSending.value = true;
   try {
-    const payload = {
-      case_id: selectedCaseId.value,
+    // Send message to backend
+    const sentMessage = await DirectMessage.create({
       content: newMessage.value.trim(),
-      sender_id: me.value?.id
-    }
-    await ChatMessage.create(payload)
-    newMessage.value = ''
-    await loadMessages()
-  } catch (err) {
-    console.error('Failed to send message:', err)
+      recipient_id: selectedUser.value.id,
+      message_type: 'text'
+    });
+
+    // Add the sent message to the local array
+    messages.value.push(sentMessage);
+
+    newMessage.value = '';
+
+    await nextTick();
+    scrollToBottom();
+
+    console.log('Message sent to', selectedUser.value.full_name);
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    alert('Failed to send message. Please try again.');
+  } finally {
+    isSending.value = false;
   }
-}
+};
 
-const refresh = () => load()
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+};
 
-onMounted(() => {
-  load()
-})
+// Auto-refresh messages when a user is selected
+const startPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+
+  // Poll every 3 seconds for new messages
+  pollingInterval = setInterval(async () => {
+    if (selectedUser.value) {
+      try {
+        const conversation = await DirectMessage.getConversation(selectedUser.value.id);
+        messages.value = conversation || [];
+      } catch (error) {
+        console.error('Failed to refresh messages:', error);
+      }
+    }
+  }, 3000);
+};
+
+const stopPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+};
+
+// Watch for user selection to start/stop polling
+watch(() => selectedUser.value, (newUser) => {
+  if (newUser) {
+    startPolling();
+  } else {
+    stopPolling();
+  }
+});
+
+// Watch for new messages and scroll to bottom
+watch(() => currentMessages.value.length, async () => {
+  await nextTick();
+  scrollToBottom();
+});
+
+onMounted(async () => {
+  await loadUsers();
+  await loadMessages();
+});
+
+onUnmounted(() => {
+  stopPolling();
+});
 </script>
 
 <style scoped>
-.bg-blue-50 { background-color: rgba(96,165,250,0.08) }
-.bg-white { background-color: var(--lt-card) }
+/* Custom scrollbar for messages */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 </style>

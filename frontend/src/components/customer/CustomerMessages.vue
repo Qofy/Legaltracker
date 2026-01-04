@@ -8,10 +8,38 @@
           </svg>
           Messages
         </h2>
-        <p class="text-gray-500 mt-1">Communicate with your lawyer</p>
+        <p class="text-gray-500 mt-1">Communicate with your lawyer and admin</p>
       </div>
     </div>
 
+    <!-- Tabs -->
+    <div class="flex gap-2 border-b border-gray-200">
+      <button
+        @click="activeTab = 'cases'"
+        :class="[
+          'px-4 py-2 font-medium text-sm transition-colors',
+          activeTab === 'cases'
+            ? 'text-blue-600 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800'
+        ]"
+      >
+        Lawyer Messages
+      </button>
+      <button
+        @click="activeTab = 'admin'"
+        :class="[
+          'px-4 py-2 font-medium text-sm transition-colors',
+          activeTab === 'admin'
+            ? 'text-blue-600 border-b-2 border-blue-600'
+            : 'text-gray-600 hover:text-gray-800'
+        ]"
+      >
+        Admin Messages
+      </button>
+    </div>
+
+    <!-- Case Messages Tab -->
+    <div v-if="activeTab === 'cases'" class="space-y-6">
     <!-- Case Selection -->
     <div v-if="myCases.length > 1" class="bg-white rounded-lg border border-gray-200 p-4">
       <label class="block text-sm font-medium text-gray-700 mb-2">Select Case</label>
@@ -135,18 +163,123 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Admin Messages Tab -->
+    <div v-else-if="activeTab === 'admin'" class="flex h-[calc(100vh-20rem)] bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div class="flex-1 flex flex-col">
+        <!-- Chat Header -->
+        <div class="p-4 border-b border-gray-200 bg-gray-50">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+              A
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Admin</p>
+              <p class="text-xs text-gray-500">Direct messages with administrator</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages List -->
+        <div ref="adminMessagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          <div v-if="isLoadingAdminMessages" class="text-center text-sm text-gray-500">
+            Loading messages...
+          </div>
+          <div v-else-if="adminMessages.length === 0" class="text-center text-sm text-gray-500 py-8">
+            No messages yet. Admin hasn't sent you any messages.
+          </div>
+          <div v-else v-for="message in adminMessages" :key="message.id" class="flex items-start gap-3">
+            <!-- Message from admin -->
+            <div v-if="message.sender_id !== currentUserId" class="flex-1">
+              <div class="flex items-start gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                  A
+                </div>
+                <div class="flex-1">
+                  <div class="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-200 max-w-md relative">
+                    <!-- Yellow Star Indicator for Admin -->
+                    <div class="absolute -top-2 -left-2">
+                      <Star class="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
+                    </div>
+                    <p class="text-sm text-gray-900">{{ message.content }}</p>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1 ml-1">{{ formatMessageTime(message.created_at) }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message from customer (current user) -->
+            <div v-else class="flex-1 flex justify-end">
+              <div class="flex items-start gap-2 flex-row-reverse">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                  {{ getUserInitials(authStore.user) }}
+                </div>
+                <div class="flex-1 flex flex-col items-end">
+                  <div class="bg-blue-600 text-white rounded-lg rounded-tr-none p-3 shadow-sm max-w-md">
+                    <p class="text-sm">{{ message.content }}</p>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="p-4 border-t border-gray-200 bg-white">
+          <div class="flex items-end gap-3">
+            <div class="flex-1">
+              <textarea
+                v-model="newAdminMessage"
+                @keydown.enter.exact.prevent="sendAdminMessage"
+                placeholder="Type your message to admin... (Press Enter to send)"
+                rows="2"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              ></textarea>
+            </div>
+            <button
+              @click="sendAdminMessage"
+              :disabled="!newAdminMessage.trim() || isSendingAdmin"
+              class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Send class="w-4 h-4" />
+              <span>Send</span>
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+            <Star class="w-3 h-3 text-yellow-400 fill-yellow-400" />
+            Messages from admin are marked with a yellow star
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, onUnmounted } from 'vue';
-import { Case, ChatMessage, User } from '@/services/entities';
+import { ref, nextTick, onMounted, onUnmounted, computed, watch } from 'vue';
+import { Case, ChatMessage, DirectMessage, User } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
-import {SendHorizontal} from "lucide-vue-next"
+import { SendHorizontal, Star, Send } from "lucide-vue-next"
 import { initSocket, getSocket } from '@/plugins/socket';
 
 const authStore = useAuthStore();
+
+// Tab state
+const activeTab = ref('cases');
+
+// Admin messages state
+const adminMessages = ref([]);
+const newAdminMessage = ref('');
+const adminMessagesContainer = ref(null);
+const isLoadingAdminMessages = ref(false);
+const isSendingAdmin = ref(false);
+let adminPollingInterval = null;
+const adminUser = ref(null);
+
+const currentUserId = computed(() => authStore.user?.id);
 
 const myCases = ref([]);
 const selectedCaseId = ref('');
@@ -279,14 +412,10 @@ const loadMessages = async () => {
       }
     }
 
-    // Load messages for this case
-    const allMessages = await ChatMessage.list('-created_date');
+    const mapMsg = (m) => ({ ...normalizeMessage(m), is_from_customer: m.sender_id === authStore.user?.id });
     messages.value = allMessages
       .filter(m => m.case_id === selectedCaseId.value)
-      .map(m => ({
-        ...m,
-        is_from_customer: m.sender_id === authStore.user?.id,
-      }))
+      .map(mapMsg)
       .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
     // Scroll to bottom
@@ -307,10 +436,7 @@ const sendMessage = async () => {
     };
 
     const sentMessage = await ChatMessage.create(messageData);
-    messages.value.push({
-      ...sentMessage,
-      is_from_customer: true,
-    });
+    messages.value.push({ ...normalizeMessage(sentMessage), is_from_customer: true });
 
     newMessage.value = '';
 
@@ -338,6 +464,14 @@ const scrollToBottom = () => {
   }
 };
 
+// Ensure message objects have a consistent timestamp field
+const normalizeMessage = (m) => {
+  if (!m) return m;
+  return {
+    ...m,
+    created_date: m.created_date || m.created_at || m.createdAt || new Date().toISOString()
+  };
+};
 const formatTime = (date) => {
   try {
     return format(new Date(date), 'MMM d, h:mm a');
@@ -346,10 +480,152 @@ const formatTime = (date) => {
   }
 };
 
+// Admin messaging functions
+const getUserInitials = (user) => {
+  if (!user) return '?';
+  const names = (user.full_name || user.email || '?').split(' ');
+  if (names.length >= 2) {
+    return (names[0][0] + names[1][0]).toUpperCase();
+  }
+  return (names[0][0] || '?').toUpperCase();
+};
+
+const formatMessageTime = (timestamp) => {
+  if (!timestamp) return '';
+  try {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      return format(date, 'h:mm a');
+    } else if (diffInHours < 48) {
+      return 'Yesterday ' + format(date, 'h:mm a');
+    } else {
+      return format(date, 'MMM d, h:mm a');
+    }
+  } catch (e) {
+    return '';
+  }
+};
+
+const loadAdminMessages = async () => {
+  isLoadingAdminMessages.value = true;
+  try {
+    // Find admin user
+    if (!adminUser.value) {
+      const allUsers = await User.list();
+      adminUser.value = allUsers.find(u => u.user_type === 'admin');
+    }
+
+    if (adminUser.value) {
+      // Load conversation with admin
+      const conversation = await DirectMessage.getConversation(adminUser.value.id);
+      adminMessages.value = conversation || [];
+      console.log('Loaded admin messages:', adminMessages.value.length);
+    }
+  } catch (error) {
+    console.error('Failed to load admin messages:', error);
+    adminMessages.value = [];
+  } finally {
+    isLoadingAdminMessages.value = false;
+  }
+};
+
+const sendAdminMessage = async () => {
+  if (!newAdminMessage.value.trim() || isSendingAdmin.value) return;
+
+  isSendingAdmin.value = true;
+  try {
+    // Find admin user if not already loaded
+    if (!adminUser.value) {
+      const allUsers = await User.list();
+      adminUser.value = allUsers.find(u => u.user_type === 'admin');
+    }
+
+    if (!adminUser.value) {
+      alert('Admin user not found');
+      return;
+    }
+
+    // Send message to admin
+    const sentMessage = await DirectMessage.create({
+      content: newAdminMessage.value.trim(),
+      recipient_id: adminUser.value.id,
+      message_type: 'text'
+    });
+
+    // Add the sent message to the local array
+    adminMessages.value.push(sentMessage);
+    newAdminMessage.value = '';
+
+    await nextTick();
+    scrollAdminToBottom();
+
+    console.log('Message sent to admin');
+  } catch (error) {
+    console.error('Failed to send message to admin:', error);
+    alert('Failed to send message. Please try again.');
+  } finally {
+    isSendingAdmin.value = false;
+  }
+};
+
+const scrollAdminToBottom = () => {
+  if (adminMessagesContainer.value) {
+    adminMessagesContainer.value.scrollTop = adminMessagesContainer.value.scrollHeight;
+  }
+};
+
+const startAdminPolling = () => {
+  if (adminPollingInterval) {
+    clearInterval(adminPollingInterval);
+  }
+
+  // Poll every 3 seconds for new messages
+  adminPollingInterval = setInterval(async () => {
+    if (activeTab.value === 'admin' && adminUser.value) {
+      try {
+        const conversation = await DirectMessage.getConversation(adminUser.value.id);
+        adminMessages.value = conversation || [];
+      } catch (error) {
+        console.error('Failed to refresh admin messages:', error);
+      }
+    }
+  }, 3000);
+};
+
+const stopAdminPolling = () => {
+  if (adminPollingInterval) {
+    clearInterval(adminPollingInterval);
+    adminPollingInterval = null;
+  }
+};
+
+// Watch for tab change to start/stop polling
+watch(() => activeTab.value, async (newTab) => {
+  if (newTab === 'admin') {
+    await loadAdminMessages();
+    startAdminPolling();
+    await nextTick();
+    scrollAdminToBottom();
+  } else {
+    stopAdminPolling();
+  }
+});
+
+// Watch for new admin messages and scroll to bottom
+watch(() => adminMessages.value.length, async () => {
+  if (activeTab.value === 'admin') {
+    await nextTick();
+    scrollAdminToBottom();
+  }
+});
+
 onMounted(() => {
   loadMyCases();
   try {
-    initSocket(authStore.token);
+  initSocket(authStore.accessToken);
     const socket = getSocket();
     if (socket) {
       socket.on('new_message', (msg) => {
@@ -375,5 +651,6 @@ onMounted(() => {
 onUnmounted(() => {
   const socket = getSocket();
   if (socket) socket.off('new_message');
+  stopAdminPolling();
 });
 </script>

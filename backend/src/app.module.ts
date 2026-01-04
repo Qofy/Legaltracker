@@ -12,6 +12,7 @@ import { ActionItemsModule } from './action-items/action-items.module';
 import { AnnotationsModule } from './annotations/annotations.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { ChatMessagesModule } from './chat-messages/chat-messages.module';
+import { DirectMessagesModule } from './direct-messages/direct-messages.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { GuestPassesModule } from './guest-passes/guest-passes.module';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -43,6 +44,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     AnnotationsModule,
     MeetingsModule,
     ChatMessagesModule,
+    DirectMessagesModule,
     InvitationsModule,
     GuestPassesModule,
     FeedbackModule,

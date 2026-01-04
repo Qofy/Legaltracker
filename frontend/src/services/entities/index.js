@@ -15,6 +15,7 @@ import Document from './Document'
 import ActionItem from './ActionItem'
 import Comment from './Comment'
 import ChatMessage from './ChatMessage'
+import DirectMessage from './DirectMessage'
 import Meeting from './Meeting'
 import Annotation from './Annotation'
 import Invitation from './Invitation'
@@ -31,6 +32,7 @@ export {
   ActionItem,
   Comment,
   ChatMessage,
+  DirectMessage,
   Meeting,
   Annotation,
   Invitation,
@@ -48,6 +50,7 @@ export default {
   ActionItem,
   Comment,
   ChatMessage,
+  DirectMessage,
   Meeting,
   Annotation,
   Invitation,
