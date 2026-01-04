@@ -38,12 +38,12 @@
           <span class="nav-text">Cases</span>
         </button>
         
-        <button type="button" @click="selectedView = 'CustomerNewCase'" :class="['nav-link', {active: selectedView === 'CustomerNewCase'}]">
+        <!-- <button type="button" @click="selectedView = 'CustomerNewCase'" :class="['nav-link', {active: selectedView === 'CustomerNewCase'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
             <FileText class="nav-icon" size="20" />
           </span>
           <span class="nav-text">New Case</span>
-        </button>
+        </button> -->
 
        
 
@@ -364,13 +364,13 @@
                   <div class="text-right text-xs text-gray-600">
                     <div class="font-medium">{{ getLawyerName(c) }}</div>
                     <div class="text-gray-400">{{ c.status }}</div>
+                    <div class="mt-2 flex gap-2 justify-end">
+                      <button v-if="isAdmin" @click.stop="scheduleCase(c, entry.client)" class="px-2 py-1 bg-green-600 text-white rounded text-xs">Schedule</button>
+                      <button @click.stop="() => { selectedView = 'Schedule'; }" class="px-2 py-1 bg-[#003aca] text-white rounded text-xs">View Schedule</button>
+                    </div>
                   </div>
                 </li>
               </ul>
-
-              <div class="mt-3 flex justify-end">
-                <button @click="selectedView = 'Schedule'" class="px-3 py-1.5 bg-[#003aca] text-white rounded text-sm">View Schedule</button>
-              </div>
             </div>
           </div>
         </div>
@@ -924,6 +924,20 @@ const handleCustomerNewCase = async (caseData) => {
     // eslint-disable-next-line no-console
     console.error('Failed to create customer case:', err);
     alert('Failed to create case. Please try again.');
+  }
+};
+
+// Schedule a meeting for a specific case (admin action)
+const scheduleCase = (caseItem, client) => {
+  try {
+    const lawyerId = caseItem.assigned_lawyer?.id || caseItem.assigned_lawyer_id || caseItem.lawyer_id || null;
+    const clientId = client?.id || null;
+    // Set a simple global preselect object that Schedule.vue will read
+    try { window.__schedulePreselect = { caseId: caseItem.id, attendeeIds: [clientId, lawyerId].filter(Boolean) }; } catch (e) {}
+    selectedView.value = 'Schedule';
+  } catch (e) {
+    console.error('Failed to schedule case:', e);
+    alert('Unable to open schedule for this case.');
   }
 };
 

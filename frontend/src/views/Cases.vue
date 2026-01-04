@@ -382,6 +382,15 @@
                 <td class="p-4 text-right">
                   <div class="flex items-center justify-end gap-1">
                     <Button 
+                      v-if="isAdmin"
+                      @click="scheduleCase(caseItem)"
+                      size="sm"
+                      variant="ghost"
+                      class="h-8 w-8 p-0"
+                    >
+                      <Plus class="w-4 h-4" />
+                    </Button>
+                    <Button 
                       @click="viewCase(caseItem)" 
                       size="sm" 
                       variant="ghost"
@@ -493,7 +502,7 @@ import { Select } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Scale, Search, FileText, AlertTriangle, Clock, 
-  TrendingUp, AlertCircle, CheckCircle, UserCheck, Edit, Eye
+  TrendingUp, AlertCircle, CheckCircle, UserCheck, Edit, Eye, Plus
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -728,6 +737,21 @@ const confirmClientStatusUpdate = async () => {
 
 const viewCase = (caseItem) => {
   router.push(`/case-details/${caseItem.id}`);
+};
+
+// Open Schedule view with preselected case and (if available) client/lawyer as attendees
+const scheduleCase = (caseItem) => {
+  try {
+    const clientIds = (caseItem.customers || []).map(c => c.id).filter(Boolean);
+    const lawyerId = caseItem.assigned_lawyer?.id || caseItem.assigned_lawyer_id || caseItem.lawyer_id || null;
+    const attendeeIds = [...clientIds];
+    if (lawyerId) attendeeIds.push(lawyerId);
+    try { window.__schedulePreselect = { caseId: caseItem.id, attendeeIds }; } catch (e) {}
+    router.push({ name: 'Schedule' });
+  } catch (e) {
+    console.error('Failed to open schedule for case:', e);
+    alert('Unable to open schedule for this case.');
+  }
 };
 
 // Bulk assignment methods

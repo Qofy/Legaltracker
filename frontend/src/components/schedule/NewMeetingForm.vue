@@ -141,6 +141,11 @@ const props = defineProps({
   pinnedCaseId: {
     type: [String, Number],
     default: null
+  },
+  // Optional list of attendee ids to pre-select when opening the form
+  initialAttendeeIds: {
+    type: Array,
+    default: () => []
   }
 });
 
@@ -267,6 +272,13 @@ const formatDate = (date) => {
 watch(() => props.pinnedCaseId, (newPinnedCaseId) => {
   if (newPinnedCaseId && !formData.case_id) {
     formData.case_id = newPinnedCaseId;
+  }
+}, { immediate: true });
+
+// Watch for initial attendee ids and apply them
+watch(() => props.initialAttendeeIds, (ids) => {
+  if (Array.isArray(ids) && ids.length > 0) {
+    formData.attendee_ids = [...new Set([...(formData.attendee_ids || []), ...ids])];
   }
 }, { immediate: true });
 

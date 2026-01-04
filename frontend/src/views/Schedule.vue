@@ -28,7 +28,7 @@
             <DialogHeader>
               <DialogTitle>Schedule a New Meeting</DialogTitle>
             </DialogHeader>
-            <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" :pinnedCaseId="null" />
+            <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" :pinnedCaseId="pinnedCaseId" :initialAttendeeIds="initialAttendeeIds" />
           </DialogContent>
         </Dialog>
     </div>
@@ -105,6 +105,8 @@ const currentDate = ref(new Date())
 const events = ref([])
 const isLoading = ref(true)
 const showMeetingForm = ref(false)
+const pinnedCaseId = ref(null)
+const initialAttendeeIds = ref([])
 
 const calendarDays = computed(() => {
   return eachDayOfInterval({
@@ -118,6 +120,20 @@ const firstDayOfMonth = computed(() => {
 })
 
 onMounted(() => {
+  // If another view requested scheduling for a particular case, pick it up
+  try {
+    const pre = window.__schedulePreselect
+    if (pre && pre.caseId) {
+      pinnedCaseId.value = pre.caseId
+      if (Array.isArray(pre.attendeeIds)) initialAttendeeIds.value = pre.attendeeIds
+      showMeetingForm.value = true
+      // clear the global so it does not reapply
+      window.__schedulePreselect = null
+    }
+  } catch (e) {
+    // ignore (e.g., SSR or window undefined)
+  }
+
   loadEvents()
 })
 
