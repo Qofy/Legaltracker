@@ -408,8 +408,8 @@ const loadUserSettings = async () => {
     const userData = await User.me();
     user.value = userData;
 
-    // inform theme store about the current user's role so dark mode only applies to admins
-    try { const themeStoreLocal = useTheme(); themeStoreLocal.setRole(userData.user_type) } catch (e) {}
+    // ensure theme store is available/init (role not used anymore)
+    try { const themeStoreLocal = useTheme(); themeStoreLocal.init() } catch (e) {}
 
     settings.value = {
       ...settings.value,

@@ -3,14 +3,12 @@ import { ref } from 'vue'
 
 export const useTheme = defineStore('theme', () => {
   const theme = ref('light')
-  const role = ref(null)
   let mq = null
   let mqListener = null
 
   const applyTheme = (t) => {
     const root = document.documentElement
     const setDark = (isDark) => root.classList.toggle('dark', !!isDark)
-    const isAdmin = role.value === 'admin'
 
     // remove previous listener
     if (mq && mqListener) {
@@ -22,8 +20,7 @@ export const useTheme = defineStore('theme', () => {
     }
 
     if (t === 'dark') {
-      // apply dark only for admins
-      setDark(isAdmin)
+      setDark(true)
       try { localStorage.setItem('theme', 'dark') } catch (e) {}
     } else if (t === 'light') {
       setDark(false)
@@ -32,9 +29,8 @@ export const useTheme = defineStore('theme', () => {
       try { localStorage.setItem('theme', 'system') } catch (e) {}
       if (window.matchMedia) {
         mq = window.matchMedia('(prefers-color-scheme: dark)')
-        // for system mode, admins follow system; non-admins stay light
-        setDark(isAdmin && mq.matches)
-        mqListener = (e) => setDark(isAdmin && e.matches)
+        setDark(mq.matches)
+        mqListener = (e) => setDark(e.matches)
         if (mq.addEventListener) mq.addEventListener('change', mqListener)
         else mq.addListener(mqListener)
       }
@@ -44,12 +40,6 @@ export const useTheme = defineStore('theme', () => {
   const setTheme = (t) => {
     theme.value = t
     applyTheme(t)
-  }
-
-  const setRole = (r) => {
-    role.value = r
-    // re-apply current theme when role changes (e.g., user logs in)
-    applyTheme(theme.value)
   }
 
   const toggleTheme = () => {
@@ -66,5 +56,5 @@ export const useTheme = defineStore('theme', () => {
     applyTheme(theme.value)
   }
 
-  return { theme, setTheme, toggleTheme, init, setRole }
+  return { theme, setTheme, toggleTheme, init }
 })

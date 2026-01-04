@@ -139,6 +139,36 @@ html.dark .icon-wrap > * {
   color: #60a5fa !important;
 }
 
+/* Make nav/aside buttons (non-active) white in dark mode for better contrast */
+html.dark .nav-link:not(.active) {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+html.dark .nav-link:not(.active) .nav-icon,
+html.dark .nav-link:not(.active) .nav-text {
+  color: #ffffff !important;
+}
+
+html.dark .nav-link:not(.active) .icon-wrap,
+html.dark aside .icon-wrap {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Buttons inside the aside (side nav) should also be white when not active */
+html.dark aside button,
+html.dark aside .btn,
+html.dark .aside .btn,
+html.dark .sidebar button {
+  color: #ffffff !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Keep active nav items highlighted as defined earlier */
+
 html.dark .border-gray-200,
 html.dark .border-gray-400,
 html.dark .border {
@@ -172,3 +202,174 @@ html.dark .card > * {
   background-color: var(--lt-card) !important;
   color: var(--lt-text) !important;
 }
+
+/* Chat bubble dark mode overrides */
+html.dark .message-bubble.receiver {
+  background-color: rgba(255,255,255,0.03) !important; /* subtle card */
+  color: var(--lt-text) !important;
+}
+
+html.dark .message-bubble.sender {
+  background-color: #1f6feb !important; /* slightly darker blue for contrast */
+  color: #ffffff !important;
+}
+
+/* Timestamps */
+html.dark .message-bubble + .mt-1 .text-xs,
+html.dark .message-bubble + .mt-1 p.text-xs {
+  color: #9aa6b2 !important;
+}
+
+/* Sidebar / Aside readability tweaks for dark mode */
+html.dark aside {
+  background-color: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)) !important;
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+}
+
+html.dark aside header {
+  background-color: rgba(255,255,255,0.02) !important;
+  color: var(--lt-text) !important;
+  border-bottom-color: var(--lt-border) !important;
+}
+
+html.dark .nav-link {
+  color: var(--lt-text) !important;
+  background-color: transparent !important;
+}
+
+html.dark .nav-link:hover {
+  background-color: rgba(96,165,250,0.06) !important; /* subtle blue hover */
+  color: #9ed0ff !important;
+}
+
+html.dark .nav-link.active {
+  background-color: rgba(96,165,250,0.08) !important;
+  color: #60a5fa !important;
+}
+
+html.dark .icon-wrap {
+  background-color: rgba(255,255,255,0.02) !important;
+  color: #60a5fa !important;
+}
+
+/* Improve contrast for small gray texts in the aside */
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: #9aa6b2 !important;
+}
+
+/* Override Tailwind gradient utility classes used in Users view (card headers, avatars) */
+html.dark .from-blue-50,
+html.dark .from-purple-50,
+html.dark .from-blue-100,
+html.dark .from-purple-100,
+html.dark .to-indigo-50,
+html.dark .to-blue-50,
+html.dark .to-indigo-100 {
+  background-image: none !important;
+  background-color: rgba(255,255,255,0.02) !important;
+}
+
+/* Avatar gradient fallback to a subtle dark shade */
+html.dark .from-blue-100.to-indigo-100,
+html.dark .bg-gradient-to-br.from-blue-100.to-indigo-100,
+html.dark .bg-gradient-to-br.from-purple-100.to-blue-100 {
+  background-image: none !important;
+  background-color: rgba(255,255,255,0.03) !important;
+}
+
+/* Badges and small stat pills */
+html.dark .bg-blue-100,
+html.dark .bg-purple-100,
+html.dark .bg-green-100,
+html.dark .bg-gray-100 {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+html.dark .text-blue-700,
+html.dark .text-purple-700,
+html.dark .text-green-700,
+html.dark .text-gray-600 {
+  color: #9ed0ff !important;
+}
+
+/* Table header specific overrides (higher specificity for utility classes) */
+html.dark thead.bg-gray-50\/80,
+html.dark .bg-gray-50\/80,
+html.dark .border-b.border-gray-100 {
+  background-color: rgba(255,255,255,0.03) !important;
+  border-color: var(--lt-border) !important;
+  color: var(--lt-text) !important;
+}
+
+/* Hover states: replace blue hover with muted blue overlay in dark */
+html.dark .hover\:bg-blue-50\/30:hover,
+html.dark .group-hover\:text-\[\#003aca\]:hover,
+html.dark .hover\:bg-blue-50:hover {
+  background-color: rgba(96,165,250,0.04) !important;
+}
+
+
+/* Admin Users / Tables: Ensure table headers, rows and cells flip in dark mode.
+   Targets common table patterns and some UI-library selectors (ant, generic table classes).
+   Uses high specificity and !important to override component-scoped styles. */
+html.dark table,
+html.dark table thead,
+html.dark table tbody,
+html.dark table th,
+html.dark table td,
+html.dark .users-table,
+html.dark .users-table thead,
+html.dark .users-table tbody,
+html.dark .users-table tr,
+html.dark .users-table th,
+html.dark .users-table td,
+html.dark .ant-table,
+html.dark .ant-table-thead > tr > th,
+html.dark .ant-table-tbody > tr > td,
+html.dark .table-row,
+html.dark .table > thead > tr > th,
+html.dark .table > tbody > tr > td {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Slightly different shade for header to separate from rows */
+html.dark table thead th,
+html.dark .ant-table-thead > tr > th,
+html.dark .users-table thead th {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: var(--lt-text) !important;
+  border-bottom: 1px solid var(--lt-border) !important;
+}
+
+/* Striped / alternating rows */
+html.dark table tbody tr:nth-child(odd),
+html.dark .ant-table-tbody > tr.ant-table-row:nth-child(odd),
+html.dark .users-table tbody tr:nth-child(odd) {
+  background-color: rgba(255,255,255,0.02) !important;
+}
+
+/* Make badge / stat boxes inside the Users panel match dark cards */
+html.dark .stat-card,
+html.dark .users-panel,
+html.dark .users-summary {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Ensure pagination and table controls are legible */
+html.dark .pagination,
+html.dark .table-controls,
+html.dark .ant-pagination,
+html.dark .ant-pagination .ant-pagination-item a {
+  background-color: transparent !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+

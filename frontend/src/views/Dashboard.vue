@@ -171,6 +171,13 @@
             <span class="nav-text">Messages</span>
           </button>
 
+          <button type="button" @click="selectedView = 'Settings'" :class="['nav-link', {active: selectedView === 'Settings'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <SettingsIcon class="nav-icon" size="20" />
+            </span>
+            <span class="nav-text">Settings</span>
+          </button>
+
           <button type="button" @click="selectedView = 'LawyerDocuments'" :class="['nav-link', {active: selectedView === 'LawyerDocuments'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -214,6 +221,13 @@
             <FileText class="nav-icon" size="20" />
           </span>
           <span class="nav-text">Cases</span>
+        </button>
+
+         <button type="button" @click="selectedView = 'Settings'" :class="['nav-link', {active: selectedView === 'Settings'}]">
+          <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+            <SettingsIcon class="nav-icon" size="20" />
+          </span>
+          <span class="nav-text">Settings</span>
         </button>
 
          <button type="button" @click="selectedView = 'CustomerMessages'" :class="['nav-link', {active: selectedView === 'CustomerMessages'}]">
@@ -657,7 +671,7 @@ const loadDashboardData = async () => {
     user.value = userData;
 
       // inform theme store of the current user's role so theme is applied only for admins
-      try { const themeStore = useTheme(); themeStore.setRole(userData.user_type) } catch (e) {}
+      try { const themeStore = useTheme(); /* role no longer required */ } catch (e) {}
 
     // Default the selected view based on the authenticated user's role.
     // This ensures customers land on the customer dashboard after a browser refresh.

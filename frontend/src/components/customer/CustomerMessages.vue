@@ -80,10 +80,10 @@
              :class="['flex', (message.sender_id === authStore.user?.id) ? 'justify-end' : 'justify-start']">
           <div :class="[(message.sender_id === authStore.user?.id) ? 'items-end flex flex-col' : 'items-start flex flex-col']">
             <div :class="[
-              'max-w-sm px-4 py-3 rounded-lg',
+              'max-w-sm px-4 py-3 rounded-lg message-bubble',
               (message.sender_id === authStore.user?.id)
-                ? 'bg-blue-600 text-white rounded-br-none'
-                : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                ? 'sender bg-blue-600 text-white rounded-br-none'
+                : 'receiver bg-gray-100 text-gray-900 rounded-bl-none'
             ]">
               <p class="text-sm">{{ message.content || message.message }}</p>
             </div>
