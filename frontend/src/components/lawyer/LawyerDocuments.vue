@@ -95,6 +95,34 @@
       </div>
     </div>
   </div>
+
+  <!-- Viewer Modal -->
+  <div v-if="showViewerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+    <div class="bg-white rounded-lg w-11/12 md:w-3/4 lg:w-2/3 max-h-[90vh] overflow-auto p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">{{ viewedDocument?.file_name }}</h3>
+        <div class="flex items-center gap-2">
+          <button @click="downloadDocument(viewedDocument)" class="px-3 py-1 bg-blue-600 text-white rounded">Download</button>
+          <button @click="closeViewer" class="px-3 py-1 bg-gray-100 rounded">Close</button>
+        </div>
+      </div>
+
+      <div class="border rounded overflow-hidden bg-gray-50">
+        <template v-if="isPreviewImage(viewedDocument)">
+          <img :src="viewedDocument.file_url || `/api/documents/${viewedDocument.id}/download`" :alt="viewedDocument.file_name" class="w-full h-auto object-contain" />
+        </template>
+        <template v-else-if="isPreviewPdf(viewedDocument)">
+          <iframe :src="viewedDocument.file_url || `/api/documents/${viewedDocument.id}/download`" class="w-full h-[70vh] border-0"></iframe>
+        </template>
+        <template v-else>
+          <div class="p-6 text-center">
+            <p class="mb-4">Preview not available for this file type.</p>
+            <a :href="viewedDocument.file_url || `/api/documents/${viewedDocument.id}/download`" target="_blank" class="text-blue-600 underline">Open in new tab / Download</a>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>

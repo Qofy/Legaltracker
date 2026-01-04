@@ -171,14 +171,6 @@
             <span class="nav-text">Messages</span>
           </button>
 
-          <button type="button" @click="selectedView = 'LawyerReports'" :class="['nav-link', {active: selectedView === 'LawyerReports'}]">
-            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-            </span>
-            <span class="nav-text">Reports</span>
-          </button>
           <button type="button" @click="selectedView = 'LawyerDocuments'" :class="['nav-link', {active: selectedView === 'LawyerDocuments'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -186,6 +178,14 @@
               </svg>
             </span>
             <span class="nav-text">Documents</span>
+          </button>
+          <button type="button" @click="selectedView = 'LawyerReports'" :class="['nav-link', {active: selectedView === 'LawyerReports'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Reports</span>
           </button>
         </div>
 
@@ -533,7 +533,7 @@
     <CommentsPannel :user="user" />
   </div>
  </div>
-   
+
 
   </div>
 </template>
