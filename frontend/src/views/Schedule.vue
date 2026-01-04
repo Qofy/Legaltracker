@@ -19,16 +19,16 @@
       </div>
         <Dialog v-model:open="showMeetingForm">
           <DialogTrigger as-child>
-            <DialogHeader>
-              <DialogTitle>Schedule a New Meeting</DialogTitle>
-            </DialogHeader>
             <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10 px-2">
               <Plus class="w-4 h-4 mr-2" />
               New Meeting
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" />
+            <DialogHeader>
+              <DialogTitle>Schedule a New Meeting</DialogTitle>
+            </DialogHeader>
+            <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" :pinnedCaseId="null" />
           </DialogContent>
         </Dialog>
     </div>

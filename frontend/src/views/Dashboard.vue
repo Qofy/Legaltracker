@@ -333,6 +333,48 @@
           </div>
         </div>
 
+        <!-- Admin: Clients & Cases -->
+        <div v-if="isAdmin" class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Clients & Cases</h3>
+            <div class="text-sm text-gray-500">Showing {{ clientsWithCases.length }} clients</div>
+          </div>
+
+          <div v-if="clientsWithCases.length === 0" class="text-center py-8 text-gray-500">
+            No clients found
+          </div>
+
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="entry in clientsWithCases" :key="entry.client.id" class="p-4 border rounded-md bg-gray-50">
+              <div class="flex items-start justify-between mb-2">
+                <div>
+                  <p class="font-semibold text-gray-800">{{ entry.client.full_name || entry.client.email || 'Unnamed Client' }}</p>
+                  <p class="text-xs text-gray-500">{{ entry.client.email }}</p>
+                </div>
+                <div class="text-xs text-gray-500">Cases: <span class="font-medium text-gray-700">{{ entry.cases.length }}</span></div>
+              </div>
+
+              <div v-if="entry.cases.length === 0" class="text-xs text-gray-500">No cases for this client</div>
+              <ul v-else class="mt-2 space-y-2">
+                <li v-for="c in entry.cases" :key="c.id" class="flex items-center justify-between bg-white rounded p-2 border">
+                  <div>
+                    <div class="text-sm font-medium text-gray-800">{{ c.title || 'Untitled Case' }}</div>
+                    <div class="text-xs text-gray-500">Case #: {{ c.case_number || '-' }}</div>
+                  </div>
+                  <div class="text-right text-xs text-gray-600">
+                    <div class="font-medium">{{ getLawyerName(c) }}</div>
+                    <div class="text-gray-400">{{ c.status }}</div>
+                  </div>
+                </li>
+              </ul>
+
+              <div class="mt-3 flex justify-end">
+                <button @click="selectedView = 'Schedule'" class="px-3 py-1.5 bg-[#003aca] text-white rounded text-sm">View Schedule</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tabs and Filters -->
         <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <div class="flex items-center justify-between mb-4 border-b border-gray-200 pb-3">
@@ -595,6 +637,8 @@ const cases = ref([]);
 const recentComments = ref([]);
 const pendingActions = ref([]);
 const conflictAlerts = ref([]);
+const clientsWithCases = ref([]);
+const allUsersList = ref([]);
 const stats = ref({ totalCases: 0, activeCases: 0, completedActions: 0, pendingActions: 0 });
 const isLoading = ref(true);
 
@@ -628,6 +672,46 @@ const loadDashboardData = async () => {
     }
 
     cases.value = userCases;
+
+    // For admins, load clients and their cases for quick overview
+    if (userData.user_type === 'admin') {
+      try {
+        const allUsers = await User.list();
+        allUsersList.value = allUsers || [];
+        const clients = (allUsers || []).filter(u => u.user_type === 'customer');
+        // Fetch a fuller list of cases so we can group by client
+        const allCasesList = await Case.list('-updated_date');
+
+        const matchesClient = (c, client) => {
+          if (!c || !client) return false;
+          const cid = client.id;
+          // customer_ids as array
+          if (Array.isArray(c.customer_ids) && c.customer_ids.includes(cid)) return true;
+          // customer_ids as comma-separated string
+          if (typeof c.customer_ids === 'string' && c.customer_ids.split(',').map(s => s.trim()).includes(String(cid))) return true;
+          // single customer_id field
+          if (c.customer_id && String(c.customer_id) === String(cid)) return true;
+          // nested customer object
+          if (c.customer && (c.customer.id === cid || String(c.customer) === String(cid))) return true;
+          // customers array of objects or ids
+          if (Array.isArray(c.customers)) {
+            if (c.customers.some(x => (x && (x.id === cid || String(x) === String(cid))))) return true;
+          }
+          return false;
+        };
+
+        clientsWithCases.value = clients.map(client => ({
+          client,
+          cases: (allCasesList || []).filter(c => matchesClient(c, client))
+        }));
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load clients with cases:', e);
+        clientsWithCases.value = [];
+      }
+    } else {
+      clientsWithCases.value = [];
+    }
 
     const casesWithConflicts = userCases.filter(c => c.ai_conflict_assessment?.has_conflicts && c.ai_conflict_assessment?.conflict_level && c.ai_conflict_assessment.conflict_level !== 'low');
     conflictAlerts.value = casesWithConflicts;
@@ -775,6 +859,36 @@ const getPriorityBadgeColor = (priority) => {
     case 'low': return 'bg-green-100 text-green-700 border border-green-200';
     default: return 'bg-gray-100 text-gray-700 border border-gray-200';
   }
+};
+
+// Resolve lawyer display name from several possible case shapes
+const getLawyerName = (c) => {
+  if (!c) return 'Unassigned';
+  // common nested fields
+  if (c.lawyerInfo && (c.lawyerInfo.name || c.lawyerInfo.full_name)) return c.lawyerInfo.name || c.lawyerInfo.full_name;
+  if (c.assigned_lawyer && (c.assigned_lawyer.name || c.assigned_lawyer.full_name)) return c.assigned_lawyer.name || c.assigned_lawyer.full_name;
+  if (c.lawyer && (c.lawyer.name || c.lawyer.full_name)) return c.lawyer.name || c.lawyer.full_name;
+
+  // id fields
+  const possibleIds = [c.lawyer_id, c.assigned_lawyer_id, c.lawyerId, c.assignedLawyerId];
+  for (const id of possibleIds) {
+    if (id != null) {
+      const found = allUsersList.value.find(u => String(u.id) === String(id));
+      if (found) return found.full_name || found.name || found.email || 'Assigned';
+    }
+  }
+
+  // some cases may include a `lawyers` or `assigned_lawyers` array
+  if (Array.isArray(c.lawyers) && c.lawyers.length > 0) {
+    const first = c.lawyers[0];
+    if (first && (first.name || first.full_name)) return first.name || first.full_name;
+    if (first && (first.id || first.user_id)) {
+      const found = allUsersList.value.find(u => String(u.id) === String(first.id || first.user_id));
+      if (found) return found.full_name || found.name || found.email || 'Assigned';
+    }
+  }
+
+  return 'Unassigned';
 };
 
 // Local view selection for aside -> main content behavior
