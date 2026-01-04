@@ -310,19 +310,19 @@
                 <div class="mt-2 grid grid-cols-3 gap-2">
                   <button
                     :class="['px-3 py-2 rounded-md border text-sm', settings.theme === 'light' ? 'bg-white border-blue-600 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-700']"
-                    @click="() => { settings.theme = 'light' }"
+                    @click="themeStore.setTheme('light')"
                   >
                     Light
                   </button>
                   <button
                     :class="['px-3 py-2 rounded-md border text-sm', settings.theme === 'dark' ? 'bg-gray-800 border-blue-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-700']"
-                    @click="() => { settings.theme = 'dark' }"
+                    @click="themeStore.setTheme('dark')"
                   >
                     Dark
                   </button>
                   <button
                     :class="['px-3 py-2 rounded-md border text-sm', settings.theme === 'system' ? 'bg-white border-blue-600 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-700']"
-                    @click="() => { settings.theme = 'system' }"
+                    @click="themeStore.setTheme('system')"
                   >
                     System
                   </button>
@@ -339,6 +339,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useTheme } from '@/stores/useTheme'
 import { User } from '@/services/entities';
 import { InvokeLLM } from '@/integrations/Core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -431,12 +432,13 @@ const loadUserSettings = async () => {
       kimi_api_key: userData.kimi_api_key || '',
       local_ai_url: userData.local_ai_url || 'http://localhost:11434'
     };
-    // Allow localStorage to override stored/user preference for quick theme switching
+    // Keep settings.theme in sync with the app theme store (localStorage or system may override)
     try {
-      const storedTheme = localStorage.getItem('theme');
-      if (storedTheme) settings.value.theme = storedTheme;
+      const themeStore = useTheme()
+      // prefer store's effective theme (it reads localStorage/system on init)
+      settings.value.theme = themeStore.theme || settings.value.theme
     } catch (e) {
-      // ignore localStorage failures
+      // ignore
     }
   } catch (error) {
     console.error('Failed to load user settings:', error);
@@ -447,7 +449,17 @@ const loadUserSettings = async () => {
 const handleSave = async () => {
   isSaving.value = true;
   try {
-    await User.updateMyUserData(settings.value);
+    // ensure server receives the current effective theme
+    try { const themeStore = useTheme(); settings.value.theme = themeStore.theme } catch (e) {}
+    // Backend User service exposes `update(id, data)`. Use current user's id when updating.
+    try {
+      const uid = user.value?.id || (await User.me())?.id
+      if (!uid) throw new Error('No authenticated user id available')
+      await User.update(uid, settings.value)
+    } catch (e) {
+      // Re-throw so the outer catch handles notification
+      throw e
+    }
     testResult.value = { type: 'success', message: 'Settings saved successfully!' };
     setTimeout(() => testResult.value = null, 3000);
   } catch (error) {
@@ -532,45 +544,13 @@ onMounted(() => {
   loadUserSettings();
 });
 
-// Theme application logic: toggle `dark` class on <html> and persist preference
-let mq = null;
-let mqListener = null;
-const applyTheme = (theme) => {
-  const root = document.documentElement;
-  const setDark = (isDark) => root.classList.toggle('dark', !!isDark);
+// Use the theme store to manage theme application and persistence
+const themeStore = useTheme()
+// ensure the store is initialized (it reads localStorage/system in init)
+try { themeStore.init() } catch (e) { /* ignore */ }
 
-  // remove previous listener if present
-  if (mq && mqListener) {
-    try {
-      if (mq.removeEventListener) mq.removeEventListener('change', mqListener);
-      else mq.removeListener(mqListener);
-    } catch (e) {
-      // ignore
-    }
-    mq = null; mqListener = null;
-  }
-
-  if (theme === 'dark') {
-    setDark(true);
-    localStorage.setItem('theme', 'dark');
-  } else if (theme === 'light') {
-    setDark(false);
-    localStorage.setItem('theme', 'light');
-  } else {
-    // follow system
-    localStorage.setItem('theme', 'system');
-    if (window.matchMedia) {
-      mq = window.matchMedia('(prefers-color-scheme: dark)');
-      setDark(mq.matches);
-      mqListener = (e) => setDark(e.matches);
-      if (mq.addEventListener) mq.addEventListener('change', mqListener);
-      else mq.addListener(mqListener);
-    }
-  }
-};
-
-// Watch theme in settings and apply immediately
-watch(() => settings.value.theme, (t) => {
-  try { applyTheme(t); } catch (e) { console.error('Failed to apply theme:', e); }
-}, { immediate: true });
+// Keep settings.theme synced to the store so Save persists the effective theme to server
+watch(() => themeStore.theme, (t) => {
+  settings.value.theme = t
+}, { immediate: true })
 </script>
