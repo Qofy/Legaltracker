@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-[calc(100vh-12rem)] bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+  <div class="flex bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden" style="height: 100vh;">
     <!-- Users List Sidebar -->
     <div class="w-80 border-r border-gray-200 flex flex-col">
       <!-- Header -->
@@ -49,6 +49,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <p class="text-sm font-medium text-gray-900 truncate">{{ user.full_name }}</p>
+                  <span v-if="unreadCounts[user.id] > 0" class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-600 text-white">{{ unreadCounts[user.id] }}</span>
                   <span
                     :class="[
                       'px-2 py-0.5 text-xs rounded-full',
@@ -176,6 +177,7 @@ import { User, DirectMessage } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { MessageSquare, MessageCircle, Search, Send, Star } from 'lucide-vue-next';
 import { format } from 'date-fns';
+import { initSocket, getSocket } from '@/plugins/socket';
 
 const authStore = useAuthStore();
 
@@ -183,6 +185,7 @@ const currentUser = ref(null);
 const currentUserId = computed(() => authStore.user?.id || currentUser.value?.id);
 
 const users = ref([]);
+const unreadCounts = ref({});
 const selectedUser = ref(null);
 const searchQuery = ref('');
 const messages = ref([]);
@@ -258,6 +261,9 @@ const loadUsers = async () => {
       (u.user_type === 'lawyer' || u.user_type === 'customer')
     );
 
+    // initialize unread counters
+    users.value.forEach(u => { unreadCounts.value[u.id] = unreadCounts.value[u.id] || 0; });
+
     console.log('Loaded users for messaging:', users.value.length);
   } catch (error) {
     console.error('Failed to load users:', error);
@@ -287,16 +293,41 @@ const selectUser = async (user) => {
 
   try {
     // Load conversation with this specific user
+    console.log('[DEBUG] Loading conversation with user:', user.id, user.full_name);
+    console.log('[DEBUG] Current admin ID:', currentUserId.value);
+
+    // Get all users to find the primary admin
+    const allUsers = await User.list();
+    const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
+    const primaryAdminId = admins[0]?.id;
+
+    console.log('[DEBUG] Primary admin ID (for consistency):', primaryAdminId);
+    console.log('[DEBUG] All admin IDs:', admins.map(a => a.id));
+
     const conversation = await DirectMessage.getConversation(user.id);
-    messages.value = conversation || [];
-    console.log('Loaded conversation with', user.full_name, ':', messages.value.length, 'messages');
+    console.log('[DEBUG] API returned conversation:', conversation);
+    console.log('[DEBUG] First message (if exists):', conversation?.[0]);
+
+    // Include messages where ANY admin is involved (not just current admin)
+    messages.value = conversation.filter(msg => {
+      const isAdminInvolved = admins.some(admin =>
+        admin.id === msg.sender_id || admin.id === msg.recipient_id
+      );
+      const isUserInvolved = msg.sender_id === user.id || msg.recipient_id === user.id;
+      return isAdminInvolved && isUserInvolved;
+    });
+
+    console.log('[DEBUG] Filtered to', messages.value.length, 'messages (from', conversation.length, 'total)');
   } catch (error) {
-    console.error('Failed to load conversation:', error);
+    console.error('[ERROR] Failed to load conversation:', error);
+    console.error('[ERROR] Error details:', error.response?.data || error.message);
   } finally {
     isLoadingMessages.value = false;
   }
 
   await nextTick();
+  // clear unread counter for this user when opening conversation
+  unreadCounts.value[user.id] = 0;
   scrollToBottom();
 };
 
@@ -305,6 +336,10 @@ const sendMessage = async () => {
 
   isSending.value = true;
   try {
+    console.log('[DEBUG] Sending message to:', selectedUser.value.id, selectedUser.value.full_name);
+    console.log('[DEBUG] Message content:', newMessage.value.trim());
+    console.log('[DEBUG] Sender (admin):', currentUserId.value);
+
     // Send message to backend
     const sentMessage = await DirectMessage.create({
       content: newMessage.value.trim(),
@@ -312,17 +347,30 @@ const sendMessage = async () => {
       message_type: 'text'
     });
 
+    console.log('[DEBUG] Backend returned message:', sentMessage);
+    console.log('[DEBUG] Sender/Recipient properly set:', sentMessage.sender_id, '→', sentMessage.recipient_id);
+
     // Add the sent message to the local array
     messages.value.push(sentMessage);
+    console.log('[DEBUG] Total messages in array:', messages.value.length);
 
     newMessage.value = '';
 
     await nextTick();
     scrollToBottom();
 
-    console.log('Message sent to', selectedUser.value.full_name);
+    // Emit over socket so recipient receives it in real-time
+    try {
+      const socket = getSocket();
+      if (socket) socket.emit('client:new_message', sentMessage);
+    } catch (e) {
+      console.debug('Failed to emit socket new_message from admin', e);
+    }
+
+    console.log('[DEBUG] ✓ Message sent successfully');
   } catch (error) {
-    console.error('Failed to send message:', error);
+    console.error('[ERROR] Failed to send message:', error);
+    console.error('[ERROR] Error details:', error.response?.data || error.message);
     alert('Failed to send message. Please try again.');
   } finally {
     isSending.value = false;
@@ -379,9 +427,39 @@ watch(() => currentMessages.value.length, async () => {
 onMounted(async () => {
   await loadUsers();
   await loadMessages();
+  try {
+    initSocket(authStore.accessToken);
+    const socket = getSocket();
+      if (socket) {
+        socket.on('new_message', (msg) => {
+          if (!msg || !msg.id) return;
+          const meId = currentUserId.value;
+          // Direct message involving admin?
+          if (msg.recipient_id === meId || msg.sender_id === meId) {
+            const otherUserId = msg.sender_id === meId ? msg.recipient_id : msg.sender_id;
+            // If we're currently viewing that user, append immediately
+            if (selectedUser.value && selectedUser.value.id === otherUserId) {
+              if (!messages.value.find(m => m.id === msg.id)) {
+                messages.value.push(msg);
+                nextTick().then(scrollToBottom);
+              }
+            } else {
+              // increment unread counter for that user
+              unreadCounts.value[otherUserId] = (unreadCounts.value[otherUserId] || 0) + 1;
+            }
+          }
+        });
+      }
+  } catch (e) {
+    console.debug('Admin socket init error', e);
+  }
 });
 
 onUnmounted(() => {
+  try {
+    const socket = getSocket();
+    if (socket) socket.off('new_message');
+  } catch (e) {}
   stopPolling();
 });
 </script>

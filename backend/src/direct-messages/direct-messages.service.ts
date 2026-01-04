@@ -19,7 +19,13 @@ export class DirectMessagesService {
       recipient_id: data.recipient_id,
     });
 
-    return await this.directMessagesRepository.save(message);
+    const savedMessage = await this.directMessagesRepository.save(message);
+
+    // Reload with sender and recipient relationships
+    return await this.directMessagesRepository.findOne({
+      where: { id: savedMessage.id },
+      relations: ['sender', 'recipient'],
+    });
   }
 
   async findConversation(userId: string, otherUserId: string): Promise<DirectMessage[]> {

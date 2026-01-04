@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="flex flex-col" style="height: 100vh; overflow: hidden;">
     <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -166,8 +166,8 @@
     </div>
 
     <!-- Admin Messages Tab -->
-    <div v-else-if="activeTab === 'admin'" class="flex h-[calc(100vh-20rem)] bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-      <div class="flex-1 flex flex-col">
+    <div v-else-if="activeTab === 'admin'" class="flex flex-col flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Chat Header -->
         <div class="p-4 border-b border-gray-200 bg-gray-50">
           <div class="flex items-center gap-3">
@@ -413,7 +413,9 @@ const loadMessages = async () => {
     }
 
     const mapMsg = (m) => ({ ...normalizeMessage(m), is_from_customer: m.sender_id === authStore.user?.id });
-    messages.value = allMessages
+    // Load all messages from backend (sorted desc by created_date)
+    const allMessages = await ChatMessage.list('-created_date');
+    messages.value = (allMessages || [])
       .filter(m => m.case_id === selectedCaseId.value)
       .map(mapMsg)
       .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
@@ -512,20 +514,29 @@ const formatMessageTime = (timestamp) => {
 const loadAdminMessages = async () => {
   isLoadingAdminMessages.value = true;
   try {
-    // Find admin user
+    // Find PRIMARY admin user (first one sorted by email for consistency)
     if (!adminUser.value) {
       const allUsers = await User.list();
-      adminUser.value = allUsers.find(u => u.user_type === 'admin');
+      const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
+      adminUser.value = admins[0]; // Use first admin for consistency
+      console.log('[DEBUG CUSTOMER] Found PRIMARY admin:', adminUser.value?.email, adminUser.value?.id);
+      console.log('[DEBUG CUSTOMER] All admins:', admins.map(a => ({ email: a.email, id: a.id })));
     }
 
     if (adminUser.value) {
+      console.log('[DEBUG CUSTOMER] Loading conversation with primary admin:', adminUser.value.id);
+      console.log('[DEBUG CUSTOMER] Current customer ID:', currentUserId.value);
       // Load conversation with admin
       const conversation = await DirectMessage.getConversation(adminUser.value.id);
+      console.log('[DEBUG CUSTOMER] API returned:', conversation);
       adminMessages.value = conversation || [];
-      console.log('Loaded admin messages:', adminMessages.value.length);
+      console.log('[DEBUG CUSTOMER] ✓ Loaded', adminMessages.value.length, 'admin messages');
+    } else {
+      console.warn('[WARN CUSTOMER] No admin user found!');
     }
   } catch (error) {
-    console.error('Failed to load admin messages:', error);
+    console.error('[ERROR CUSTOMER] Failed to load admin messages:', error);
+    console.error('[ERROR CUSTOMER] Error details:', error.response?.data || error.message);
     adminMessages.value = [];
   } finally {
     isLoadingAdminMessages.value = false;
@@ -537,16 +548,19 @@ const sendAdminMessage = async () => {
 
   isSendingAdmin.value = true;
   try {
-    // Find admin user if not already loaded
+    // Find PRIMARY admin user if not already loaded
     if (!adminUser.value) {
       const allUsers = await User.list();
-      adminUser.value = allUsers.find(u => u.user_type === 'admin');
+      const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
+      adminUser.value = admins[0]; // Use first admin for consistency
     }
 
     if (!adminUser.value) {
       alert('Admin user not found');
       return;
     }
+
+    console.log('[DEBUG CUSTOMER] Sending to PRIMARY admin:', adminUser.value.email, adminUser.value.id);
 
     // Send message to admin
     const sentMessage = await DirectMessage.create({
@@ -555,6 +569,8 @@ const sendAdminMessage = async () => {
       message_type: 'text'
     });
 
+    console.log('[DEBUG CUSTOMER] ✓ Message sent:', sentMessage.sender_id, '→', sentMessage.recipient_id);
+
     // Add the sent message to the local array
     adminMessages.value.push(sentMessage);
     newAdminMessage.value = '';
@@ -562,9 +578,15 @@ const sendAdminMessage = async () => {
     await nextTick();
     scrollAdminToBottom();
 
-    console.log('Message sent to admin');
+    // Emit socket event so admin receives it in realtime
+    try {
+      const socket = getSocket();
+      if (socket) socket.emit('client:new_message', sentMessage);
+    } catch (e) {
+      console.debug('Failed to emit admin new_message', e);
+    }
   } catch (error) {
-    console.error('Failed to send message to admin:', error);
+    console.error('[ERROR CUSTOMER] Failed to send message to admin:', error);
     alert('Failed to send message. Please try again.');
   } finally {
     isSendingAdmin.value = false;
@@ -638,6 +660,15 @@ onMounted(() => {
         else if (msg.case_id) {
           // increment unread count for background cases
           unreadMap.value[msg.case_id] = (unreadMap.value[msg.case_id] || 0) + 1;
+        }
+        // Handle direct messages (admin <-> customer)
+        if (msg.recipient_id && (msg.recipient_id === authStore.user?.id || msg.sender_id === authStore.user?.id)) {
+          if (!adminMessages.value.find(m => m.id === msg.id)) {
+            adminMessages.value.push(msg);
+            if (activeTab.value === 'admin') {
+              nextTick().then(scrollAdminToBottom);
+            }
+          }
         }
         // update last message timestamp for the case
         if (msg.case_id) lastMessageMap.value[msg.case_id] = msg.created_date || msg.created_at || new Date().toISOString();

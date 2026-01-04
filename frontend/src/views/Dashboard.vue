@@ -1,7 +1,7 @@
 <template>
   <div class=" bg-gray-50 min-h-screen flex">
   <!-- ///////////////////Aside/////////////////////////// -->
-    <aside class="w-64 flex flex-col gap-6 bg-white border-r-2 border-r-gray-400">
+    <aside class="w-64 flex flex-col gap-6 bg-white border-r-2 border-r-gray-400" style="height: 100vh; position: sticky; top: 0; overflow-y: auto;">
       <header class="flex flex-col bg-white py-4 px-4 text-gray-800 border-b border-b-gray-400">
         <h1 class="font-bold text-2xl flex gap-2 items-center text-[#003aca]">
           <Scale size="26" />
@@ -106,7 +106,7 @@
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </span>
-              <span class="nav-text">Admin Messages</span>
+              <span class="nav-text">Messages</span>
             </button>
 
           <button type="button" @click="selectedView = 'FinancialManagement'" :class="['nav-link', {active: selectedView === 'FinancialManagement'}]">
@@ -288,7 +288,7 @@
   </div>
 </div>
 <!------------- MAin---------------->
-    <main class="flex-1 p-6 overflow-x-hidden ">
+    <main class="flex-1 p-6 overflow-x-hidden" style="height: 100vh; overflow-y: auto;">
       <div class="max-w-7xl mx-auto">
         <div v-if="selectedView === 'Dashboard'">
           <div class="flex items-center justify-between mb-6">

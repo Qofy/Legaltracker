@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="flex flex-col min-h-0" style="overflow: hidden;">
     <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -80,14 +80,16 @@
             </div>
           </div>
 
-          <div v-else>
+            <div v-else>
             <div v-if="messages.length === 0" class="text-center text-gray-500 py-8">No messages for this case yet.</div>
 
             <div v-for="m in messages" :key="m.id" :class="['flex', (m.sender_id === authStore.user?.id) ? 'justify-end' : 'justify-start']">
                 <div :class="[(m.sender_id === authStore.user?.id) ? 'items-end flex flex-col' : 'items-start flex flex-col']">
                   <div :class="[
-                    'max-w-2xl px-4 py-3 rounded-lg',
-                    (m.sender_id === authStore.user?.id) ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                    'max-w-2xl rounded-lg',
+                    (m.sender_id === authStore.user?.id)
+                      ? 'bg-blue-600 text-white rounded-br-none px-3 py-2 text-sm'
+                      : 'bg-gray-100 text-gray-900 rounded-bl-none px-4 py-3'
                   ]">
                     <p class="text-sm">{{ m.content || m.message }}</p>
                   </div>
@@ -113,8 +115,8 @@
     </div>
 
     <!-- Admin Messages Tab -->
-    <div v-else-if="activeTab === 'admin'" class="flex h-[calc(100vh-20rem)] bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-      <div class="flex-1 flex flex-col">
+    <div v-else-if="activeTab === 'admin'" class="flex flex-col flex-1 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Chat Header -->
         <div class="p-4 border-b border-gray-200 bg-gray-50">
           <div class="flex items-center gap-3">
@@ -136,7 +138,7 @@
           <div v-else-if="adminMessages.length === 0" class="text-center text-sm text-gray-500 py-8">
             No messages yet. Admin hasn't sent you any messages.
           </div>
-          <div v-else v-for="message in adminMessages" :key="message.id" class="flex items-start gap-3">
+            <div v-else v-for="message in adminMessages" :key="message.id" class="flex items-start gap-3">
             <!-- Message from admin -->
             <div v-if="message.sender_id !== currentUserId" class="flex-1">
               <div class="flex items-start gap-2">
@@ -163,7 +165,7 @@
                   {{ getUserInitials(authStore.user) }}
                 </div>
                 <div class="flex-1 flex flex-col items-end">
-                  <div class="bg-blue-600 text-white rounded-lg rounded-tr-none p-3 shadow-sm max-w-md">
+                  <div class="bg-blue-600 text-white rounded-lg rounded-tr-none px-3 py-2 shadow-sm max-w-md">
                     <p class="text-sm">{{ message.content }}</p>
                   </div>
                   <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
@@ -269,6 +271,18 @@ const loadAssignedCases = async () => {
     await Promise.all(Array.from(customerIds).slice(0, 20).map(async id => {
       try { userCache.value[id] = (await User.get(id)); } catch (e) {}
     }));
+    // Auto-open the first case so the message input is visible immediately
+    if (cases.value.length > 0) {
+      activeCase.value = cases.value[0];
+      await loadMessagesForCase(activeCase.value.id);
+      // join case room
+      try {
+        const socket = getSocket();
+        if (socket && activeCase.value && activeCase.value.id) socket.emit('join_case', activeCase.value.id);
+      } catch (e) {}
+      await nextTick();
+      if (messageInput.value) messageInput.value.focus();
+    }
   } catch (e) {
     console.error('Failed to load assigned cases', e);
   }
@@ -397,20 +411,30 @@ const formatMessageTime = (timestamp) => {
 const loadAdminMessages = async () => {
   isLoadingAdminMessages.value = true;
   try {
-    // Find admin user
+    // Find PRIMARY admin user (first one sorted by email for consistency)
     if (!adminUser.value) {
       const allUsers = await User.list();
-      adminUser.value = allUsers.find(u => u.user_type === 'admin');
+      const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
+      adminUser.value = admins[0]; // Use first admin for consistency
+      console.log('[DEBUG LAWYER] Found PRIMARY admin:', adminUser.value?.email, adminUser.value?.id);
+      console.log('[DEBUG LAWYER] All admins:', admins.map(a => ({ email: a.email, id: a.id })));
     }
 
     if (adminUser.value) {
+      console.log('[DEBUG LAWYER] Loading conversation with primary admin:', adminUser.value.id);
+      console.log('[DEBUG LAWYER] Current lawyer ID:', currentUserId.value);
       // Load conversation with admin
       const conversation = await DirectMessage.getConversation(adminUser.value.id);
+      console.log('[DEBUG LAWYER] API returned:', conversation);
+      console.log('[DEBUG LAWYER] First message:', conversation?.[0]);
       adminMessages.value = conversation || [];
-      console.log('Loaded admin messages:', adminMessages.value.length);
+      console.log('[DEBUG LAWYER] ✓ Loaded', adminMessages.value.length, 'admin messages');
+    } else {
+      console.warn('[WARN LAWYER] No admin user found!');
     }
   } catch (error) {
-    console.error('Failed to load admin messages:', error);
+    console.error('[ERROR LAWYER] Failed to load admin messages:', error);
+    console.error('[ERROR LAWYER] Error details:', error.response?.data || error.message);
     adminMessages.value = [];
   } finally {
     isLoadingAdminMessages.value = false;
@@ -422,16 +446,19 @@ const sendAdminMessage = async () => {
 
   isSendingAdmin.value = true;
   try {
-    // Find admin user if not already loaded
+    // Find PRIMARY admin user if not already loaded
     if (!adminUser.value) {
       const allUsers = await User.list();
-      adminUser.value = allUsers.find(u => u.user_type === 'admin');
+      const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
+      adminUser.value = admins[0]; // Use first admin for consistency
     }
 
     if (!adminUser.value) {
       alert('Admin user not found');
       return;
     }
+
+    console.log('[DEBUG LAWYER] Sending to PRIMARY admin:', adminUser.value.email, adminUser.value.id);
 
     // Send message to admin
     const sentMessage = await DirectMessage.create({
@@ -440,6 +467,8 @@ const sendAdminMessage = async () => {
       message_type: 'text'
     });
 
+    console.log('[DEBUG LAWYER] ✓ Message sent:', sentMessage.sender_id, '→', sentMessage.recipient_id);
+
     // Add the sent message to the local array
     adminMessages.value.push(sentMessage);
     newAdminMessage.value = '';
@@ -447,9 +476,15 @@ const sendAdminMessage = async () => {
     await nextTick();
     scrollAdminToBottom();
 
-    console.log('Message sent to admin');
+    // Emit over socket so admin receives it in realtime
+    try {
+      const socket = getSocket();
+      if (socket) socket.emit('client:new_message', sentMessage);
+    } catch (e) {
+      console.debug('Failed to emit lawyer->admin new_message', e);
+    }
   } catch (error) {
-    console.error('Failed to send message to admin:', error);
+    console.error('[ERROR LAWYER] Failed to send message to admin:', error);
     alert('Failed to send message. Please try again.');
   } finally {
     isSendingAdmin.value = false;
@@ -526,6 +561,15 @@ onMounted(() => {
         }
         // update last message timestamp
         if (msg.case_id) lastMessageMap.value[msg.case_id] = msg.created_date || msg.created_at || new Date().toISOString();
+        // Handle direct messages (admin <-> lawyer)
+        if (msg.recipient_id && (msg.recipient_id === authStore.user?.id || msg.sender_id === authStore.user?.id)) {
+          if (!adminMessages.value.find(m => m.id === msg.id)) {
+            adminMessages.value.push(msg);
+            if (activeTab.value === 'admin') {
+              nextTick().then(scrollAdminToBottom);
+            }
+          }
+        }
       });
     }
   } catch (e) {
