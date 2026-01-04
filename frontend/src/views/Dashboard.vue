@@ -616,7 +616,7 @@ const loadDashboardData = async () => {
     if (!selectedView.value || selectedView.value === 'Dashboard') {
       if (userData.user_type === 'customer') selectedView.value = 'CustomerOverview';
       else if (userData.user_type === 'lawyer') selectedView.value = 'LawyerOverview';
-      else if (userData.user_type === 'admin') selectedView.value = 'AdminOverview';
+      else if (userData.user_type === 'admin') selectedView.value = 'Dashboard';
     }
 
     let userCases = [];
