@@ -305,6 +305,30 @@
                   <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
               </div>
+              <div class="mt-4">
+                <Label for="theme_preference">Theme</Label>
+                <div class="mt-2 grid grid-cols-3 gap-2">
+                  <button
+                    :class="['px-3 py-2 rounded-md border text-sm', settings.theme === 'light' ? 'bg-white border-blue-600 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-700']"
+                    @click="() => { settings.theme = 'light' }"
+                  >
+                    Light
+                  </button>
+                  <button
+                    :class="['px-3 py-2 rounded-md border text-sm', settings.theme === 'dark' ? 'bg-gray-800 border-blue-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-700']"
+                    @click="() => { settings.theme = 'dark' }"
+                  >
+                    Dark
+                  </button>
+                  <button
+                    :class="['px-3 py-2 rounded-md border text-sm', settings.theme === 'system' ? 'bg-white border-blue-600 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-700']"
+                    @click="() => { settings.theme = 'system' }"
+                  >
+                    System
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Choose between Light, Dark, or follow your system preference.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -314,7 +338,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { User } from '@/services/entities';
 import { InvokeLLM } from '@/integrations/Core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -407,6 +431,13 @@ const loadUserSettings = async () => {
       kimi_api_key: userData.kimi_api_key || '',
       local_ai_url: userData.local_ai_url || 'http://localhost:11434'
     };
+    // Allow localStorage to override stored/user preference for quick theme switching
+    try {
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) settings.value.theme = storedTheme;
+    } catch (e) {
+      // ignore localStorage failures
+    }
   } catch (error) {
     console.error('Failed to load user settings:', error);
   }
@@ -500,4 +531,46 @@ const updateNotificationPref = (key, value) => {
 onMounted(() => {
   loadUserSettings();
 });
+
+// Theme application logic: toggle `dark` class on <html> and persist preference
+let mq = null;
+let mqListener = null;
+const applyTheme = (theme) => {
+  const root = document.documentElement;
+  const setDark = (isDark) => root.classList.toggle('dark', !!isDark);
+
+  // remove previous listener if present
+  if (mq && mqListener) {
+    try {
+      if (mq.removeEventListener) mq.removeEventListener('change', mqListener);
+      else mq.removeListener(mqListener);
+    } catch (e) {
+      // ignore
+    }
+    mq = null; mqListener = null;
+  }
+
+  if (theme === 'dark') {
+    setDark(true);
+    localStorage.setItem('theme', 'dark');
+  } else if (theme === 'light') {
+    setDark(false);
+    localStorage.setItem('theme', 'light');
+  } else {
+    // follow system
+    localStorage.setItem('theme', 'system');
+    if (window.matchMedia) {
+      mq = window.matchMedia('(prefers-color-scheme: dark)');
+      setDark(mq.matches);
+      mqListener = (e) => setDark(e.matches);
+      if (mq.addEventListener) mq.addEventListener('change', mqListener);
+      else mq.addListener(mqListener);
+    }
+  }
+};
+
+// Watch theme in settings and apply immediately
+watch(() => settings.value.theme, (t) => {
+  try { applyTheme(t); } catch (e) { console.error('Failed to apply theme:', e); }
+}, { immediate: true });
 </script>
