@@ -19,6 +19,46 @@
     </Card>
   </div>
 
+  <div v-else-if="isAdminMode" class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-5xl mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <h2 class="text-xl font-semibold">Guest Access Management</h2>
+              <p class="text-sm text-gray-500">Create and manage guest access passes</p>
+            </div>
+            <!-- placeholder for create button -->
+            <div>
+              <!-- Could wire up a create dialog here -->
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div v-if="guestPasses.length === 0" class="text-center py-8 text-gray-500">
+            <p>No guest passes found.</p>
+          </div>
+          <div v-else class="space-y-2">
+            <div v-for="p in guestPasses" :key="p.id" class="flex items-center justify-between p-3 bg-white rounded hover:shadow-sm transition">
+              <div class="flex items-center gap-4">
+                <div class="font-medium">{{ p.guest_name || p.guest_email || 'Guest' }}</div>
+                <div class="text-sm text-gray-500">Case: {{ p.case_id }}</div>
+                <Badge class="ml-2" :class="p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'">{{ p.status }}</Badge>
+                <div class="text-sm text-gray-500">{{ p.access_level.replace('_',' ') }} - Expires: {{ formatDate(p.expires_at) }}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <Button size="sm" variant="ghost" @click="revokeGuest(p.id)" v-if="p.status === 'active'">Revoke</Button>
+                <Button size="sm" variant="outline" as-child>
+                  <a :href="`/guest-access?token=${p.pass_token}&case=${p.case_id}`" target="_blank">Open</a>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+
   <div v-else class="min-h-screen bg-gray-50 p-6">
     <div class="max-w-5xl mx-auto space-y-6">
       <!-- Guest Access Header -->
@@ -181,6 +221,28 @@ const caseData = ref(null);
 const documents = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
+const isAdminMode = ref(false);
+const guestPasses = ref([]);
+
+const loadAdminGuestPasses = async () => {
+  try {
+    const list = await GuestPass.list();
+    guestPasses.value = list || [];
+  } catch (err) {
+    console.error('Failed to load guest passes for admin:', err);
+    error.value = 'Failed to load guest passes.';
+  }
+};
+
+const revokeGuest = async (id) => {
+  try {
+    await GuestPass.update(id, { status: 'revoked' });
+    await loadAdminGuestPasses();
+  } catch (err) {
+    console.error('Failed to revoke guest pass:', err);
+    error.value = 'Failed to revoke guest pass.';
+  }
+};
 
 const validateAccessAndLoadData = async () => {
   isLoading.value = true;
@@ -190,7 +252,22 @@ const validateAccessAndLoadData = async () => {
     const token = route.query.token;
     const caseId = route.query.case;
 
+    // If no token/case provided, and we are in a logged-in admin context,
+    // treat this as the admin Guest Access management view.
     if (!token || !caseId) {
+      // check current user
+      try {
+        const me = await (await import('@/services/entities')).User.me();
+        if (me && me.user_type === 'admin') {
+          isAdminMode.value = true;
+          await loadAdminGuestPasses();
+          isLoading.value = false;
+          return;
+        }
+      } catch (e) {
+        // ignore and fallthrough to invalid link
+      }
+
       error.value = 'Invalid access link. Missing token or case ID.';
       isLoading.value = false;
       return;

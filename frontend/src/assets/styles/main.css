@@ -312,6 +312,128 @@ html.dark .hover\:bg-blue-50:hover {
   background-color: rgba(96,165,250,0.04) !important;
 }
 
+/* Legal Research specific overrides */
+html.dark .bg-blue-50,
+html.dark .bg-purple-50,
+html.dark .bg-green-50,
+html.dark .bg-amber-50,
+html.dark .from-amber-50,
+html.dark .to-yellow-50,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50,
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50,
+html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50,
+html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background-image: none !important;
+  background-color: rgba(255,255,255,0.02) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Card content, headers, and quick info cards */
+html.dark .card,
+html.dark .Card,
+html.dark .CardContent,
+html.dark .CardHeader,
+html.dark .CardTitle,
+html.dark .p-4.bg-blue-50,
+html.dark .p-4.bg-purple-50,
+html.dark .p-4.bg-green-50,
+html.dark .p-4.bg-amber-50 {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+}
+
+/* Select input background */
+html.dark select.bg-white,
+html.dark select.bg-white:focus,
+html.dark .appearance-none.w-full.px-3.py-2.bg-white {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Skeleton loaders */
+html.dark .h-8.bg-gray-200,
+html.dark .h-60.bg-gray-200 {
+  background-color: rgba(255,255,255,0.03) !important;
+}
+
+/* Prose content and saved research cards */
+html.dark .prose,
+html.dark .prose-sm,
+html.dark .line-clamp-3 {
+  color: var(--lt-text) !important;
+}
+
+/* Schedule / Calendar view overrides */
+/* Card containers and controls */
+html.dark .p-6.bg-white.rounded-lg.border.border-gray-200,
+html.dark .bg-white.rounded-lg.border.border-gray-200,
+html.dark .p-6.bg-white.rounded-lg {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Header inside schedule */
+html.dark .p-6 .text-2xl.font-bold.text-gray-800,
+html.dark .p-6 .text-lg.font-semibold.text-gray-800,
+html.dark .text-gray-800 {
+  color: var(--lt-text) !important;
+}
+
+/* Calendar grid backgrounds (week header and empty day cells) */
+html.dark .grid.grid-cols-7.gap-px.bg-gray-200,
+html.dark .bg-gray-200,
+html.dark .bg-gray-50 {
+  background-color: rgba(255,255,255,0.02) !important;
+  color: var(--lt-text) !important;
+  border-color: var(--lt-border) !important;
+}
+
+/* Day cell (white boxes) */
+html.dark .p-2.h-40.flex.flex-col.bg-white,
+html.dark .bg-white {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
+}
+
+/* Today's background (blue-50) */
+html.dark .bg-blue-50,
+html.dark .text-blue-600,
+html.dark .text-blue-600 {
+  background-color: rgba(96,165,250,0.08) !important;
+  color: #9ed0ff !important;
+}
+
+/* Event badges inside day cells */
+html.dark .bg-blue-100 { background-color: rgba(96,165,250,0.08) !important; color: #eaf6ff !important; border-color: rgba(96,165,250,0.18) !important; }
+html.dark .text-blue-800 { color: #cfe9ff !important; }
+html.dark .border-blue-300 { border-color: rgba(96,165,250,0.22) !important; }
+
+html.dark .bg-orange-100 { background-color: rgba(245,158,11,0.06) !important; color: #ffe8c9 !important; border-color: rgba(245,158,11,0.14) !important; }
+html.dark .text-orange-800 { color: #ffd5a8 !important; }
+html.dark .border-orange-300 { border-color: rgba(245,158,11,0.16) !important; }
+
+html.dark .bg-purple-100 { background-color: rgba(139,92,246,0.06) !important; color: #f1e7ff !important; border-color: rgba(139,92,246,0.14) !important; }
+html.dark .text-purple-800 { color: #e6d9ff !important; }
+html.dark .border-purple-300 { border-color: rgba(139,92,246,0.16) !important; }
+
+/* Scroll area and overflow inside day cells */
+html.dark .overflow-y-auto { scrollbar-color: #2a3946 transparent !important; }
+
+/* Buttons in calendar controls */
+html.dark .button,
+html.dark button,
+html.dark .btn,
+html.dark .ant-btn {
+  color: var(--lt-text) !important;
+  background-color: transparent !important;
+  border-color: var(--lt-border) !important;
+}
+
+
+
 
 /* Admin Users / Tables: Ensure table headers, rows and cells flip in dark mode.
    Targets common table patterns and some UI-library selectors (ant, generic table classes).
