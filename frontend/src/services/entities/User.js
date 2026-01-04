@@ -64,10 +64,26 @@ class UserService {
    */
   async update(id, data) {
     try {
-      const response = await axios.patch(`${this.baseUrl}/${id}`, data)
+      // Backend routes expect PUT for full/partial user updates
+      const response = await axios.put(`${this.baseUrl}/${id}`, data)
       return response.data
     } catch (error) {
       console.error(`Error updating user ${id}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Convenience helper to update the currently authenticated user's data
+   * (calls `me()` to resolve id then `update(id, data)`).
+   */
+  async updateMyUserData(data) {
+    try {
+      const me = await this.me()
+      if (!me || !me.id) throw new Error('No authenticated user')
+      return this.update(me.id, data)
+    } catch (error) {
+      console.error('Error updating current user data:', error)
       throw error
     }
   }

@@ -455,7 +455,21 @@ const handleSave = async () => {
     try {
       const uid = user.value?.id || (await User.me())?.id
       if (!uid) throw new Error('No authenticated user id available')
-      await User.update(uid, settings.value)
+
+      // Backend `User` entity only includes a subset of fields. Build a safe payload
+      // to avoid sending nested objects or unknown keys that may cause server errors.
+      const payload = {
+        full_name: user.value?.full_name || undefined,
+        phone: settings.value.phone || undefined,
+        bar_number: settings.value.bar_number || undefined,
+        // backend stores specializations as comma-separated string `specializations`
+        specializations: Array.isArray(settings.value.specialization)
+          ? settings.value.specialization.join(', ')
+          : (settings.value.specialization || undefined),
+        address: settings.value.address || undefined,
+      }
+
+      await User.update(uid, payload)
     } catch (e) {
       // Re-throw so the outer catch handles notification
       throw e

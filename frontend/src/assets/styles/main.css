@@ -60,6 +60,33 @@ body {
   @apply bg-gray-50 text-gray-900;
 }
 
+/* Quick dark-mode overrides (applies when `html.dark` is present).
+   This is a pragmatic patch to make the UI respond to the `dark` class
+   immediately. Longer-term: replace hard-coded colors with CSS variables
+   or Tailwind `dark:` variants in components. */
+:root {
+  --lt-bg: #f8fafc;
+  --lt-card: #ffffff;
+  --lt-text: #111827;
+  --lt-border: #e5e7f0;
+}
+html.dark {
+  --lt-bg: #0b1220;
+  --lt-card: #071024;
+  --lt-text: #e6eef8;
+  --lt-border: #1f2937;
+}
+
+/* Apply variables to common element roots */
+body {
+  background-color: var(--lt-bg) !important;
+  color: var(--lt-text) !important;
+}
+.bg-white { background-color: var(--lt-card) !important; }
+.bg-gray-50 { background-color: var(--lt-bg) !important; }
+.text-gray-900, .text-gray-800 { color: var(--lt-text) !important; }
+.border-gray-200, .border-gray-400 { border-color: var(--lt-border) !important; }
+
 /* Custom Utilities */
 @layer utilities {
   .scrollbar-hide {
@@ -70,4 +97,78 @@ body {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Stronger dark-mode overrides to cover component-scoped styles (Dashboard, Schedule, Cases, Help, etc.)
+   These use the existing --lt-* variables and `!important` so scoped component styles are overridden.
+*/
+html.dark body,
+html.dark main,
+html.dark aside,
+html.dark header,
+html.dark nav,
+html.dark .bg-white,
+html.dark .bg-gray-50,
+html.dark .rounded-lg.bg-white,
+html.dark .p-4.bg-white {
+  background-color: var(--lt-bg) !important;
+  color: var(--lt-text) !important;
+}
+
+html.dark .nav-link,
+html.dark .nav-link.active,
+html.dark .nav-link:hover,
+html.dark .nav-link:active {
+  background-color: transparent !important;
+  color: var(--lt-text) !important;
+}
+
+html.dark .nav-link .nav-icon,
+html.dark .nav-link .nav-text {
+  color: var(--lt-border) !important;
+}
+
+html.dark .nav-link.active .nav-icon,
+html.dark .nav-link.active .nav-text {
+  color: #60a5fa !important;
+}
+
+html.dark .icon-wrap,
+html.dark .icon-wrap > * {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: #60a5fa !important;
+}
+
+html.dark .border-gray-200,
+html.dark .border-gray-400,
+html.dark .border {
+  border-color: var(--lt-border) !important;
+}
+
+html.dark .text-gray-800,
+html.dark .text-gray-900,
+html.dark .text-gray-700 {
+  color: var(--lt-text) !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-600,
+html.dark .text-gray-400 {
+  color: #9aa6b2 !important;
+}
+
+html.dark .bg-blue-100,
+html.dark .bg-gray-100,
+html.dark .bg-gray-50 {
+  background-color: rgba(255,255,255,0.02) !important;
+  color: var(--lt-text) !important;
+}
+
+html.dark .p-4,
+html.dark .rounded,
+html.dark .rounded-lg,
+html.dark .card,
+html.dark .card > * {
+  background-color: var(--lt-card) !important;
+  color: var(--lt-text) !important;
 }
