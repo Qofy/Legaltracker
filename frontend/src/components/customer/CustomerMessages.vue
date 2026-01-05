@@ -415,10 +415,22 @@ const loadMessages = async () => {
     const mapMsg = (m) => ({ ...normalizeMessage(m), is_from_customer: m.sender_id === authStore.user?.id });
     // Load all messages from backend (sorted desc by created_date)
     const allMessages = await ChatMessage.list('-created_date');
-    messages.value = (allMessages || [])
-      .filter(m => m.case_id === selectedCaseId.value)
-      .map(mapMsg)
-      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+    const serverMessages = (allMessages || []).filter(m => m.case_id === selectedCaseId.value).map(mapMsg);
+
+    // Merge server messages with in-memory messages to preserve local-only items
+    const byKey = {};
+    const addToByKey = (m) => {
+      if (!m) return;
+      const key = m.id || m._tempId || (m.created_date ? `${new Date(m.created_date).getTime()}-${Math.random().toString(36).slice(2,8)}` : `tmp-${Math.random().toString(36).slice(2,8)}`);
+      if (!byKey[key]) byKey[key] = m;
+      else {
+        if (m.id && (!byKey[key].id || byKey[key].id !== m.id)) byKey[key] = m;
+      }
+    };
+
+    serverMessages.forEach(addToByKey);
+    messages.value.forEach(addToByKey);
+    messages.value = Object.values(byKey).sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
     // Scroll to bottom
     await nextTick();
@@ -529,15 +541,41 @@ const loadAdminMessages = async () => {
       // Load conversation with admin
       const conversation = await DirectMessage.getConversation(adminUser.value.id);
       console.log('[DEBUG CUSTOMER] API returned:', conversation);
-      adminMessages.value = conversation || [];
-      console.log('[DEBUG CUSTOMER] ✓ Loaded', adminMessages.value.length, 'admin messages');
+      // Only replace local adminMessages when server returns non-empty results.
+      if (Array.isArray(conversation) && conversation.length > 0) {
+        adminMessages.value = conversation;
+        console.log('[DEBUG CUSTOMER] ✓ Loaded', adminMessages.value.length, 'admin messages');
+      } else {
+        console.log('[DEBUG CUSTOMER] Server returned no admin conversation; preserving existing local admin messages');
+        try {
+          const cached = DirectMessage.getCachedMessages() || [];
+          if (cached.length > 0 && adminMessages.value.length === 0) {
+            adminMessages.value = cached.filter(m => String(m.sender_id) === String(adminUser.value.id) || String(m.recipient_id) === String(adminUser.value.id));
+            console.log('[DEBUG CUSTOMER] Populated adminMessages from cache:', adminMessages.value.length);
+          }
+        } catch (e) {
+          console.debug('Failed to populate adminMessages from cache:', e);
+        }
+      }
     } else {
       console.warn('[WARN CUSTOMER] No admin user found!');
     }
   } catch (error) {
     console.error('[ERROR CUSTOMER] Failed to load admin messages:', error);
     console.error('[ERROR CUSTOMER] Error details:', error.response?.data || error.message);
-    adminMessages.value = [];
+    // Fallback to cached direct messages if available to avoid wiping UI
+    try {
+      const cached = DirectMessage.getCachedMessages() || [];
+      if (cached.length > 0) {
+        adminMessages.value = cached.filter(m => String(m.sender_id) === String(adminUser.value?.id) || String(m.recipient_id) === String(adminUser.value?.id));
+        console.log('[DEBUG CUSTOMER] Populated adminMessages from cache after error:', adminMessages.value.length);
+      } else {
+        adminMessages.value = [];
+      }
+    } catch (e) {
+      console.debug('[DEBUG CUSTOMER] Failed to read cache after load error:', e);
+      adminMessages.value = [];
+    }
   } finally {
     isLoadingAdminMessages.value = false;
   }
@@ -608,8 +646,12 @@ const startAdminPolling = () => {
   adminPollingInterval = setInterval(async () => {
     if (activeTab.value === 'admin' && adminUser.value) {
       try {
-        const conversation = await DirectMessage.getConversation(adminUser.value.id);
-        adminMessages.value = conversation || [];
+        const conversation = await DirectMessage.getConversation(adminUser.value.id) || [];
+        // Merge server conversation with local adminMessages to avoid losing local messages
+        const byId = {};
+        conversation.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        adminMessages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        adminMessages.value = Object.values(byId).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
       } catch (error) {
         console.error('Failed to refresh admin messages:', error);
       }

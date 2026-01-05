@@ -124,11 +124,31 @@ class DirectMessageService {
       // Fetch from server
       const response = await axios.get(this.baseUrl)
       const messages = response.data || []
-      
-      // Update cache
-      this.setCachedMessages(messages)
-      console.log('Fetched and cached direct messages:', messages.length)
-      
+
+      // Merge server messages with existing cache instead of blindly
+      // replacing the cache. This prevents dropping client-only or
+      // unsynced messages when the server returns fewer items.
+      try {
+        const existing = this.getCachedMessages() || [];
+
+        if (Array.isArray(messages) && messages.length > 0) {
+          const serverById = {};
+          messages.forEach(m => { if (m && m.id) serverById[m.id] = m; });
+
+          // Keep existing items that either have no id (local-only) or
+          // whose id is missing from the server results.
+          const remaining = (existing || []).filter(e => !e || !e.id || !serverById[e.id]);
+
+          const merged = [...messages, ...remaining];
+          this.setCachedMessages(merged);
+          console.log('Fetched and merged direct messages: total=', merged.length, 'server=', messages.length, 'keptLocal=', remaining.length);
+        } else {
+          console.log('Fetched no messages from server; preserving existing cache')
+        }
+      } catch (e) {
+        console.error('Failed to merge server messages with cache:', e);
+      }
+
       return messages
     } catch (error) {
       console.error('Error fetching direct messages:', error)
@@ -148,10 +168,24 @@ class DirectMessageService {
   async refreshCache() {
     try {
       setTimeout(async () => {
-        const response = await axios.get(this.baseUrl)
-        const messages = response.data || []
-        this.setCachedMessages(messages)
-        console.log('Background cache refresh completed:', messages.length)
+        try {
+          const response = await axios.get(this.baseUrl)
+          const messages = response.data || []
+          const existing = this.getCachedMessages() || [];
+
+          if (Array.isArray(messages) && messages.length > 0) {
+            const serverById = {};
+            messages.forEach(m => { if (m && m.id) serverById[m.id] = m; });
+            const remaining = (existing || []).filter(e => !e || !e.id || !serverById[e.id]);
+            const merged = [...messages, ...remaining];
+            this.setCachedMessages(merged);
+            console.log('Background cache refresh completed: merged=', merged.length, 'server=', messages.length, 'keptLocal=', remaining.length);
+          } else {
+            console.log('Background refresh returned no messages; cache unchanged')
+          }
+        } catch (e) {
+          console.error('Background cache refresh failed:', e);
+        }
       }, 1000)
     } catch (error) {
       console.error('Background cache refresh failed:', error)

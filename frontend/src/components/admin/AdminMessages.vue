@@ -298,10 +298,19 @@ const loadMessages = async () => {
     
     // Then fetch fresh data from server
     const allMessages = await DirectMessage.list();
-    allDirectMessages.value = allMessages || [];
-    // On initial load, populate messages.value with all direct messages so they're available for filtering
-    messages.value = allDirectMessages.value;
-    console.log('Loaded direct messages from backend:', allDirectMessages.value.length, 'populated messages.value with:', messages.value.length);
+    // If server returned messages, update cache and UI. If server returned an empty
+    // array, preserve whatever is already in `messages.value` (likely from cache
+    // or recently sent items) to avoid wiping out local state.
+    if (Array.isArray(allMessages) && allMessages.length > 0) {
+      allDirectMessages.value = allMessages;
+      // On initial load, populate messages.value with all direct messages so they're available for filtering
+      messages.value = allDirectMessages.value;
+      console.log('Loaded direct messages from backend:', allDirectMessages.value.length, 'populated messages.value with:', messages.value.length);
+    } else {
+      console.log('Server returned no direct messages; preserving existing local messages (cache or unsynced sends)');
+      // Ensure allDirectMessages has at least cached data
+      allDirectMessages.value = allDirectMessages.value.length ? allDirectMessages.value : (DirectMessage.getCachedMessages() || []);
+    }
   } catch (error) {
     console.error('Failed to load messages:', error);
     // If server fails, try to use cached data as fallback
@@ -339,17 +348,44 @@ const selectUser = async (user) => {
     const allUsers = await User.list();
     const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
     const conversation = await DirectMessage.getConversation(user.id) || [];
+
     // include messages where ANY admin is involved
-    const filtered = (conversation || []).filter(msg => {
-      const isAdminInvolved = admins.some(admin => admin.id === msg.sender_id || admin.id === msg.recipient_id);
-      const isUserInvolved = msg.sender_id === user.id || msg.recipient_id === user.id;
+    const serverFiltered = (conversation || []).filter(msg => {
+      const isAdminInvolved = admins.some(admin => String(admin.id) === String(msg.sender_id) || String(admin.id) === String(msg.recipient_id));
+      const isUserInvolved = String(msg.sender_id) === String(user.id) || String(msg.recipient_id) === String(user.id);
       return isAdminInvolved && isUserInvolved;
     });
-    // merge server results with current messages
-    const byId = {};
-    filtered.forEach(m => { if (m && m.id) byId[m.id] = m; });
-    messages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
-    messages.value = Object.values(byId).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
+
+    // Also include cached messages that match this conversation (fallback when server returns empty)
+    let cachedFiltered = [];
+    try {
+      const cached = DirectMessage.getCachedMessages() || [];
+      cachedFiltered = cached.filter(msg => {
+        const isAdminInvolved = admins.some(admin => String(admin.id) === String(msg.sender_id) || String(admin.id) === String(msg.recipient_id));
+        const isUserInvolved = String(msg.sender_id) === String(user.id) || String(msg.recipient_id) === String(user.id);
+        return isAdminInvolved && isUserInvolved;
+      });
+    } catch (e) {
+      console.debug('Failed to read direct message cache for conversation merge:', e);
+    }
+
+    // Merge server, cached, and in-memory messages without losing items that lack server ids.
+    const byKey = {};
+    const addToByKey = (m) => {
+      if (!m) return;
+      const key = m.id || m._tempId || (m.created_at || m.created_date ? `${new Date(m.created_at || m.created_date).getTime()}-${Math.random().toString(36).slice(2,8)}` : `tmp-${Math.random().toString(36).slice(2,8)}`);
+      if (!byKey[key]) byKey[key] = m;
+      else {
+        // prefer server-sourced data when available
+        if (m.id && (!byKey[key].id || byKey[key].id !== m.id)) byKey[key] = m;
+      }
+    };
+
+    serverFiltered.forEach(addToByKey);
+    cachedFiltered.forEach(addToByKey);
+    messages.value.forEach(addToByKey);
+
+    messages.value = Object.values(byKey).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
   } catch (error) {
     console.error('[ERROR] Failed to load conversation:', error);
     console.error('[ERROR] Error details:', error.response?.data || error.message);
