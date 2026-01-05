@@ -89,6 +89,21 @@
             <h3 class="font-semibold text-gray-900">{{ lawyerName }}</h3>
             <p class="text-xs text-gray-500">Your Lawyer</p>
           </div>
+          <!-- Quick switch to Admin messages (visible in header) -->
+          <div class="ml-auto hidden md:flex items-center gap-2">
+            <button
+              @click="activeTab = 'cases'"
+              :class="['px-3 py-1 text-sm rounded', activeTab === 'cases' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700']"
+            >
+              Lawyer
+            </button>
+            <button
+              @click="activeTab = 'admin'"
+              :class="['px-3 py-1 text-sm rounded', activeTab === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700']"
+            >
+              Admin
+            </button>
+          </div>
         </div>
       </div>
 
@@ -177,6 +192,21 @@
             <div>
               <p class="text-sm font-semibold text-gray-900">Admin</p>
               <p class="text-xs text-gray-500">Direct messages with administrator</p>
+            </div>
+            <!-- Quick switch to Lawyer messages (visible in admin header) -->
+            <div class="ml-auto hidden md:flex items-center gap-2">
+              <button
+                @click="activeTab = 'cases'"
+                :class="['px-3 py-1 text-sm rounded', activeTab === 'cases' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700']"
+              >
+                Lawyer
+              </button>
+              <button
+                @click="activeTab = 'admin'"
+                :class="['px-3 py-1 text-sm rounded', activeTab === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700']"
+              >
+                Admin
+              </button>
             </div>
           </div>
         </div>
