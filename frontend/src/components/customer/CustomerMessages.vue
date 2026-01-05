@@ -647,9 +647,10 @@ watch(() => adminMessages.value.length, async () => {
 onMounted(() => {
   loadMyCases();
   try {
-  initSocket(authStore.accessToken);
+    initSocket(authStore.accessToken);
     const socket = getSocket();
     if (socket) {
+      try { socket.emit('register', { userId: authStore.user?.id, userType: authStore.user?.user_type }); } catch (e) {}
       socket.on('new_message', (msg) => {
         if (!msg || !msg.id) return;
         // only add if it belongs to the selected case and not a duplicate
@@ -665,6 +666,12 @@ onMounted(() => {
         if (msg.recipient_id && (msg.recipient_id === authStore.user?.id || msg.sender_id === authStore.user?.id)) {
           if (!adminMessages.value.find(m => m.id === msg.id)) {
             adminMessages.value.push(msg);
+            // Cache the message in localStorage
+            try {
+              DirectMessage.addToCache(msg);
+            } catch (e) {
+              console.debug('Failed to cache admin message in localStorage:', e);
+            }
             if (activeTab.value === 'admin') {
               nextTick().then(scrollAdminToBottom);
             }

@@ -187,6 +187,8 @@ const currentUserId = computed(() => authStore.user?.id || currentUser.value?.id
 const users = ref([]);
 const unreadCounts = ref({});
 const selectedUser = ref(null);
+const adminIds = ref([]);
+const allDirectMessages = ref([]);
 const searchQuery = ref('');
 const messages = ref([]);
 const newMessage = ref('');
@@ -210,15 +212,23 @@ const filteredUsers = computed(() => {
 const currentMessages = computed(() => {
   if (!selectedUser.value) return [];
 
-  // Filter messages between admin and selected user
-  return messages.value
+  // Filter messages between ANY admin and selected user (not just current admin)
+  const filtered = messages.value
     .filter(msg => {
-      const isBetweenUsers =
-        (msg.sender_id === currentUserId.value && msg.recipient_id === selectedUser.value.id) ||
-        (msg.sender_id === selectedUser.value.id && msg.recipient_id === currentUserId.value);
-      return isBetweenUsers;
+      const isFromSelectedUser = msg.sender_id === selectedUser.value.id;
+      const isToSelectedUser = msg.recipient_id === selectedUser.value.id;
+      const isFromAnyAdmin = adminIds.value.includes(msg.sender_id);
+      const isToAnyAdmin = adminIds.value.includes(msg.recipient_id);
+      
+      const isBetweenSelectedUserAndAnyAdmin = 
+        (isFromSelectedUser && isToAnyAdmin) || 
+        (isToSelectedUser && isFromAnyAdmin);
+      
+      return isBetweenSelectedUserAndAnyAdmin;
     })
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  
+  return filtered;
 });
 
 const getUserInitials = (user) => {
@@ -261,6 +271,9 @@ const loadUsers = async () => {
       (u.user_type === 'lawyer' || u.user_type === 'customer')
     );
 
+    // capture all admin ids for group-delivered admin messages
+    adminIds.value = allUsers.filter(u => u.user_type === 'admin').map(u => u.id);
+
     // initialize unread counters
     users.value.forEach(u => { unreadCounts.value[u.id] = unreadCounts.value[u.id] || 0; });
 
@@ -275,13 +288,31 @@ const loadUsers = async () => {
 const loadMessages = async () => {
   isLoadingMessages.value = true;
   try {
-    // Load all messages from the backend
+    // Try to load from cache first for immediate display
+    const cached = DirectMessage.getCachedMessages();
+    if (cached && cached.length > 0) {
+      allDirectMessages.value = cached;
+      messages.value = cached;
+      console.log('Loaded cached direct messages:', cached.length);
+    }
+    
+    // Then fetch fresh data from server
     const allMessages = await DirectMessage.list();
-    messages.value = allMessages || [];
-    console.log('Loaded messages from backend:', messages.value.length);
+    allDirectMessages.value = allMessages || [];
+    // On initial load, populate messages.value with all direct messages so they're available for filtering
+    messages.value = allDirectMessages.value;
+    console.log('Loaded direct messages from backend:', allDirectMessages.value.length, 'populated messages.value with:', messages.value.length);
   } catch (error) {
     console.error('Failed to load messages:', error);
-    messages.value = [];
+    // If server fails, try to use cached data as fallback
+    const cached = DirectMessage.getCachedMessages();
+    if (cached && cached.length > 0) {
+      allDirectMessages.value = cached;
+      messages.value = cached;
+      console.log('Server failed, using cached messages as fallback:', cached.length);
+    } else {
+      messages.value = [];
+    }
   } finally {
     isLoadingMessages.value = false;
   }
@@ -289,35 +320,36 @@ const loadMessages = async () => {
 
 const selectUser = async (user) => {
   selectedUser.value = user;
-  isLoadingMessages.value = true;
 
+  // Prefill from cached direct messages to avoid empty loading state
   try {
-    // Load conversation with this specific user
-    console.log('[DEBUG] Loading conversation with user:', user.id, user.full_name);
-    console.log('[DEBUG] Current admin ID:', currentUserId.value);
+    const cached = allDirectMessages.value || [];
+    // Don't filter here - let currentMessages computed do the filtering
+    // Just ensure messages.value has all the data available
+    if (cached.length > 0 && messages.value.length === 0) {
+      messages.value = cached;
+    }
+  } catch (e) {
+    console.debug('Error prefilling from cache:', e);
+  }
 
-    // Get all users to find the primary admin
+  // still fetch official conversation from server and merge
+  isLoadingMessages.value = true;
+  try {
     const allUsers = await User.list();
     const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
-    const primaryAdminId = admins[0]?.id;
-
-    console.log('[DEBUG] Primary admin ID (for consistency):', primaryAdminId);
-    console.log('[DEBUG] All admin IDs:', admins.map(a => a.id));
-
-    const conversation = await DirectMessage.getConversation(user.id);
-    console.log('[DEBUG] API returned conversation:', conversation);
-    console.log('[DEBUG] First message (if exists):', conversation?.[0]);
-
-    // Include messages where ANY admin is involved (not just current admin)
-    messages.value = conversation.filter(msg => {
-      const isAdminInvolved = admins.some(admin =>
-        admin.id === msg.sender_id || admin.id === msg.recipient_id
-      );
+    const conversation = await DirectMessage.getConversation(user.id) || [];
+    // include messages where ANY admin is involved
+    const filtered = (conversation || []).filter(msg => {
+      const isAdminInvolved = admins.some(admin => admin.id === msg.sender_id || admin.id === msg.recipient_id);
       const isUserInvolved = msg.sender_id === user.id || msg.recipient_id === user.id;
       return isAdminInvolved && isUserInvolved;
     });
-
-    console.log('[DEBUG] Filtered to', messages.value.length, 'messages (from', conversation.length, 'total)');
+    // merge server results with current messages
+    const byId = {};
+    filtered.forEach(m => { if (m && m.id) byId[m.id] = m; });
+    messages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
+    messages.value = Object.values(byId).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
   } catch (error) {
     console.error('[ERROR] Failed to load conversation:', error);
     console.error('[ERROR] Error details:', error.response?.data || error.message);
@@ -393,8 +425,15 @@ const startPolling = () => {
   pollingInterval = setInterval(async () => {
     if (selectedUser.value) {
       try {
-        const conversation = await DirectMessage.getConversation(selectedUser.value.id);
-        messages.value = conversation || [];
+        const conversation = await DirectMessage.getConversation(selectedUser.value.id) || [];
+        // Merge server conversation with local messages to avoid losing recently sent items
+        const byId = {};
+        // add server messages first
+        conversation.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        // add local messages (preserve ones server may not yet have)
+        messages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        // set merged, sorted by created_at/created_date
+        messages.value = Object.values(byId).sort((a, b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
       } catch (error) {
         console.error('Failed to refresh messages:', error);
       }
@@ -427,32 +466,107 @@ watch(() => currentMessages.value.length, async () => {
 onMounted(async () => {
   await loadUsers();
   await loadMessages();
-  try {
-    initSocket(authStore.accessToken);
-    const socket = getSocket();
+    try {
+      initSocket(authStore.accessToken);
+      const socket = getSocket();
       if (socket) {
+        // register this client with the socket server so it joins user/admin rooms
+        try { socket.emit('register', { userId: authStore.user?.id, userType: authStore.user?.user_type }); } catch (e) {}
         socket.on('new_message', (msg) => {
-          if (!msg || !msg.id) return;
-          const meId = currentUserId.value;
-          // Direct message involving admin?
-          if (msg.recipient_id === meId || msg.sender_id === meId) {
-            const otherUserId = msg.sender_id === meId ? msg.recipient_id : msg.sender_id;
-            // If we're currently viewing that user, append immediately
-            if (selectedUser.value && selectedUser.value.id === otherUserId) {
-              if (!messages.value.find(m => m.id === msg.id)) {
-                messages.value.push(msg);
-                nextTick().then(scrollToBottom);
+          console.debug('[socket ADMIN] new_message received', msg);
+          try {
+            if (!msg || !msg.id) return;
+
+            const meId = String(currentUserId.value || '');
+
+            // normalize ids to strings to avoid type mismatches
+            const senderId = msg.sender_id ? String(msg.sender_id) : null;
+            const recipientId = msg.recipient_id ? String(msg.recipient_id) : null;
+
+            // ignore case messages in this handler
+            if (msg.case_id) return;
+
+            // If message directly involves this admin (sent to/from current admin)
+            if (senderId === meId || recipientId === meId) {
+              console.debug('[socket ADMIN] message involves current admin:', { meId, senderId, recipientId });
+              const otherUserId = (senderId === meId) ? recipientId : senderId;
+              if (selectedUser.value && String(selectedUser.value.id) === otherUserId) {
+                  if (!messages.value.find(m => m.id === msg.id)) {
+                    const normalized = { ...msg, created_at: msg.created_at || msg.created_date || msg.createdAt || new Date().toISOString() };
+                    console.debug('[socket ADMIN] appending message to open conversation', normalized.id, 'otherUserId=', otherUserId);
+                    messages.value.push(normalized);
+                    // Cache in localStorage
+                    try {
+                      DirectMessage.addToCache(normalized);
+                    } catch (e) {
+                      console.debug('Failed to cache message in localStorage:', e);
+                    }
+                    nextTick().then(scrollToBottom);
+                  }
+              } else if (otherUserId) {
+                  // Cache message even when conversation not open
+                  const normalized = { ...msg, created_at: msg.created_at || msg.created_date || msg.createdAt || new Date().toISOString() };
+                  if (!allDirectMessages.value.find(m => m.id === msg.id)) {
+                    allDirectMessages.value.push(normalized);
+                  }
+                  try {
+                    DirectMessage.addToCache(normalized);
+                  } catch (e) {
+                    console.debug('Failed to cache message in localStorage:', e);
+                  }
+                  const prev = unreadCounts.value[otherUserId] || 0;
+                  unreadCounts.value[otherUserId] = prev + 1;
+                  console.debug('[socket ADMIN] incremented unreadCounts for', otherUserId, '=>', unreadCounts.value[otherUserId]);
               }
-            } else {
-              // increment unread counter for that user
-              unreadCounts.value[otherUserId] = (unreadCounts.value[otherUserId] || 0) + 1;
+              return;
             }
+
+            // If message is addressed to any admin (admin-group delivery), notify current admin too
+            const isAdminMessage = (senderId && adminIds.value.includes(senderId)) || (recipientId && adminIds.value.includes(recipientId));
+            if (isAdminMessage) {
+              console.debug('[socket ADMIN] isAdminMessage detected', { adminIds: adminIds.value, senderId, recipientId, selectedUserId: selectedUser.value?.id });
+              // determine the non-admin participant
+              const otherUserId = (senderId && !adminIds.value.includes(senderId)) ? senderId : (recipientId && !adminIds.value.includes(recipientId)) ? recipientId : null;
+              console.debug('[socket ADMIN] resolved otherUserId for admin message:', otherUserId);
+              if (otherUserId) {
+                // always increment unread so admin sees a badge
+                const prev = unreadCounts.value[otherUserId] || 0;
+                unreadCounts.value[otherUserId] = prev + 1;
+                console.debug('[socket ADMIN] incremented unreadCounts for', otherUserId, '=>', unreadCounts.value[otherUserId]);
+
+                // Always append message to messages array AND cache it in allDirectMessages
+                const normalized = { ...msg, created_at: msg.created_at || msg.created_date || msg.createdAt || new Date().toISOString() };
+                if (!messages.value.find(m => m.id === msg.id)) {
+                  messages.value.push(normalized);
+                  console.debug('[socket ADMIN] appended admin-group message to messages array', normalized.id, 'messages.value.length=', messages.value.length);
+                }
+                if (!allDirectMessages.value.find(m => m.id === msg.id)) {
+                  allDirectMessages.value.push(normalized);
+                  console.debug('[socket ADMIN] cached message in allDirectMessages', normalized.id);
+                }
+                
+                // Also cache in localStorage for persistence
+                try {
+                  DirectMessage.addToCache(normalized);
+                  console.debug('[socket ADMIN] cached message in localStorage', normalized.id);
+                } catch (e) {
+                  console.debug('Failed to cache message in localStorage:', e);
+                }
+
+                // If admin currently viewing that user, scroll to bottom
+                if (selectedUser.value && String(selectedUser.value.id) === otherUserId) {
+                  nextTick().then(scrollToBottom);
+                }
+              }
+            }
+          } catch (e) {
+            console.debug('Error handling incoming admin new_message', e, msg);
           }
         });
       }
-  } catch (e) {
-    console.debug('Admin socket init error', e);
-  }
+    } catch (e) {
+      console.debug('Admin socket init error', e);
+    }
 });
 
 onUnmounted(() => {

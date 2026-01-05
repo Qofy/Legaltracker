@@ -311,9 +311,14 @@ const openCase = async (c) => {
 
 const loadMessagesForCase = async (caseId) => {
   try {
-    const all = await ChatMessage.list('-created_date');
+    const all = await ChatMessage.list('-created_date') || [];
     const normalizeMessage = (m) => ({ ...m, created_date: m.created_date || m.created_at || m.createdAt || new Date().toISOString() });
-    messages.value = (all || []).filter(m => m.case_id === caseId).map(normalizeMessage).sort((a,b) => new Date(a.created_date) - new Date(b.created_date));
+    const serverMsgs = (all || []).filter(m => m.case_id === caseId).map(normalizeMessage);
+    // Merge server messages with local messages (keep local-only messages)
+    const byId = {};
+    serverMsgs.forEach(m => { if (m && m.id) byId[m.id] = m; });
+    messages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
+    messages.value = Object.values(byId).sort((a,b) => new Date(a.created_date) - new Date(b.created_date));
     await nextTick();
     scrollToBottom();
   } catch (e) {
@@ -445,9 +450,9 @@ const sendAdminMessage = async () => {
   if (!newAdminMessage.value.trim() || isSendingAdmin.value) return;
 
   isSendingAdmin.value = true;
-  try {
-    // Find PRIMARY admin user if not already loaded
-    if (!adminUser.value) {
+    try {
+      // Find PRIMARY admin user if not already loaded
+      if (!adminUser.value) {
       const allUsers = await User.list();
       const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
       adminUser.value = admins[0]; // Use first admin for consistency
@@ -479,9 +484,10 @@ const sendAdminMessage = async () => {
     // Emit over socket so admin receives it in realtime
     try {
       const socket = getSocket();
+      console.debug('[socket LAWYER] emitting client:new_message', sentMessage);
       if (socket) socket.emit('client:new_message', sentMessage);
     } catch (e) {
-      console.debug('Failed to emit lawyer->admin new_message', e);
+      console.debug('Failed to emit lawyer->admin new_message', e, sentMessage);
     }
   } catch (error) {
     console.error('[ERROR LAWYER] Failed to send message to admin:', error);
@@ -506,8 +512,12 @@ const startAdminPolling = () => {
   adminPollingInterval = setInterval(async () => {
     if (activeTab.value === 'admin' && adminUser.value) {
       try {
-        const conversation = await DirectMessage.getConversation(adminUser.value.id);
-        adminMessages.value = conversation || [];
+        const conversation = await DirectMessage.getConversation(adminUser.value.id) || [];
+        // Merge server conversation with local adminMessages to avoid losing local messages
+        const byId = {};
+        conversation.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        adminMessages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        adminMessages.value = Object.values(byId).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
       } catch (error) {
         console.error('Failed to refresh admin messages:', error);
       }
@@ -545,11 +555,30 @@ watch(() => adminMessages.value.length, async () => {
 onMounted(() => {
   loadAssignedCases();
   // initialize socket connection
-  try {
-    initSocket(authStore.accessToken);
-    const socket = getSocket();
-    if (socket) {
-      socket.on('new_message', (msg) => {
+    try {
+      initSocket(authStore.accessToken);
+      const socket = getSocket();
+      if (socket) {
+        try { socket.emit('register', { userId: authStore.user?.id, userType: authStore.user?.user_type }); } catch (e) {}
+        // When connection is (re)established, rejoin rooms and refresh messages
+        socket.on('connect', () => {
+          try {
+            // rejoin active case
+            if (activeCase.value && activeCase.value.id) {
+              socket.emit('join_case', activeCase.value.id);
+              // reload messages for the case to catch any missed ones
+              loadMessagesForCase(activeCase.value.id).catch(() => {});
+            }
+            // reload admin conversation if admin tab is open or adminUser is known
+            if (adminUser.value) {
+              loadAdminMessages().catch(() => {});
+            }
+          } catch (e) {
+            console.debug('Error during socket connect handler', e);
+          }
+        });
+
+        socket.on('new_message', (msg) => {
         // avoid duplicates
         if (!msg || !msg.id) return;
         if (messages.value.find(m => m.id === msg.id)) return;
@@ -565,6 +594,12 @@ onMounted(() => {
         if (msg.recipient_id && (msg.recipient_id === authStore.user?.id || msg.sender_id === authStore.user?.id)) {
           if (!adminMessages.value.find(m => m.id === msg.id)) {
             adminMessages.value.push(msg);
+            // Cache the message in localStorage
+            try {
+              DirectMessage.addToCache(msg);
+            } catch (e) {
+              console.debug('Failed to cache admin message in localStorage:', e);
+            }
             if (activeTab.value === 'admin') {
               nextTick().then(scrollAdminToBottom);
             }
