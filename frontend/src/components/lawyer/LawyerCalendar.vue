@@ -134,6 +134,104 @@
       </div>
     </div>
 
+    <!-- Case Deadlines from Admin -->
+    <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border-2 border-red-200 p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-red-800 flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            Case Deadlines
+          </h3>
+          <p class="text-red-700 mt-1">Deadlines assigned by admin for your cases</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white/70 rounded-full px-4 py-2">
+          <div class="w-3 h-3 rounded-full bg-red-500"></div>
+          <span class="text-red-800 font-semibold text-sm">{{ myCaseDeadlines.length }} active</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-if="myCaseDeadlines.length === 0" class="col-span-full text-center py-8">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-lg font-semibold text-gray-700">All caught up!</p>
+          <p class="text-gray-600">No case deadlines assigned at the moment</p>
+        </div>
+
+        <div
+          v-for="deadline in myCaseDeadlines"
+          :key="deadline.id"
+          :class="[
+            'bg-white rounded-xl p-4 border-2 shadow-sm transition-all duration-200 hover:shadow-md',
+            isOverdue(deadline.due_date) ? 'border-red-300 bg-red-50' : 'border-orange-200'
+          ]"
+        >
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <h4 class="font-bold text-gray-900 text-sm">{{ deadline.title }}</h4>
+              <p class="text-xs text-gray-600 mt-1">#{{ deadline.case_number }}</p>
+              <p class="text-xs text-gray-500">{{ deadline.case_type }}</p>
+            </div>
+            <div 
+              :class="[
+                'px-2 py-1 rounded-full text-xs font-bold',
+                isOverdue(deadline.due_date) 
+                  ? 'bg-red-100 text-red-800' 
+                  : isUpcomingSoon(deadline.due_date) 
+                    ? 'bg-orange-100 text-orange-800' 
+                    : 'bg-green-100 text-green-800'
+              ]"
+            >
+              {{ getDeadlineStatus(deadline.due_date) }}
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-xs text-gray-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span :class="isOverdue(deadline.due_date) ? 'text-red-600 font-semibold' : 'text-gray-700'">
+                {{ formatDeadlineDate(deadline.due_date) }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs text-gray-600">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span>Assigned by Admin</span>
+            </div>
+          </div>
+
+          <!-- Progress bar for time remaining -->
+          <div class="mt-3">
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                :class="[
+                  'h-2 rounded-full transition-all duration-300',
+                  isOverdue(deadline.due_date) 
+                    ? 'bg-red-500' 
+                    : isUpcomingSoon(deadline.due_date) 
+                      ? 'bg-orange-500' 
+                      : 'bg-green-500'
+                ]"
+                :style="`width: ${getTimeProgress(deadline.due_date)}%`"
+              ></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 text-right">{{ getDaysRemaining(deadline.due_date) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Deadlines List -->
     <div class="bg-white rounded-lg border border-gray-200 p-6">
       <div class="flex items-center justify-between mb-4">
@@ -296,6 +394,19 @@ const filteredDeadlines = computed(() => {
   });
 });
 
+const myCaseDeadlines = computed(() => {
+  const userId = authStore.user?.id;
+  if (!userId) return [];
+  
+  return cases.value
+    .filter(c => {
+      // Check if this lawyer is assigned to the case and case has a due_date
+      const isAssigned = c.owners && c.owners.some(owner => owner.id === userId);
+      return isAssigned && c.due_date;
+    })
+    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date)); // Sort by due date
+});
+
 const loadCalendarData = async () => {
   try {
     const userId = authStore.user?.id;
@@ -435,6 +546,55 @@ const getStatusBadge = (status) => {
     case 'pending': return 'bg-yellow-100 text-yellow-700';
     default: return 'bg-gray-100 text-gray-700';
   }
+};
+
+// Helper functions for case deadlines
+const formatDeadlineDate = (date) => {
+  try {
+    return format(new Date(date), 'MMM d, yyyy h:mm a');
+  } catch (e) {
+    return '';
+  }
+};
+
+const isUpcomingSoon = (date) => {
+  const now = new Date();
+  const deadline = new Date(date);
+  const diffInHours = (deadline - now) / (1000 * 60 * 60);
+  return diffInHours <= 48 && diffInHours > 0; // Within 48 hours
+};
+
+const getDeadlineStatus = (date) => {
+  const now = new Date();
+  const deadline = new Date(date);
+  
+  if (deadline < now) return 'OVERDUE';
+  if (isUpcomingSoon(date)) return 'URGENT';
+  return 'PENDING';
+};
+
+const getDaysRemaining = (date) => {
+  const now = new Date();
+  const deadline = new Date(date);
+  const diffInDays = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays < 0) return `${Math.abs(diffInDays)} days overdue`;
+  if (diffInDays === 0) return 'Due today';
+  if (diffInDays === 1) return '1 day remaining';
+  return `${diffInDays} days remaining`;
+};
+
+const getTimeProgress = (date) => {
+  const now = new Date();
+  const deadline = new Date(date);
+  const diffInDays = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays < 0) return 100; // Overdue
+  if (diffInDays > 30) return 10; // More than a month away
+  
+  // Calculate progress based on urgency (more urgent = fuller bar)
+  const progress = Math.max(10, 100 - (diffInDays * 3));
+  return Math.min(100, progress);
 };
 
 onMounted(() => {

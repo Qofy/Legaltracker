@@ -1,82 +1,231 @@
 <template>
-  <div class="space-y-6">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
     <!-- Header -->
-    <div class="mb-6">
-      <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-        <CalendarIcon class="w-7 h-7 text-[#003aca]" />
-        Schedule & Calendar
-      </h2>
-      <p class="text-gray-600 mt-1">
-        View all important dates for cases, tasks, and meetings.
-      </p>
-    </div>
-    <div class="p-6 bg-white rounded-lg border border-gray-200">
-      <div class="flex  justify-between mb-4">
+    <div class="max-w-7xl mx-auto mb-8">
+      <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-lg font-semibold text-gray-800">New Meeting</h3>
-          <p class="text-sm text-gray-600 mt-1">Schedule meetings and appointments</p>
+          <h1 class="text-4xl font-bold text-gray-900 flex items-center gap-3">
+            <div class="p-3 bg-gradient-to-r from-[#003aca] to-[#0052e8] rounded-2xl shadow-lg">
+              <CalendarIcon class="w-8 h-8 text-white" />
+            </div>
+            Admin Schedule
+          </h1>
+          <p class="text-lg text-gray-600 mt-2">
+            Manage cases, meetings, and important deadlines
+          </p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border">
+            <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span class="text-sm text-gray-600">Cases</span>
+            <div class="w-3 h-3 rounded-full bg-purple-500 ml-3"></div>
+            <span class="text-sm text-gray-600">Meetings</span>
+            <div class="w-3 h-3 rounded-full bg-orange-500 ml-3"></div>
+            <span class="text-sm text-gray-600">Actions</span>
+          </div>
+          
+          <Dialog v-model:open="showMeetingForm">
+            <DialogTrigger as-child>
+              <Button class="bg-gradient-to-r from-[#003aca] to-[#0052e8] hover:from-[#002a8a] hover:to-[#003aca] text-white shadow-lg px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-xl">
+                <Plus class="w-5 h-5 mr-2" />
+                Schedule Meeting
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Schedule a New Meeting</DialogTitle>
+              </DialogHeader>
+              <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" :pinnedCaseId="pinnedCaseId" :initialAttendeeIds="initialAttendeeIds" />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
-        <Dialog v-model:open="showMeetingForm">
-          <DialogTrigger as-child>
-            <Button class="bg-[#003aca] hover:bg-[#002a8a] text-white h-10 px-2">
-              <Plus class="w-4 h-4 mr-2" />
-              New Meeting
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Schedule a New Meeting</DialogTitle>
-            </DialogHeader>
-            <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" :pinnedCaseId="pinnedCaseId" :initialAttendeeIds="initialAttendeeIds" />
-          </DialogContent>
-        </Dialog>
     </div>
 
-    <!-- New Meeting Section -->
-
-    <!-- Calendar -->
-    <div class="bg-white rounded-lg border border-gray-200">
-      <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-        <h3 class="text-2xl font-bold text-gray-800">{{ format(currentDate, 'MMMM yyyy') }}</h3>
-        <div class="flex space-x-2">
-          <Button variant="outline" size="icon" @click="currentDate = subMonths(currentDate, 1)">
-            <ChevronLeft class="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" @click="currentDate = new Date()">Today</Button>
-          <Button variant="outline" size="icon" @click="currentDate = addMonths(currentDate, 1)">
-            <ChevronRight class="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      <div class="p-6">
-          <div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
-            <div v-for="day in weekDays" :key="day" class="text-center font-medium text-sm py-2 bg-gray-50 text-gray-600">
-              {{ day }}
+    <!-- Case Deadline Management Section (Admin Only) -->
+    <div v-if="isAdmin" class="max-w-7xl mx-auto mb-8">
+      <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+                <Clock class="w-6 h-6" />
+                Case Deadline Management
+              </h3>
+              <p class="text-white/90 mt-1">Assign due dates to cases and notify assigned lawyers</p>
             </div>
-            <div v-for="i in firstDayOfMonth" :key="`empty-${i}`" class="bg-gray-50"></div>
+            <div class="bg-white/20 rounded-full px-4 py-2">
+              <span class="text-white font-semibold">{{ casesWithoutDueDate.length }} pending</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-8">
+          <div class="space-y-4 max-h-96 overflow-y-auto">
             <div
-              v-for="day in calendarDays"
-              :key="day.toString()"
-              :class="`p-2 h-40 flex flex-col bg-white ${isToday(day) ? 'bg-blue-50' : ''}`"
+              v-for="caseItem in casesWithoutDueDate"
+              :key="caseItem.id"
+              class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-200"
             >
-              <span :class="`font-medium ${isToday(day) ? 'text-blue-600' : 'text-gray-800'}`">
-                {{ format(day, 'd') }}
-              </span>
-              <div class="mt-1 space-y-1 overflow-y-auto">
-                <div
-                  v-for="(event, index) in getDayEvents(day)"
-                  :key="index"
-                  :class="`p-1 rounded-md text-xs border ${getEventTypeStyles(event.type)}`"
-                >
-                  <div class="flex items-center">
-                    <component :is="getEventTypeIcon(event.type)" />
-                    <span class="font-semibold truncate">{{ event.title }}</span>
+              <div class="flex-1">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-r from-[#003aca] to-[#0052e8] rounded-full flex items-center justify-center">
+                    <Briefcase class="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-900">{{ caseItem.title }}</h4>
+                    <p class="text-sm text-gray-600">#{{ caseItem.case_number }}</p>
+                    <p class="text-xs text-gray-500">
+                      Lawyer: {{ getAssignedLawyerName(caseItem) || 'Unassigned' }}
+                    </p>
                   </div>
                 </div>
               </div>
+
+              <div class="flex items-center gap-3">
+                <div class="flex flex-col gap-1">
+                  <label class="text-xs font-medium text-gray-600">Due Date</label>
+                  <input
+                    v-model="caseItem.tempDueDate"
+                    type="datetime-local"
+                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <Button
+                  @click="assignDueDate(caseItem)"
+                  :disabled="!caseItem.tempDueDate"
+                  class="bg-gradient-to-r from-[#003aca] to-[#0052e8] hover:from-[#002a8a] hover:to-[#003aca] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <Send class="w-4 h-4 mr-2" />
+                  Send
+                </Button>
+              </div>
+            </div>
+
+            <div v-if="casesWithoutDueDate.length === 0" class="text-center py-8">
+              <CheckCircle class="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <p class="text-lg font-semibold text-gray-700">All cases have due dates assigned</p>
+              <p class="text-gray-500">Great job staying organized!</p>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Calendar Container -->
+    <div class="max-w-7xl mx-auto">
+      <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+        <!-- Calendar Header -->
+        <div class="bg-gradient-to-r from-[#003aca] to-[#0052e8] px-8 py-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-3xl font-bold text-white">
+              {{ format(currentDate, 'MMMM yyyy') }}
+            </h2>
+            <div class="flex items-center gap-3">
+              <Button 
+                @click="currentDate = subMonths(currentDate, 1)"
+                class="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full w-12 h-12 p-0 transition-all duration-200"
+              >
+                <ChevronLeft class="w-5 h-5" />
+              </Button>
+              <Button 
+                @click="currentDate = new Date()"
+                class="bg-white text-[#003aca] hover:bg-gray-50 font-semibold px-6 py-2 rounded-full transition-all duration-200"
+              >
+                Today
+              </Button>
+              <Button 
+                @click="currentDate = addMonths(currentDate, 1)"
+                class="bg-white/20 hover:bg-white/30 text-white border-0 rounded-full w-12 h-12 p-0 transition-all duration-200"
+              >
+                <ChevronRight class="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="p-8">
+          <!-- Week Days Header -->
+          <div class="grid grid-cols-7 gap-4 mb-4">
+            <div 
+              v-for="day in weekDays" 
+              :key="day" 
+              class="text-center font-bold text-gray-700 py-4 text-lg"
+            >
+              {{ day }}
+            </div>
+          </div>
+          
+          <!-- Calendar Days -->
+          <div class="grid grid-cols-7 gap-4">
+            <!-- Calendar days -->
+            <div
+              v-for="day in calendarDays"
+              :key="day.toString()"
+              :class="[
+                'h-32 rounded-2xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg relative overflow-hidden',
+                isToday(day) 
+                  ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-300 ring-2 ring-blue-200' 
+                  : isSameMonth(day, currentDate)
+                    ? 'bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50/50'
+                    : 'bg-gray-50/30 border-gray-50 text-gray-400'
+              ]"
+            >
+              <!-- Day Number -->
+              <div class="p-3">
+                <div 
+                  :class="[
+                    'w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-200',
+                    isToday(day) 
+                      ? 'bg-gradient-to-r from-[#003aca] to-[#0052e8] text-white shadow-lg' 
+                      : isSameMonth(day, currentDate)
+                        ? 'text-gray-700 hover:bg-gray-100'
+                        : 'text-gray-400'
+                  ]"
+                >
+                  {{ format(day, 'd') }}
+                </div>
+              </div>
+              
+              <!-- Events (only show for current month) -->
+              <div v-if="isSameMonth(day, currentDate)" class="px-3 pb-3 space-y-1">
+                <div
+                  v-for="(event, index) in getDayEvents(day).slice(0, 2)"
+                  :key="index"
+                  :class="[
+                    'px-2 py-1 rounded-lg text-xs font-semibold truncate shadow-sm transition-all duration-200 hover:shadow-md',
+                    getEventTypeStyles(event.type)
+                  ]"
+                  :title="event.title"
+                >
+                  <div class="flex items-center gap-1">
+                    <component :is="getEventTypeIcon(event.type)" class="w-3 h-3 flex-shrink-0" />
+                    <span class="truncate">{{ event.title.replace(/^(Case Due:|Court:|Action:|Meeting:)\s*/, '') }}</span>
+                  </div>
+                </div>
+                
+                <!-- More events indicator -->
+                <div 
+                  v-if="getDayEvents(day).length > 2"
+                  class="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded-lg"
+                >
+                  +{{ getDayEvents(day).length - 2 }} more
+                </div>
+              </div>
+              
+              <!-- Event count badge (only for current month) -->
+              <div 
+                v-if="isSameMonth(day, currentDate) && getDayEvents(day).length > 0"
+                class="absolute top-2 right-2 w-6 h-6 rounded-full bg-gradient-to-r from-[#003aca] to-[#0052e8] text-white text-xs font-bold flex items-center justify-center shadow-lg"
+              >
+                {{ getDayEvents(day).length }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -84,7 +233,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { Case, ActionItem, Meeting } from '@/services/entities'
+import { Case, ActionItem, Meeting, User } from '@/services/entities'
 import { Button } from '@/components/ui/button'
 import {
   Calendar as CalendarIcon,
@@ -93,9 +242,12 @@ import {
   Briefcase,
   ListTodo,
   Users,
-  Plus
+  Plus,
+  Clock,
+  Send,
+  CheckCircle
 } from 'lucide-vue-next'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, addMonths, subMonths, isToday } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, addMonths, subMonths, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import NewMeetingForm from '../components/schedule/NewMeetingForm.vue'
 
@@ -107,16 +259,30 @@ const isLoading = ref(true)
 const showMeetingForm = ref(false)
 const pinnedCaseId = ref(null)
 const initialAttendeeIds = ref([])
+const allCases = ref([])
+const currentUser = ref(null)
+
+const isAdmin = computed(() => {
+  return currentUser.value?.user_type === 'admin'
+})
+
+const casesWithoutDueDate = computed(() => {
+  return allCases.value
+    .filter(c => !c.due_date && c.assigned_lawyer)
+    .map(c => ({
+      ...c,
+      tempDueDate: ''
+    }))
+})
 
 const calendarDays = computed(() => {
-  return eachDayOfInterval({
-    start: startOfMonth(currentDate.value),
-    end: endOfMonth(currentDate.value)
-  })
+  const start = startOfWeek(startOfMonth(currentDate.value))
+  const end = endOfWeek(endOfMonth(currentDate.value))
+  return eachDayOfInterval({ start, end })
 })
 
 const firstDayOfMonth = computed(() => {
-  return getDay(startOfMonth(currentDate.value))
+  return 0 // No longer needed since we're showing full weeks
 })
 
 onMounted(() => {
@@ -143,11 +309,15 @@ const loadEvents = async () => {
   const end = endOfMonth(currentDate.value)
 
   try {
-    const [casesData, actionsData, meetingsData] = await Promise.all([
+    const [casesData, actionsData, meetingsData, userData] = await Promise.all([
       Case.list(),
       ActionItem.list(),
-      Meeting.list()
+      Meeting.list(),
+      User.me()
     ])
+
+    currentUser.value = userData
+    allCases.value = casesData
 
     const caseEvents = casesData.flatMap(c => [
       c.due_date && { date: new Date(c.due_date), title: `Case Due: ${c.title}`, type: 'case', data: c },
@@ -179,16 +349,43 @@ const handleMeetingCreated = () => {
   loadEvents()
 }
 
+const getAssignedLawyerName = (caseItem) => {
+  if (caseItem.owners && caseItem.owners.length > 0) {
+    const lawyer = caseItem.owners.find(owner => owner.user_type === 'lawyer')
+    return lawyer ? lawyer.full_name : caseItem.owners[0].full_name
+  }
+  return null
+}
+
+const assignDueDate = async (caseItem) => {
+  if (!caseItem.tempDueDate) return
+  
+  try {
+    await Case.update(caseItem.id, {
+      due_date: new Date(caseItem.tempDueDate).toISOString()
+    })
+    
+    // Refresh data to update the calendar and case list
+    await loadEvents()
+    
+    // Show success message
+    alert(`Due date assigned to case: ${caseItem.title}`)
+  } catch (error) {
+    console.error('Failed to assign due date:', error)
+    alert('Failed to assign due date. Please try again.')
+  }
+}
+
 const getDayEvents = (day) => {
   return events.value.filter(e => isSameDay(e.date, day))
 }
 
 const getEventTypeStyles = (type) => {
   switch (type) {
-    case 'case': return 'bg-blue-100 text-blue-800 border-blue-300'
-    case 'action': return 'bg-orange-100 text-orange-800 border-orange-300'
-    case 'meeting': return 'bg-purple-100 text-purple-800 border-purple-300'
-    default: return 'bg-gray-100 text-gray-800'
+    case 'case': return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400'
+    case 'action': return 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400'
+    case 'meeting': return 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-400'
+    default: return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-400'
   }
 }
 
