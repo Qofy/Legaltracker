@@ -135,22 +135,22 @@
     </div>
 
     <!-- Case Deadlines from Admin -->
-    <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl border-2 border-red-200 p-6">
+    <div class="bg-gradient-to-r from-[#0e1b3d] to-[#072e75] rounded-xl border-0 p-6 text-white">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h3 class="text-xl font-bold text-red-800 flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+            <div class="w-10 h-10 bg-gradient-to-r from-[#003aca] to-[#0052e8] rounded-full flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             Case Deadlines
           </h3>
-          <p class="text-red-700 mt-1">Deadlines assigned by admin for your cases</p>
+          <p class="text-white/90 mt-1">Deadlines assigned by admin for your cases</p>
         </div>
-        <div class="flex items-center gap-2 bg-white/70 rounded-full px-4 py-2">
-          <div class="w-3 h-3 rounded-full bg-red-500"></div>
-          <span class="text-red-800 font-semibold text-sm">{{ myCaseDeadlines.length }} active</span>
+        <div class="flex items-center gap-2 bg-white/20 rounded-full px-4 py-2">
+          <div class="w-3 h-3 rounded-full bg-white"></div>
+          <span class="text-white font-semibold text-sm">{{ myCaseDeadlines.length }} active</span>
         </div>
       </div>
 
@@ -170,7 +170,7 @@
           :key="deadline.id"
           :class="[
             'bg-white rounded-xl p-4 border-2 shadow-sm transition-all duration-200 hover:shadow-md',
-            isOverdue(deadline.due_date) ? 'border-red-300 bg-red-50' : 'border-orange-200'
+            isOverdue(deadline.due_date) ? 'border-red-300 bg-red-50' : 'border-blue-100'
           ]"
         >
           <div class="flex items-start justify-between mb-3">
