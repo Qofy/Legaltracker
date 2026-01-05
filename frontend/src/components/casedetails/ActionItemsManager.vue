@@ -200,7 +200,7 @@ const handleCreateItem = async () => {
   */
 
   // Mock creation for development
-  console.log('Creating action item:', { ...newItem, case_id: props.caseId });
+  // Creating action item (debug removed)
   newItem.title = '';
   newItem.description = '';
   newItem.assigned_to = '';
@@ -223,7 +223,7 @@ const handleDelete = async (itemId) => {
     */
 
     // Mock deletion for development
-    console.log('Deleting action item:', itemId);
+    // Deleting action item (debug removed)
     loadActionItems();
   }
 };
@@ -239,8 +239,7 @@ const handleStatusChange = async (item, status) => {
   }
   */
 
-  // Mock update for development
-  console.log('Updating action item status:', item.id, status);
+  // Mock update for development (debug removed)
   loadActionItems();
 };
 

@@ -601,7 +601,7 @@ const loadDashboardData = async () => {
 onMounted(() => {
   // Auto-login for development if not authenticated
   if (!authStore.isAuthenticated) {
-    console.log('Auto-logging in for development...');
+    // Auto-login for development (debug removed)
     authStore.fakeLogin('admin');
   }
   loadDashboardData();

@@ -113,9 +113,7 @@
                 <div class="flex-1">
                   <div class="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-200 max-w-md">
                     <p class="text-sm text-gray-900">{{ message.content }}</p>
-                    <div class="mt-2">
-                      <span class="inline-block text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
-                    </div>
+                    <!-- source/id debug removed -->
                   </div>
                   <p class="text-xs text-gray-400 mt-1 ml-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
@@ -136,9 +134,7 @@
                     </div>
                     <p class="text-sm">{{ message.content }}</p>
                   </div>
-                  <div class="mt-2">
-                    <span class="inline-block text-xs text-white bg-blue-700/60 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
-                  </div>
+                  <!-- source/id debug removed -->
                   <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
               </div>
@@ -283,7 +279,7 @@ const loadUsers = async () => {
     // initialize unread counters
     users.value.forEach(u => { unreadCounts.value[u.id] = unreadCounts.value[u.id] || 0; });
 
-    console.log('Loaded users for messaging:', users.value.length);
+    // Loaded users for messaging (debug removed)
   } catch (error) {
     console.error('Failed to load users:', error);
   } finally {
@@ -299,7 +295,7 @@ const loadMessages = async () => {
     if (cached && cached.length > 0) {
       allDirectMessages.value = cached;
       messages.value = cached;
-      console.log('Loaded cached direct messages:', cached.length);
+      // Loaded cached direct messages (debug removed)
     }
     
     // Then fetch fresh data from server
@@ -307,13 +303,13 @@ const loadMessages = async () => {
     // If server returned messages, update cache and UI. If server returned an empty
     // array, preserve whatever is already in `messages.value` (likely from cache
     // or recently sent items) to avoid wiping out local state.
-    if (Array.isArray(allMessages) && allMessages.length > 0) {
+      if (Array.isArray(allMessages) && allMessages.length > 0) {
       allDirectMessages.value = allMessages;
       // On initial load, populate messages.value with all direct messages so they're available for filtering
       messages.value = allDirectMessages.value;
-      console.log('Loaded direct messages from backend:', allDirectMessages.value.length, 'populated messages.value with:', messages.value.length);
+      // Loaded direct messages from backend (debug removed)
     } else {
-      console.log('Server returned no direct messages; preserving existing local messages (cache or unsynced sends)');
+      // Server returned no direct messages; preserving existing local messages (cache or unsynced sends) (debug removed)
       // Ensure allDirectMessages has at least cached data
       allDirectMessages.value = allDirectMessages.value.length ? allDirectMessages.value : (DirectMessage.getCachedMessages() || []);
     }
@@ -321,10 +317,10 @@ const loadMessages = async () => {
     console.error('Failed to load messages:', error);
     // If server fails, try to use cached data as fallback
     const cached = DirectMessage.getCachedMessages();
-    if (cached && cached.length > 0) {
+      if (cached && cached.length > 0) {
       allDirectMessages.value = cached;
       messages.value = cached;
-      console.log('Server failed, using cached messages as fallback:', cached.length);
+      // Server failed, using cached messages as fallback (debug removed)
     } else {
       messages.value = [];
     }
@@ -424,9 +420,7 @@ const sendMessage = async () => {
 
   isSending.value = true;
   try {
-    console.log('[DEBUG] Sending message to:', selectedUser.value.id, selectedUser.value.full_name);
-    console.log('[DEBUG] Message content:', newMessage.value.trim());
-    console.log('[DEBUG] Sender (admin):', currentUserId.value);
+    // Sending message to selected user (debug removed)
 
     // Send message to backend
     const sentMessage = await DirectMessage.create({
@@ -435,13 +429,13 @@ const sendMessage = async () => {
       message_type: 'text'
     });
 
-    console.log('[DEBUG] Backend returned message:', sentMessage);
-    console.log('[DEBUG] Sender/Recipient properly set:', sentMessage.sender_id, '→', sentMessage.recipient_id);
+    // Backend returned message (debug removed)
+    // Sender/Recipient properly set (debug removed)
 
     // Add the sent message to the local array
     try { sentMessage.__source = 'local'; } catch (e) {}
     messages.value.push(sentMessage);
-    console.log('[DEBUG] Total messages in array:', messages.value.length);
+    // Total messages in array (debug removed)
 
     newMessage.value = '';
 
@@ -456,7 +450,7 @@ const sendMessage = async () => {
       console.debug('Failed to emit socket new_message from admin', e);
     }
 
-    console.log('[DEBUG] ✓ Message sent successfully');
+    // Message sent successfully (debug removed)
   } catch (error) {
     console.error('[ERROR] Failed to send message:', error);
     console.error('[ERROR] Error details:', error.response?.data || error.message);

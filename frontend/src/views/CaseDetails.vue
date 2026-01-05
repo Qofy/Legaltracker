@@ -302,7 +302,7 @@ const loadCaseDetails = async (id) => {
     // documents.value = docs;
     // actionItems.value = actions;
 
-    console.log('TODO: Load case details for case ID:', id);
+    // TODO: Load case details for case ID: (debug removed)
   } catch (err) {
     console.error('Failed to load case details:', err);
     error.value = 'Failed to load case details. You may not have permission to view this case, or it may not exist.';
@@ -318,7 +318,7 @@ const handleUpdateCase = async (updatedData) => {
   try {
     // TODO: Replace with actual API call when ready
     // await Case.update(caseId.value, updatedData);
-    console.log('TODO: Update case:', updatedData);
+    // TODO: Update case (debug removed)
     showEditCase.value = false;
     loadCaseDetails(caseId.value);
   } catch (error) {
@@ -331,7 +331,7 @@ const handleArchiveCase = async () => {
     try {
       // TODO: Replace with actual API call when ready
       // await Case.update(caseId.value, { status: 'archived' });
-      console.log('TODO: Archive case');
+      // TODO: Archive case (debug removed)
       router.push('/cases');
     } catch (error) {
       console.error('Failed to archive case:', error);
@@ -344,7 +344,7 @@ const handleDeleteCase = async () => {
     try {
       // TODO: Replace with actual API call when ready
       // await Case.delete(caseId.value);
-      console.log('TODO: Delete case');
+      // TODO: Delete case (debug removed)
       router.push('/cases');
     } catch (error) {
       console.error('Failed to delete case:', error);

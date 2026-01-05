@@ -192,7 +192,7 @@ const handleSubmit = async () => {
       // TODO: Uncomment when API is ready
       // const { file_url } = await UploadFile({ file: screenshotFile.value });
       // screenshot_url = file_url;
-      console.log('Screenshot upload would happen here');
+      // Screenshot upload would happen here (debug removed)
       isUploadingScreenshot.value = false;
     }
 
@@ -201,7 +201,7 @@ const handleSubmit = async () => {
     //   ...formData,
     //   screenshot_url
     // });
-    console.log('Feature request would be created with:', { ...formData, screenshot_url });
+    // Feature request would be created with data (debug removed)
 
     isSuccess.value = true;
     setTimeout(() => {

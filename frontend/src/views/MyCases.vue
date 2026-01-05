@@ -320,7 +320,7 @@ const loadUserAndCases = async () => {
     //   caseItem.customer_ids && caseItem.customer_ids.includes(userData.id)
     // );
     // cases.value = userCases;
-    console.log('TODO: Load user and cases from API');
+    // TODO: Load user and cases from API (debug removed)
   } catch (error) {
     console.error('Failed to load cases:', error);
   }

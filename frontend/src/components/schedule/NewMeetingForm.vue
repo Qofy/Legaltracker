@@ -223,7 +223,7 @@ const handleSubmit = async (e) => {
   try {
     // API call commented out
     // await Meeting.create(finalFormData);
-    console.log('Meeting data (API call commented out):', finalFormData);
+    // Meeting data (API call commented out) (debug removed)
 
     toast({
       title: 'Meeting Created!',

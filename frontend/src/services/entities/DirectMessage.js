@@ -157,8 +157,7 @@ class DirectMessageService {
       // Return cached data immediately if available and not forcing refresh
       if (!forceRefresh) {
         const cached = this.getCachedMessages()
-        if (cached && cached.length > 0) {
-          console.log('Using cached direct messages:', cached.length)
+          if (cached && cached.length > 0) {
           // Fetch fresh data in background
           this.refreshCache()
           return cached
@@ -183,12 +182,11 @@ class DirectMessageService {
           // whose id is missing from the server results.
           const remaining = (existing || []).filter(e => !e || !e.id || !serverById[e.id]);
 
-          const merged = [...messages, ...remaining];
-          this.setCachedMessages(merged);
-          console.log('Fetched and merged direct messages: total=', merged.length, 'server=', messages.length, 'keptLocal=', remaining.length);
-        } else {
-          console.log('Fetched no messages from server; preserving existing cache')
-        }
+            const merged = [...messages, ...remaining];
+            this.setCachedMessages(merged);
+          } else {
+            // fetched no messages; preserve existing cache
+          }
       } catch (e) {
         console.error('Failed to merge server messages with cache:', e);
       }
@@ -199,7 +197,7 @@ class DirectMessageService {
       // Fallback to cache if server fails
       const cached = this.getCachedMessages()
       if (cached) {
-        console.log('Server failed, using cached messages:', cached.length)
+        // server failed, using cached messages
         return cached
       }
       throw error
@@ -223,9 +221,9 @@ class DirectMessageService {
             const remaining = (existing || []).filter(e => !e || !e.id || !serverById[e.id]);
             const merged = [...messages, ...remaining];
             this.setCachedMessages(merged);
-            console.log('Background cache refresh completed: merged=', merged.length, 'server=', messages.length, 'keptLocal=', remaining.length);
+                // Background cache refresh completed
           } else {
-            console.log('Background refresh returned no messages; cache unchanged')
+                // Background refresh returned no messages; leave cache unchanged
           }
         } catch (e) {
           console.error('Background cache refresh failed:', e);

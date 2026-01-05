@@ -109,7 +109,7 @@ router.beforeEach((to, from, next) => {
 
   // Development mode: Auto-login if not authenticated
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    console.log('🔓 Development mode: Auto-logging in as admin');
+    // Development mode: auto-login as admin (no console output)
     authStore.fakeLogin('admin');
   }
 

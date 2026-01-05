@@ -330,9 +330,9 @@ const filteredTasks = computed(() => {
 const loadTasks = async () => {
   try {
     const userId = authStore.user?.id;
-    console.log('Loading tasks for user ID:', userId);
+    // Loading tasks for user ID (debug removed)
     if (!userId) {
-      console.log('No user ID found, exiting');
+      // No user ID found, exiting (debug removed)
       return;
     }
 
@@ -340,20 +340,17 @@ const loadTasks = async () => {
     cases.value = await Case.list();
     const caseIds = cases.value.map(c => c.id);
 
-    console.log('Lawyer assigned cases:', cases.value.length);
-    console.log('Case IDs:', caseIds);
-    console.log('Assigned cases details:', cases.value);
+    // Lawyer assigned cases info (debug removed)
 
     // Fetch all tasks first to see what's available
     const allTasks = await ActionItem.list();
-    console.log('Total tasks in system:', allTasks.length);
-    console.log('All tasks:', allTasks);
+    // Total tasks in system (debug removed)
 
     if (caseIds.length > 0) {
       // Fetch all tasks for lawyer's cases
       tasks.value = allTasks
         .filter(t => {
-          console.log(`Checking task ${t.id} with case_id ${t.case_id} against case IDs:`, caseIds);
+          // Checking task vs case IDs (debug removed)
           return caseIds.includes(t.case_id);
         })
         .map(t => ({
@@ -361,10 +358,9 @@ const loadTasks = async () => {
           case_title: cases.value.find(c => c.id === t.case_id)?.title || 'Unknown Case',
         }));
         
-      console.log('Tasks found for assigned cases:', tasks.value.length);
-      console.log('Filtered tasks:', tasks.value);
+      // Tasks found for assigned cases (debug removed)
     } else {
-      console.log('No assigned cases found for lawyer');
+      // No assigned cases found for lawyer (debug removed)
       tasks.value = [];
     }
     // Merge any locally stored pending tasks (safety fallback)

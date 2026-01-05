@@ -278,36 +278,33 @@ const loadMyCases = async () => {
       return;
     }
 
-    console.log('Loading cases for customer:', userId);
+    // Load cases for customer
     const allCases = await Case.list();
-    console.log('All cases from API:', allCases.length, allCases);
     
     myCases.value = allCases.filter(c => {
       // Check if user is in customers array (could be array of IDs or objects)
       if (c.customer_ids && Array.isArray(c.customer_ids)) {
         const matchesCustomerIds = c.customer_ids.includes(userId);
-        console.log('Checking customer_ids:', c.id, c.customer_ids, matchesCustomerIds);
         if (matchesCustomerIds) return true;
       }
       if (c.customers && Array.isArray(c.customers)) {
         const matchesCustomers = c.customers.some(customer => 
           typeof customer === 'string' ? customer === userId : customer.id === userId
         );
-        console.log('Checking customers:', c.id, c.customers, matchesCustomers);
         if (matchesCustomers) return true;
       }
       
       // Debug: log all case properties to see what's available
-      console.log('Case properties for', c.case_number || c.title, ':', Object.keys(c));
+      // debug: case properties available
       
       return false;
     });
 
-    console.log('Found customer cases:', myCases.value.length, myCases.value);
+    // found customer cases
 
     if (myCases.value.length > 0) {
       selectedCaseId.value = myCases.value[0].id;
-      console.log('Selected case ID:', selectedCaseId.value);
+      // selected case id set
       await loadDocuments();
     } else {
       console.warn('No cases found for customer');
@@ -321,26 +318,18 @@ const loadDocuments = async () => {
   try {
     if (!selectedCaseId.value) return;
 
-    console.log('Loading documents for case:', selectedCaseId.value);
-    console.log('Current user:', authStore.user);
+    // loading documents for case
 
     const userId = authStore.user?.id;
     const allDocuments = await Document.list();
     
-    console.log('All documents from API:', allDocuments.length, allDocuments);
-    
-    // First, let's see ALL documents regardless of filtering
-    console.log('Raw documents data:', JSON.stringify(allDocuments, null, 2));
-    
-    // Temporarily show ALL documents to debug the issue
-    console.log('Showing all documents for debugging...');
+    // process documents
     documents.value = allDocuments.map(d => ({
       ...d,
       is_uploaded_by_customer: d.uploaded_by === userId || d.uploaded_by?.id === userId,
       upload_date: d.upload_date || d.created_date || d.updated_date || d.createdAt || new Date().toISOString()
     }));
     
-    console.log('All documents (unfiltered):', documents.value.length, documents.value);
   } catch (error) {
     console.error('Failed to load documents:', error);
   }
@@ -405,11 +394,7 @@ const uploadDocument = async () => {
       return;
     }
 
-    console.log('Uploading document:', {
-      fileName: uploadForm.value.fileName,
-      type: uploadForm.value.type,
-      caseId: selectedCaseId.value
-    });
+    // uploading document
 
     // In production, upload file to server
     const docData = {
@@ -423,7 +408,7 @@ const uploadDocument = async () => {
     };
 
     const uploaded = await Document.create(docData);
-    console.log('Document uploaded:', uploaded);
+    // document uploaded
     
     // Refresh the documents list
     await loadDocuments();
@@ -453,7 +438,7 @@ const formatDate = (date) => {
 };
 
 onMounted(() => {
-  console.log('CustomerDocuments mounted, user:', authStore.user);
+  // CustomerDocuments mounted
   loadMyCases();
   
   // Test: Add a button to create a test document
@@ -469,7 +454,7 @@ onMounted(() => {
     
     try {
       const result = await Document.create(testDoc);
-      console.log('Test document created:', result);
+      // test document created
       await loadDocuments();
     } catch (error) {
       console.error('Failed to create test document:', error);

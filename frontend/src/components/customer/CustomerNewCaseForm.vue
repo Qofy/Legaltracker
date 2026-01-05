@@ -210,9 +210,9 @@ const formData = ref({
 });
 
 const onSelectCourtDate = (date) => {
-  console.log('Date selected:', date);
+  // Date selected (debug removed)
   formData.value.court_date = date ? date.toISOString().split('T')[0] : '';
-  console.log('Court date set to:', formData.value.court_date);
+  // Court date set (debug removed)
 };
 
 const formatDate = (d) => {

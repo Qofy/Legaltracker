@@ -328,11 +328,11 @@ const loadCustomerDashboard = async (showLoader = true) => {
     const userId = authStore.user?.id;
     if (!userId) return;
 
-    console.log('Loading customer dashboard for user:', userId);
+    // Loading customer dashboard for user (debug removed)
 
     // Fetch all cases and filter for customer's cases
     const allCases = await Case.list();
-    console.log('All cases:', allCases.length);
+    // All cases count (debug removed)
     
     myCases.value = allCases.filter(c => {
       // Check multiple possible customer relationship structures
@@ -347,7 +347,7 @@ const loadCustomerDashboard = async (showLoader = true) => {
       return false;
     });
 
-    console.log('Customer cases found:', myCases.value.length);
+    // Customer cases found (debug removed)
 
     if (myCases.value.length > 0) {
       const caseIds = myCases.value.map(c => c.id);

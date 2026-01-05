@@ -533,14 +533,9 @@ const loadAdminMessages = async () => {
     // Set primary admin for sending messages (first one alphabetically)
     if (!adminUser.value && allAdmins.length > 0) {
       adminUser.value = allAdmins[0];
-      console.log('[DEBUG CUSTOMER] Found PRIMARY admin for sending:', adminUser.value?.email, adminUser.value?.id);
     }
 
-    console.log('[DEBUG CUSTOMER] All admins:', allAdmins.map(a => ({ email: a.email, id: a.id })));
-
     if (allAdmins.length > 0) {
-      console.log('[DEBUG CUSTOMER] Loading conversations with ALL admins');
-      console.log('[DEBUG CUSTOMER] Current customer ID:', currentUserId.value);
 
       // Load conversations with ALL admins and merge them
       const allConversations = await Promise.all(
@@ -560,16 +555,15 @@ const loadAdminMessages = async () => {
       });
 
       const allMessages = Object.values(mergedMessages);
-      console.log('[DEBUG CUSTOMER] API returned total messages from all admins:', allMessages.length);
+      // API returned total messages from all admins
 
       // Only replace local adminMessages when server returns non-empty results
       if (allMessages.length > 0) {
         adminMessages.value = allMessages.sort((a, b) =>
           new Date(a.created_at || a.created_date).getTime() - new Date(b.created_at || b.created_date).getTime()
         );
-        console.log('[DEBUG CUSTOMER] ✓ Loaded', adminMessages.value.length, 'admin messages from all admins');
       } else {
-        console.log('[DEBUG CUSTOMER] Server returned no admin conversations; preserving existing local admin messages');
+        // Server returned no admin conversations; preserve existing local admin messages
         try {
           const cached = DirectMessage.getCachedMessages() || [];
           if (cached.length > 0 && adminMessages.value.length === 0) {
@@ -578,7 +572,7 @@ const loadAdminMessages = async () => {
             adminMessages.value = cached.filter(m =>
               adminIds.has(String(m.sender_id)) || adminIds.has(String(m.recipient_id))
             );
-            console.log('[DEBUG CUSTOMER] Populated adminMessages from cache:', adminMessages.value.length);
+            // populated adminMessages from cache
           }
         } catch (e) {
           console.debug('Failed to populate adminMessages from cache:', e);
@@ -596,7 +590,6 @@ const loadAdminMessages = async () => {
       if (cached.length > 0) {
         // Filter for messages involving any admin
         adminMessages.value = cached;
-        console.log('[DEBUG CUSTOMER] Populated adminMessages from cache after error:', adminMessages.value.length);
       } else {
         adminMessages.value = [];
       }
@@ -626,7 +619,7 @@ const sendAdminMessage = async () => {
       return;
     }
 
-    console.log('[DEBUG CUSTOMER] Sending to PRIMARY admin:', adminUser.value.email, adminUser.value.id);
+    // debug: sending to primary admin
 
     // Send message to admin
     const sentMessage = await DirectMessage.create({
@@ -635,7 +628,7 @@ const sendAdminMessage = async () => {
       message_type: 'text'
     });
 
-    console.log('[DEBUG CUSTOMER] ✓ Message sent:', sentMessage.sender_id, '→', sentMessage.recipient_id);
+    // debug: message sent
 
     // Add the sent message to the local array
     adminMessages.value.push(sentMessage);

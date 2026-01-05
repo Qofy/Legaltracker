@@ -390,7 +390,7 @@ const loadData = async () => {
     // TODO: Replace with actual API calls
     // documents.value = await Document.list()
     // cases.value = await Case.list()
-    console.log('TODO: Load documents and cases from API')
+    // TODO: Load documents and cases from API (debug removed)
 
     // Mock data for testing
     cases.value = [
@@ -463,7 +463,7 @@ const handleUpload = async () => {
 
   try {
     // TODO: Implement file upload
-    console.log('TODO: Upload files:', selectedFiles.value)
+    // TODO: Upload files (debug removed)
     showUploadDialog.value = false
     selectedFiles.value = []
     uploadCaseId.value = ''

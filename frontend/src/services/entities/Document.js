@@ -16,11 +16,11 @@ class DocumentService {
    */
   async list(sortOrder = '-created_date') {
     try {
-      console.log('Document.list() called with sortOrder:', sortOrder);
+      // Document.list() called with sortOrder (debug removed)
       const response = await axios.get(this.baseUrl, {
         params: { sort: sortOrder }
       })
-      console.log('Document.list() response:', response.data);
+      // Document.list() response (debug removed)
       return response.data
     } catch (error) {
       console.error('Error fetching documents:', error)
@@ -50,9 +50,9 @@ class DocumentService {
    */
   async create(data) {
     try {
-      console.log('Document.create() called with data:', data);
+      // Document.create() called with data (debug removed)
       const response = await axios.post(this.baseUrl, data)
-      console.log('Document.create() response:', response.data);
+      // Document.create() response (debug removed)
       return response.data
     } catch (error) {
       console.error('Error creating document:', error)

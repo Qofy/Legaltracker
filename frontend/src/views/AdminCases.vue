@@ -761,25 +761,25 @@ const toggleCaseSelection = (caseId, checked) => {
 };
 
 const openLawyerAssignment = (caseItem) => {
-  console.log('Opening lawyer assignment for case:', caseItem);
+  // Opening lawyer assignment for case (debug removed)
   selectedCaseForAssignment.value = caseItem;
   // Get the first owner (lawyer) if exists
   const currentOwner = caseItem.owners && caseItem.owners.length > 0 ? caseItem.owners[0] : null;
   selectedLawyerId.value = currentOwner?.id || '';
   showLawyerAssignment.value = true;
-  console.log('Lawyer assignment dialog opened');
+  // Lawyer assignment dialog opened (debug removed)
 };
 
 const confirmLawyerAssignment = async () => {
   try {
-    console.log('Assigning lawyer:', selectedLawyerId.value, 'to case:', selectedCaseForAssignment.value.id);
+    // Assigning lawyer (debug removed)
     // Assign lawyer by updating both owner_ids and assigned_lawyer_id
     // This ensures compatibility with both RLS systems
     await Case.update(selectedCaseForAssignment.value.id, {
       owner_ids: [selectedLawyerId.value],
       assigned_lawyer_id: selectedLawyerId.value
     });
-    console.log('Lawyer assignment saved successfully');
+    // Lawyer assignment saved successfully (debug removed)
     await loadData(); // Refresh data
     showLawyerAssignment.value = false;
     selectedCaseForAssignment.value = null;
@@ -838,11 +838,11 @@ const handleStatusUpdate = async (data) => {
 };
 
 const viewCase = (caseItem) => {
-  console.log('View case clicked:', caseItem);
-  console.log('Opening modal for case:', caseItem.title);
+  // View case clicked (debug removed)
+  // Opening modal for case (debug removed)
   selectedCaseForView.value = caseItem;
   showCaseDetailsModal.value = true;
-  console.log('Modal should now be visible');
+  // Modal should now be visible (debug removed)
 };
 
 const editCase = (caseItem) => {
@@ -862,15 +862,15 @@ const handleModalEdit = (caseItem) => {
 
 const openCaseActions = (caseItem) => {
   // Show context menu or actions dropdown
-  console.log('Open actions for case:', caseItem);
+  // Open actions for case (debug removed)
 };
 
 const bulkAssignLawyer = () => {
-  console.log('Bulk assign lawyer to:', selectedCases.value);
+  // Bulk assign lawyer to selected cases (debug removed)
 };
 
 const bulkUpdateStatus = () => {
-  console.log('Bulk update status for:', selectedCases.value);
+  // Bulk update status for selected cases (debug removed)
 };
 
 // Utility functions

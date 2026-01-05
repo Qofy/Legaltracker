@@ -152,9 +152,7 @@
                       <Star class="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
                     </div>
                     <p class="text-sm text-gray-900">{{ message.content }}</p>
-                    <div class="mt-2">
-                      <span class="inline-block text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
-                    </div>
+                    <!-- source/id debug removed -->
                   </div>
                   <p class="text-xs text-gray-400 mt-1 ml-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
@@ -171,9 +169,7 @@
                   <div class="bg-blue-600 text-white rounded-lg rounded-tr-none px-3 py-2 shadow-sm max-w-md">
                     <p class="text-sm">{{ message.content }}</p>
                   </div>
-                  <div class="mt-2">
-                    <span class="inline-block text-xs text-white bg-blue-700/60 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
-                  </div>
+                  <!-- source/id debug removed -->
                   <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
               </div>
@@ -442,21 +438,21 @@ const loadAdminMessages = async () => {
     // Set primary admin for sending messages (first one alphabetically)
     if (!adminUser.value && allAdmins.length > 0) {
       adminUser.value = allAdmins[0];
-      console.log('[DEBUG LAWYER] Found PRIMARY admin for sending:', adminUser.value?.email, adminUser.value?.id);
+      // Found PRIMARY admin for sending (debug removed)
     }
 
-    console.log('[DEBUG LAWYER] All admins:', allAdmins.map(a => ({ email: a.email, id: a.id })));
+    // All admins loaded (debug removed)
 
     if (allAdmins.length > 0) {
-      console.log('[DEBUG LAWYER] Loading conversations with ALL admins');
-      console.log('[DEBUG LAWYER] Current lawyer ID:', currentUserId.value);
+      // Loading conversations with ALL admins (debug removed)
+      // Current lawyer ID available (debug removed)
 
       // Load conversations with ALL admins
       const allConversations = await Promise.all(
         allAdmins.map(admin => DirectMessage.getConversation(admin.id).catch(() => []))
       );
 
-      console.log('[DEBUG LAWYER] API returned conversations:', allConversations.map(c => c?.length || 0));
+      // API returned conversation counts (debug removed)
 
       // Filter and merge messages from all conversations
       let serverFiltered = [];
@@ -514,7 +510,7 @@ const loadAdminMessages = async () => {
       adminMessages.value.forEach(addToByKey);
 
       adminMessages.value = Object.values(byKey).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
-      console.log('[DEBUG LAWYER] ✓ Loaded', adminMessages.value.length, 'admin messages from all admins (merged)');
+      // Loaded admin messages from all admins (merged) (debug removed)
 
       // Persist merged admin messages into the shared direct messages cache
       try {
@@ -544,7 +540,7 @@ const loadAdminMessages = async () => {
           (adminIds.has(String(m.sender_id)) || adminIds.has(String(m.recipient_id))) &&
           (String(m.sender_id) === String(currentUserId.value) || String(m.recipient_id) === String(currentUserId.value))
         );
-        console.log('[DEBUG LAWYER] Populated adminMessages from cache after error:', adminMessages.value.length);
+        // Populated adminMessages from cache after error (debug removed)
       } else {
         adminMessages.value = [];
       }
@@ -574,7 +570,7 @@ const sendAdminMessage = async () => {
       return;
     }
 
-    console.log('[DEBUG LAWYER] Sending to PRIMARY admin:', adminUser.value.email, adminUser.value.id);
+    // Sending to PRIMARY admin (debug removed)
 
     // Send message to admin
     const sentMessage = await DirectMessage.create({
@@ -586,7 +582,7 @@ const sendAdminMessage = async () => {
     // Mark as local/sent for debug tracing
     try { sentMessage.__source = 'local'; } catch (e) {}
 
-    console.log('[DEBUG LAWYER] ✓ Message sent:', sentMessage.sender_id, '→', sentMessage.recipient_id);
+    // Message sent (debug removed)
 
     // Add the sent message to the local array
     adminMessages.value.push(sentMessage);

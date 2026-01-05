@@ -149,13 +149,7 @@ const handleFileUpload = async (event) => {
   }
   */
 
-  // Mock upload for development
-  console.log('Uploading file:', {
-    case_id: props.caseId,
-    file_name: file.name,
-    file_type: file.type.split('/')[1] || 'other',
-    file_size: file.size
-  });
+  // Mock upload for development (debug removed)
   setTimeout(() => {
     loadDocuments();
   }, 1000);
@@ -176,8 +170,7 @@ const handleDelete = async (docId) => {
     }
     */
 
-    // Mock deletion for development
-    console.log('Deleting document:', docId);
+    // Mock deletion for development (debug removed)
     loadDocuments();
   }
 };
