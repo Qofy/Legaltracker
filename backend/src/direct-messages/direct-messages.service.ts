@@ -12,6 +12,8 @@ export class DirectMessagesService {
   ) {}
 
   async create(data: any, user: User): Promise<DirectMessage> {
+    console.log('[BACKEND][DirectMessages] create() called by user:', user?.id, 'payload:', data);
+
     const message = this.directMessagesRepository.create({
       content: data.content,
       message_type: data.message_type || 'text',
@@ -20,16 +22,21 @@ export class DirectMessagesService {
     });
 
     const savedMessage = await this.directMessagesRepository.save(message);
+    console.log('[BACKEND][DirectMessages] saved message id=', savedMessage.id);
 
     // Reload with sender and recipient relationships
-    return await this.directMessagesRepository.findOne({
+    const reloaded = await this.directMessagesRepository.findOne({
       where: { id: savedMessage.id },
       relations: ['sender', 'recipient'],
     });
+
+    console.log('[BACKEND][DirectMessages] reloaded message:', reloaded && reloaded.id);
+    return reloaded;
   }
 
   async findConversation(userId: string, otherUserId: string): Promise<DirectMessage[]> {
-    return await this.directMessagesRepository
+    console.log('[BACKEND][DirectMessages] findConversation() called userId=', userId, 'otherUserId=', otherUserId);
+    const results = await this.directMessagesRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.sender', 'sender')
       .leftJoinAndSelect('message.recipient', 'recipient')
@@ -39,16 +46,23 @@ export class DirectMessagesService {
       )
       .orderBy('message.created_at', 'ASC')
       .getMany();
+
+    console.log('[BACKEND][DirectMessages] findConversation returned count=', (results && results.length) || 0);
+    return results;
   }
 
   async findAllConversations(userId: string): Promise<DirectMessage[]> {
-    return await this.directMessagesRepository
+    console.log('[BACKEND][DirectMessages] findAllConversations() called userId=', userId);
+    const results = await this.directMessagesRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.sender', 'sender')
       .leftJoinAndSelect('message.recipient', 'recipient')
       .where('message.sender_id = :userId OR message.recipient_id = :userId', { userId })
       .orderBy('message.created_at', 'DESC')
       .getMany();
+
+    console.log('[BACKEND][DirectMessages] findAllConversations returned count=', (results && results.length) || 0);
+    return results;
   }
 
   async markAsRead(messageId: string, user: User): Promise<DirectMessage> {

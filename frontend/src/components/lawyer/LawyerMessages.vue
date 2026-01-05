@@ -138,7 +138,7 @@
           <div v-else-if="adminMessages.length === 0" class="text-center text-sm text-gray-500 py-8">
             No messages yet. Admin hasn't sent you any messages.
           </div>
-            <div v-else v-for="message in adminMessages" :key="message.id" class="flex items-start gap-3">
+            <div v-else v-for="message in adminMessages" :key="message.id || message._tempId || message.created_at || message.created_date" class="flex items-start gap-3">
             <!-- Message from admin -->
             <div v-if="message.sender_id !== currentUserId" class="flex-1">
               <div class="flex items-start gap-2">
@@ -152,6 +152,9 @@
                       <Star class="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
                     </div>
                     <p class="text-sm text-gray-900">{{ message.content }}</p>
+                    <div class="mt-2">
+                      <span class="inline-block text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
+                    </div>
                   </div>
                   <p class="text-xs text-gray-400 mt-1 ml-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
@@ -167,6 +170,9 @@
                 <div class="flex-1 flex flex-col items-end">
                   <div class="bg-blue-600 text-white rounded-lg rounded-tr-none px-3 py-2 shadow-sm max-w-md">
                     <p class="text-sm">{{ message.content }}</p>
+                  </div>
+                  <div class="mt-2">
+                    <span class="inline-block text-xs text-white bg-blue-700/60 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
                   </div>
                   <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
@@ -236,6 +242,7 @@ const adminMessagesContainer = ref(null);
 const isLoadingAdminMessages = ref(false);
 const isSendingAdmin = ref(false);
 let adminPollingInterval = null;
+const allDirectMessages = ref([]);
 const adminUser = ref(null);
 
 const userCache = ref({}); // cache user names by id
@@ -428,51 +435,77 @@ const formatMessageTime = (timestamp) => {
 const loadAdminMessages = async () => {
   isLoadingAdminMessages.value = true;
   try {
-    // Find PRIMARY admin user (first one sorted by email for consistency)
-    if (!adminUser.value) {
-      const allUsers = await User.list();
-      const admins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
-      adminUser.value = admins[0]; // Use first admin for consistency
-      console.log('[DEBUG LAWYER] Found PRIMARY admin:', adminUser.value?.email, adminUser.value?.id);
-      console.log('[DEBUG LAWYER] All admins:', admins.map(a => ({ email: a.email, id: a.id })));
+    // Find ALL admin users
+    const allUsers = await User.list();
+    const allAdmins = allUsers.filter(u => u.user_type === 'admin').sort((a, b) => a.email.localeCompare(b.email));
+
+    // Set primary admin for sending messages (first one alphabetically)
+    if (!adminUser.value && allAdmins.length > 0) {
+      adminUser.value = allAdmins[0];
+      console.log('[DEBUG LAWYER] Found PRIMARY admin for sending:', adminUser.value?.email, adminUser.value?.id);
     }
 
-    if (adminUser.value) {
-      console.log('[DEBUG LAWYER] Loading conversation with primary admin:', adminUser.value.id);
-      console.log('[DEBUG LAWYER] Current lawyer ID:', currentUserId.value);
-      // Load conversation with admin
-      const conversation = await DirectMessage.getConversation(adminUser.value.id) || [];
-      console.log('[DEBUG LAWYER] API returned:', conversation);
-      console.log('[DEBUG LAWYER] First message:', conversation?.[0]);
+    console.log('[DEBUG LAWYER] All admins:', allAdmins.map(a => ({ email: a.email, id: a.id })));
 
-      // Filter server messages to only those involving the admin and this lawyer
-      const serverFiltered = (conversation || []).filter(msg => {
-        const isAdminInvolved = String(adminUser.value.id) === String(msg.sender_id) || String(adminUser.value.id) === String(msg.recipient_id);
-        const isUserInvolved = String(msg.sender_id) === String(currentUserId.value) || String(msg.recipient_id) === String(currentUserId.value);
-        return isAdminInvolved && isUserInvolved;
+    if (allAdmins.length > 0) {
+      console.log('[DEBUG LAWYER] Loading conversations with ALL admins');
+      console.log('[DEBUG LAWYER] Current lawyer ID:', currentUserId.value);
+
+      // Load conversations with ALL admins
+      const allConversations = await Promise.all(
+        allAdmins.map(admin => DirectMessage.getConversation(admin.id).catch(() => []))
+      );
+
+      console.log('[DEBUG LAWYER] API returned conversations:', allConversations.map(c => c?.length || 0));
+
+      // Filter and merge messages from all conversations
+      let serverFiltered = [];
+      allConversations.forEach(conversation => {
+        if (Array.isArray(conversation)) {
+          const filtered = conversation.filter(msg => {
+            const isUserInvolved = String(msg.sender_id) === String(currentUserId.value) || String(msg.recipient_id) === String(currentUserId.value);
+            return isUserInvolved;
+          });
+          serverFiltered.push(...filtered);
+        }
       });
 
-      // Also include cached messages that match this conversation (fallback when server returns empty)
+      // Mark server messages as coming from server for debugging and remove duplicates
+      const serverById = {};
+      serverFiltered.forEach(m => {
+        if (m && m.id) {
+          serverById[m.id] = { ...m, __source: 'server' };
+        }
+      });
+      serverFiltered = Object.values(serverById);
+      console.debug('[DEBUG LAWYER] serverFiltered count:', serverFiltered.length);
+
+      // Also include cached messages that match these conversations (fallback when server returns empty)
       let cachedFiltered = [];
       try {
-        const cached = DirectMessage.getCachedMessages() || [];
+        const cached = (allDirectMessages.value && allDirectMessages.value.length) ? allDirectMessages.value : (DirectMessage.getCachedMessages() || []);
+        const adminIds = new Set(allAdmins.map(a => String(a.id)));
         cachedFiltered = cached.filter(msg => {
-          const isAdminInvolved = String(adminUser.value.id) === String(msg.sender_id) || String(adminUser.value.id) === String(msg.recipient_id);
+          const isAdminInvolved = adminIds.has(String(msg.sender_id)) || adminIds.has(String(msg.recipient_id));
           const isUserInvolved = String(msg.sender_id) === String(currentUserId.value) || String(msg.recipient_id) === String(currentUserId.value);
           return isAdminInvolved && isUserInvolved;
         });
+        cachedFiltered = cachedFiltered.map(m => ({ ...m, __source: m.__source || 'cache' }));
+        console.debug('[DEBUG LAWYER] cachedFiltered count:', cachedFiltered.length);
       } catch (e) {
         console.debug('Failed to read direct message cache for conversation merge:', e);
       }
 
-      // Merge server, cached, and in-memory messages without losing items that lack server ids.
+      // Merge server, cached, and in-memory messages without losing items that lack server ids
       const byKey = {};
       const addToByKey = (m) => {
         if (!m) return;
         const key = m.id || m._tempId || (m.created_at || m.created_date ? `${new Date(m.created_at || m.created_date).getTime()}-${Math.random().toString(36).slice(2,8)}` : `tmp-${Math.random().toString(36).slice(2,8)}`);
+        if (m && !m.__source) m.__source = 'memory';
         if (!byKey[key]) byKey[key] = m;
         else {
           if (m.id && (!byKey[key].id || byKey[key].id !== m.id)) byKey[key] = m;
+          if (m.__source === 'server') byKey[key] = m;
         }
       };
 
@@ -481,7 +514,7 @@ const loadAdminMessages = async () => {
       adminMessages.value.forEach(addToByKey);
 
       adminMessages.value = Object.values(byKey).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
-      console.log('[DEBUG LAWYER] ✓ Loaded', adminMessages.value.length, 'admin messages (merged)');
+      console.log('[DEBUG LAWYER] ✓ Loaded', adminMessages.value.length, 'admin messages from all admins (merged)');
 
       // Persist merged admin messages into the shared direct messages cache
       try {
@@ -489,6 +522,9 @@ const loadAdminMessages = async () => {
           try { DirectMessage.addToCache(m); } catch (e) { /* ignore */ }
         });
         console.debug('[DEBUG LAWYER] persisted merged admin messages to cache');
+        try {
+          adminMessages.value.forEach(m => { if (m && m.id && !allDirectMessages.value.find(x => x.id && x.id === m.id)) allDirectMessages.value.push(m); });
+        } catch (e) {}
       } catch (e) {
         console.debug('[DEBUG LAWYER] failed to persist admin messages to cache', e);
       }
@@ -502,7 +538,12 @@ const loadAdminMessages = async () => {
     try {
       const cached = DirectMessage.getCachedMessages() || [];
       if (cached.length > 0) {
-        adminMessages.value = cached.filter(m => String(m.sender_id) === String(adminUser.value?.id) || String(m.recipient_id) === String(adminUser.value?.id));
+        const allUsers = await User.list().catch(() => []);
+        const adminIds = new Set(allUsers.filter(u => u.user_type === 'admin').map(a => String(a.id)));
+        adminMessages.value = cached.filter(m =>
+          (adminIds.has(String(m.sender_id)) || adminIds.has(String(m.recipient_id))) &&
+          (String(m.sender_id) === String(currentUserId.value) || String(m.recipient_id) === String(currentUserId.value))
+        );
         console.log('[DEBUG LAWYER] Populated adminMessages from cache after error:', adminMessages.value.length);
       } else {
         adminMessages.value = [];
@@ -542,6 +583,9 @@ const sendAdminMessage = async () => {
       message_type: 'text'
     });
 
+    // Mark as local/sent for debug tracing
+    try { sentMessage.__source = 'local'; } catch (e) {}
+
     console.log('[DEBUG LAWYER] ✓ Message sent:', sentMessage.sender_id, '→', sentMessage.recipient_id);
 
     // Add the sent message to the local array
@@ -578,21 +622,47 @@ const startAdminPolling = () => {
     clearInterval(adminPollingInterval);
   }
 
-  // Poll every 3 seconds for new messages
+  // Poll every 10 seconds for new messages (reduced frequency)
   adminPollingInterval = setInterval(async () => {
-    if (activeTab.value === 'admin' && adminUser.value) {
+    // Skip polling when page is hidden or socket is connected
+    try {
+      const socket = getSocket && getSocket();
+      if (typeof document !== 'undefined' && document.hidden) return;
+      if (socket && socket.connected) return;
+    } catch (e) {}
+
+    if (activeTab.value === 'admin') {
       try {
-        const conversation = await DirectMessage.getConversation(adminUser.value.id) || [];
-        // Merge server conversation with local adminMessages to avoid losing local messages
-        const byId = {};
-        conversation.forEach(m => { if (m && m.id) byId[m.id] = m; });
-        adminMessages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
-        adminMessages.value = Object.values(byId).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
+        // Get all admin users
+        const allUsers = await User.list();
+        const allAdmins = allUsers.filter(u => u.user_type === 'admin');
+
+        if (allAdmins.length > 0) {
+          // Load conversations with ALL admins
+          const allConversations = await Promise.all(
+            allAdmins.map(admin => DirectMessage.getConversation(admin.id).catch(() => []))
+          );
+
+          // Merge all conversations
+          const byId = {};
+          allConversations.forEach(conversation => {
+            if (Array.isArray(conversation)) {
+              conversation.forEach(m => { if (m && m.id) byId[m.id] = m; });
+            }
+          });
+
+          // Also include existing local messages
+          adminMessages.value.forEach(m => { if (m && m.id) byId[m.id] = m; });
+
+          adminMessages.value = Object.values(byId).sort((a,b) =>
+            new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0)
+          );
+        }
       } catch (error) {
         console.error('Failed to refresh admin messages:', error);
       }
     }
-  }, 3000);
+  }, 10000);
 };
 
 const stopAdminPolling = () => {
@@ -624,6 +694,32 @@ watch(() => adminMessages.value.length, async () => {
 
 onMounted(() => {
   loadAssignedCases();
+  // preload direct messages (cache-first) so admin conversation merges have data to use
+  (async () => {
+    try {
+      // Load cached messages first
+      const cached = DirectMessage.getCachedMessages() || [];
+      if (cached && cached.length > 0) {
+        allDirectMessages.value = cached;
+        console.debug('[DEBUG LAWYER] Loaded cached direct messages:', cached.length);
+      }
+      // Refresh from server (list) and merge with cache without wiping local-only items
+      const srv = await DirectMessage.list();
+      if (Array.isArray(srv) && srv.length > 0) {
+        // merge server into allDirectMessages preferring server entries
+        const byId = {};
+        srv.forEach(m => { if (m && m.id) byId[m.id] = m; });
+        // include any cached items that the server doesn't know about
+        (allDirectMessages.value || []).forEach(m => { if (m && m.id && !byId[m.id]) byId[m.id] = m; });
+        // keep local-only (no id) messages at end
+        const locals = (allDirectMessages.value || []).filter(m => !m.id);
+        allDirectMessages.value = Object.values(byId).concat(locals);
+        console.debug('[DEBUG LAWYER] Refreshed direct messages from backend:', Object.keys(byId).length);
+      }
+    } catch (e) {
+      console.debug('[DEBUG LAWYER] Failed to preload direct messages:', e);
+    }
+  })();
   // initialize socket connection
     try {
       initSocket(authStore.accessToken);
@@ -661,12 +757,28 @@ onMounted(() => {
         // update last message timestamp
         if (msg.case_id) lastMessageMap.value[msg.case_id] = msg.created_date || msg.created_at || new Date().toISOString();
         // Handle direct messages (admin <-> lawyer)
-        if (msg.recipient_id && (msg.recipient_id === authStore.user?.id || msg.sender_id === authStore.user?.id)) {
-          if (!adminMessages.value.find(m => m.id === msg.id)) {
-            adminMessages.value.push(msg);
+            if (msg.recipient_id && (msg.recipient_id === authStore.user?.id || msg.sender_id === authStore.user?.id)) {
+          if (!adminMessages.value.find(m => (m.id && msg.id && m.id === msg.id) || (m._tempId && m._tempId === msg._tempId))) {
+            const normalized = { ...msg, created_at: msg.created_at || msg.created_date || msg.createdAt || new Date().toISOString(), __source: 'socket' };
+            // ensure a stable temporary id for messages that don't have server id yet
+            if (!normalized.id && !normalized._tempId) normalized._tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+            adminMessages.value.push(normalized);
+            try {
+              console.debug('[DEBUG LAWYER] after socket push adminMessages count:', adminMessages.value.length);
+              console.debug('[DEBUG LAWYER] last admin message:', adminMessages.value[adminMessages.value.length-1]);
+            } catch (e) {}
+            // also add to in-memory allDirectMessages so merges can use it immediately
+            try {
+              if (normalized.id) {
+                if (!allDirectMessages.value.find(m => m.id === normalized.id)) allDirectMessages.value.push(normalized);
+              } else {
+                // keep local-only messages too
+                allDirectMessages.value.push(normalized);
+              }
+            } catch (e) {}
             // Cache the message in localStorage
             try {
-              DirectMessage.addToCache(msg);
+              DirectMessage.addToCache(normalized);
             } catch (e) {
               console.debug('Failed to cache admin message in localStorage:', e);
             }

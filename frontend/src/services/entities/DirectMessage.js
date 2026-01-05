@@ -12,6 +12,37 @@ class DirectMessageService {
   }
 
   /**
+   * Sanitize a message object before writing to cache.
+   * Removes sensitive fields like password, hashedPassword, and salt
+   * from embedded user objects (sender, recipient).
+   * @param {Object} msg
+   * @returns {Object} sanitized clone
+   */
+  sanitizeMessage(msg) {
+    try {
+      if (!msg || typeof msg !== 'object') return msg
+      const clone = JSON.parse(JSON.stringify(msg))
+
+      const scrubUser = user => {
+        if (!user || typeof user !== 'object') return user
+        const cleaned = { ...user }
+        delete cleaned.password
+        delete cleaned.hashedPassword
+        delete cleaned.salt
+        return cleaned
+      }
+
+      if (clone.sender) clone.sender = scrubUser(clone.sender)
+      if (clone.recipient) clone.recipient = scrubUser(clone.recipient)
+
+      return clone
+    } catch (e) {
+      // If sanitization fails for any reason, fall back to returning original
+      return msg
+    }
+  }
+
+  /**
    * Get messages from localStorage cache
    * @returns {Array|null} Cached messages or null if expired/missing
    */
@@ -41,8 +72,13 @@ class DirectMessageService {
    */
   setCachedMessages(messages) {
     try {
+      // Ensure messages are sanitized before persisting to localStorage
+      const sanitized = Array.isArray(messages)
+        ? messages.map(m => this.sanitizeMessage(m))
+        : messages
+
       const cacheData = {
-        data: messages,
+        data: sanitized,
         timestamp: Date.now()
       }
       localStorage.setItem(this.cacheKey, JSON.stringify(cacheData))
@@ -58,9 +94,17 @@ class DirectMessageService {
   addToCache(message) {
     try {
       const cached = this.getCachedMessages() || []
-      // Avoid duplicates
-      if (!cached.find(m => m.id === message.id)) {
-        cached.push(message)
+      const msg = this.sanitizeMessage(message)
+
+      // Avoid duplicates when server-assigned id exists. If message has
+      // no id (local/temporary), append it so it won't be dropped.
+      if (msg && msg.id) {
+        if (!cached.find(m => m && m.id === msg.id)) {
+          cached.push(msg)
+          this.setCachedMessages(cached)
+        }
+      } else {
+        cached.push(msg)
         this.setCachedMessages(cached)
       }
     } catch (error) {

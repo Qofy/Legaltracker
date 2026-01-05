@@ -103,7 +103,7 @@
           <div v-else-if="currentMessages.length === 0" class="text-center text-sm text-gray-500 py-8">
             No messages yet. Start the conversation!
           </div>
-          <div v-else v-for="message in currentMessages" :key="message.id" class="flex items-start gap-3">
+          <div v-else v-for="message in currentMessages" :key="message.id || message._tempId || message.created_at || message.created_date" class="flex items-start gap-3">
             <!-- Message from others -->
             <div v-if="message.sender_id !== currentUserId" class="flex-1">
               <div class="flex items-start gap-2">
@@ -113,6 +113,9 @@
                 <div class="flex-1">
                   <div class="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-200 max-w-md">
                     <p class="text-sm text-gray-900">{{ message.content }}</p>
+                    <div class="mt-2">
+                      <span class="inline-block text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
+                    </div>
                   </div>
                   <p class="text-xs text-gray-400 mt-1 ml-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
@@ -132,6 +135,9 @@
                       <Star class="w-5 h-5 text-yellow-400 fill-yellow-400 drop-shadow-md" />
                     </div>
                     <p class="text-sm">{{ message.content }}</p>
+                  </div>
+                  <div class="mt-2">
+                    <span class="inline-block text-xs text-white bg-blue-700/60 px-2 py-0.5 rounded">{{ message.__source || 'unknown' }}{{ message.id ? ' · ' + (message.id.slice ? message.id.slice(0,8) : message.id) : '' }}</span>
                   </div>
                   <p class="text-xs text-gray-400 mt-1 mr-1">{{ formatMessageTime(message.created_at) }}</p>
                 </div>
@@ -350,11 +356,14 @@ const selectUser = async (user) => {
     const conversation = await DirectMessage.getConversation(user.id) || [];
 
     // include messages where ANY admin is involved
-    const serverFiltered = (conversation || []).filter(msg => {
+    let serverFiltered = (conversation || []).filter(msg => {
       const isAdminInvolved = admins.some(admin => String(admin.id) === String(msg.sender_id) || String(admin.id) === String(msg.recipient_id));
       const isUserInvolved = String(msg.sender_id) === String(user.id) || String(msg.recipient_id) === String(user.id);
       return isAdminInvolved && isUserInvolved;
     });
+    // Mark server messages for debugging
+    serverFiltered = serverFiltered.map(m => ({ ...m, __source: 'server' }));
+    console.debug('[DEBUG ADMIN] serverFiltered count:', serverFiltered.length, 'sample ids:', serverFiltered.slice(0,5).map(x => x.id));
 
     // Also include cached messages that match this conversation (fallback when server returns empty)
     let cachedFiltered = [];
@@ -365,6 +374,8 @@ const selectUser = async (user) => {
         const isUserInvolved = String(msg.sender_id) === String(user.id) || String(msg.recipient_id) === String(user.id);
         return isAdminInvolved && isUserInvolved;
       });
+      cachedFiltered = cachedFiltered.map(m => ({ ...m, __source: m.__source || 'cache' }));
+      console.debug('[DEBUG ADMIN] cachedFiltered count:', cachedFiltered.length, 'sample ids:', cachedFiltered.slice(0,5).map(x => x.id));
     } catch (e) {
       console.debug('Failed to read direct message cache for conversation merge:', e);
     }
@@ -386,6 +397,15 @@ const selectUser = async (user) => {
     messages.value.forEach(addToByKey);
 
     messages.value = Object.values(byKey).sort((a,b) => new Date(a.created_at || a.created_date || 0) - new Date(b.created_at || b.created_date || 0));
+    try {
+      console.debug('[DEBUG ADMIN] merged messages count:', messages.value.length);
+      console.debug('[DEBUG ADMIN] merged preview:', messages.value.slice(0,10).map(m => ({ id: m.id, sender_id: m.sender_id, recipient_id: m.recipient_id, __source: m.__source })));
+      const serverIds = new Set((serverFiltered || []).filter(x => x && x.id).map(x => String(x.id)));
+      const mergedIds = new Set((messages.value || []).filter(x => x && x.id).map(x => String(x.id)));
+      const missing = [];
+      serverIds.forEach(id => { if (!mergedIds.has(id)) missing.push(id); });
+      if (missing.length > 0) console.warn('[DEBUG ADMIN] server IDs missing from merged messages:', missing.slice(0,10));
+    } catch (e) { console.debug('Failed to debug merged admin messages', e); }
   } catch (error) {
     console.error('[ERROR] Failed to load conversation:', error);
     console.error('[ERROR] Error details:', error.response?.data || error.message);
@@ -419,6 +439,7 @@ const sendMessage = async () => {
     console.log('[DEBUG] Sender/Recipient properly set:', sentMessage.sender_id, '→', sentMessage.recipient_id);
 
     // Add the sent message to the local array
+    try { sentMessage.__source = 'local'; } catch (e) {}
     messages.value.push(sentMessage);
     console.log('[DEBUG] Total messages in array:', messages.value.length);
 
@@ -457,8 +478,17 @@ const startPolling = () => {
     clearInterval(pollingInterval);
   }
 
-  // Poll every 3 seconds for new messages
+  // Poll every 10 seconds for new messages (reduced frequency)
   pollingInterval = setInterval(async () => {
+    // Skip polling if page is hidden or a socket connection is active
+    try {
+      const socket = getSocket && getSocket();
+      if (typeof document !== 'undefined' && document.hidden) return;
+      if (socket && socket.connected) return;
+    } catch (e) {
+      // ignore environment issues
+    }
+
     if (selectedUser.value) {
       try {
         const conversation = await DirectMessage.getConversation(selectedUser.value.id) || [];
@@ -474,7 +504,7 @@ const startPolling = () => {
         console.error('Failed to refresh messages:', error);
       }
     }
-  }, 3000);
+  }, 10000);
 };
 
 const stopPolling = () => {
@@ -528,7 +558,7 @@ onMounted(async () => {
               const otherUserId = (senderId === meId) ? recipientId : senderId;
               if (selectedUser.value && String(selectedUser.value.id) === otherUserId) {
                   if (!messages.value.find(m => m.id === msg.id)) {
-                    const normalized = { ...msg, created_at: msg.created_at || msg.created_date || msg.createdAt || new Date().toISOString() };
+                    const normalized = { ...msg, created_at: msg.created_at || msg.created_date || msg.createdAt || new Date().toISOString(), __source: 'socket' };
                     console.debug('[socket ADMIN] appending message to open conversation', normalized.id, 'otherUserId=', otherUserId);
                     messages.value.push(normalized);
                     // Cache in localStorage
