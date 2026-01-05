@@ -412,8 +412,11 @@ const loadCalendarData = async () => {
     const userId = authStore.user?.id;
     if (!userId) return;
 
-    // Fetch lawyer's cases
-    cases.value = await Case.filter({ lawyer_id: userId });
+    // Fetch lawyer's cases - the backend will automatically filter cases for lawyers
+    // based on ownership, sharing, or assignment
+    cases.value = await Case.list();
+    console.log('Loaded cases for lawyer:', cases.value);
+    
     const caseIds = cases.value.map(c => c.id);
 
     if (caseIds.length > 0) {

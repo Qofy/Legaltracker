@@ -1,5 +1,25 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <!-- Success/Error Notification Toast -->
+    <div 
+      v-if="notification.show"
+      :class="[
+        'fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-500 ease-in-out border-l-4',
+        notification.type === 'success' ? 'bg-green-50 border-green-500 text-green-800' : 
+        notification.type === 'error' ? 'bg-red-50 border-red-500 text-red-800' : 
+        'bg-yellow-50 border-yellow-500 text-yellow-800'
+      ]"
+    >
+      <div class="flex items-center gap-3">
+        <div class="text-sm font-semibold">{{ notification.message }}</div>
+        <button @click="notification.show = false" class="ml-2 opacity-70 hover:opacity-100 transition-opacity">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <!-- Header -->
     <div class="max-w-7xl mx-auto mb-8">
       <div class="flex items-center justify-between">
@@ -261,6 +281,7 @@ const pinnedCaseId = ref(null)
 const initialAttendeeIds = ref([])
 const allCases = ref([])
 const currentUser = ref(null)
+const notification = ref({ show: false, message: '', type: 'success' })
 
 const isAdmin = computed(() => {
   return currentUser.value?.user_type === 'admin'
@@ -268,7 +289,12 @@ const isAdmin = computed(() => {
 
 const casesWithoutDueDate = computed(() => {
   return allCases.value
-    .filter(c => !c.due_date && c.assigned_lawyer)
+    .filter(c => {
+      // Include cases without due_date that have lawyers assigned (either through assigned_lawyer or owners)
+      const hasLawyer = c.assigned_lawyer || c.assigned_lawyer_id || 
+                       (c.owners && c.owners.some(owner => owner.user_type === 'lawyer'))
+      return !c.due_date && hasLawyer
+    })
     .map(c => ({
       ...c,
       tempDueDate: ''
@@ -319,6 +345,10 @@ const loadEvents = async () => {
     currentUser.value = userData
     allCases.value = casesData
 
+    console.log('Current user:', userData)
+    console.log('All cases:', casesData)
+    console.log('Cases without due date:', casesWithoutDueDate.value)
+
     const caseEvents = casesData.flatMap(c => [
       c.due_date && { date: new Date(c.due_date), title: `Case Due: ${c.title}`, type: 'case', data: c },
       c.court_date && { date: new Date(c.court_date), title: `Court: ${c.title}`, type: 'case', data: c }
@@ -349,30 +379,62 @@ const handleMeetingCreated = () => {
   loadEvents()
 }
 
+const showNotification = (message, type = 'success') => {
+  notification.value = { show: true, message, type }
+  setTimeout(() => {
+    notification.value.show = false
+  }, 4000)
+}
+
 const getAssignedLawyerName = (caseItem) => {
+  // First check if there's an assigned_lawyer (the actual lawyer assigned to the case)
+  if (caseItem.assigned_lawyer && caseItem.assigned_lawyer.full_name) {
+    return caseItem.assigned_lawyer.full_name
+  }
+  
+  // Fallback: check owners for lawyers
   if (caseItem.owners && caseItem.owners.length > 0) {
     const lawyer = caseItem.owners.find(owner => owner.user_type === 'lawyer')
     return lawyer ? lawyer.full_name : caseItem.owners[0].full_name
   }
-  return null
+  
+  return 'Unassigned'
 }
 
 const assignDueDate = async (caseItem) => {
-  if (!caseItem.tempDueDate) return
+  if (!caseItem.tempDueDate) {
+    showNotification('⚠️ Please select a due date and time', 'warning')
+    return
+  }
+  
+  console.log('Assigning due date:', {
+    caseId: caseItem.id,
+    tempDueDate: caseItem.tempDueDate,
+    caseTitle: caseItem.title
+  })
   
   try {
-    await Case.update(caseItem.id, {
-      due_date: new Date(caseItem.tempDueDate).toISOString()
+    const dueDateISO = new Date(caseItem.tempDueDate).toISOString()
+    console.log('Sending update request with due_date:', dueDateISO)
+    
+    const updatedCase = await Case.update(caseItem.id, {
+      due_date: dueDateISO
     })
+    
+    console.log('Case updated successfully:', updatedCase)
+    
+    // Clear the temp due date
+    caseItem.tempDueDate = ''
     
     // Refresh data to update the calendar and case list
     await loadEvents()
     
-    // Show success message
-    alert(`Due date assigned to case: ${caseItem.title}`)
+    // Show green success notification
+    showNotification(`✅ Due date successfully assigned to case: ${caseItem.title}`, 'success')
   } catch (error) {
     console.error('Failed to assign due date:', error)
-    alert('Failed to assign due date. Please try again.')
+    console.error('Error details:', error.response?.data || error.message)
+    showNotification('❌ Failed to assign due date. Please try again.', 'error')
   }
 }
 
