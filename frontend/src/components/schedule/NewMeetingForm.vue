@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-4">
+  <form @submit.prevent="handleSubmit" novalidate class="space-y-4">
     <div>
       <Label for="title">Meeting Title</Label>
       <Input
@@ -213,6 +213,7 @@ const combineDateAndTime = (date, time) => {
 };
 
 const handleSubmit = async (e) => {
+  console.log('NewMeetingForm: handleSubmit called', { title: formData.title, start_time: formData.start_time, attendees: formData.attendee_ids })
   if (!formData.title || !formData.start_time || formData.attendee_ids.length === 0) {
     toast({
       variant: 'destructive',
@@ -231,16 +232,32 @@ const handleSubmit = async (e) => {
     case_id: formData.case_id === '' ? null : formData.case_id
   };
 
-  try {
-    // API call commented out
-    // await Meeting.create(finalFormData);
-    // Meeting data (API call commented out) (debug removed)
+    try {
+      // API call commented out
+      // const created = await Meeting.create(finalFormData);
+      // For now create a local meeting object so UI can update immediately
+      const created = {
+        id: `local-${Date.now()}`,
+        title: formData.title,
+        meeting_date: finalFormData.start_time,
+        start_time: finalFormData.start_time,
+        end_time: finalFormData.end_time,
+        case_id: finalFormData.case_id,
+        attendee_ids: formData.attendee_ids,
+        location: formData.location,
+        description: formData.description
+      };
 
-    toast({
-      title: 'Meeting Created!',
-      description: `Meeting "${formData.title}" has been scheduled.`
-    });
-    emit('meetingCreated');
+      toast({
+        title: 'Meeting Created!',
+        description: `Meeting "${formData.title}" has been scheduled.`
+      });
+
+      // Optional immediate alert popup for visibility
+      try { window.alert(`Meeting "${formData.title}" scheduled for ${format(new Date(created.meeting_date), 'PPP p')}`) } catch (e) { /* ignore */ }
+
+      // Emit the created meeting so parent can update calendar immediately
+      emit('meetingCreated', created);
   } catch (error) {
     console.error('Failed to create meeting:', error);
     toast({

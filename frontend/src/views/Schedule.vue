@@ -372,8 +372,26 @@ const loadEvents = async () => {
   isLoading.value = false
 }
 
-const handleMeetingCreated = () => {
+const handleMeetingCreated = (meeting) => {
   showMeetingForm.value = false
+
+  // If a meeting object was provided emit from the form (local-created), add it to events immediately
+  if (meeting) {
+    try {
+      const newEvent = {
+        date: new Date(meeting.meeting_date),
+        title: `Meeting: ${meeting.title}`,
+        type: 'meeting',
+        data: meeting
+      }
+      // Add to current events so the calendar updates instantly
+      events.value = [newEvent, ...events.value]
+    } catch (e) {
+      console.warn('Failed to add local meeting to events', e)
+    }
+  }
+
+  // Refresh from server to keep data consistent when API is available
   loadEvents()
 }
 
