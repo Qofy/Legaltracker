@@ -162,6 +162,13 @@
               >
                 <ChevronRight class="w-5 h-5" />
               </Button>
+              <button
+                @click="compactLabels = !compactLabels"
+                :title="compactLabels ? 'Compact labels: On' : 'Compact labels: Off'"
+                class="ml-2 bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-2 text-sm font-medium transition"
+              >
+                {{ compactLabels ? 'Compact' : 'Full' }}
+              </button>
             </div>
           </div>
         </div>
@@ -223,7 +230,7 @@
                 >
                   <div class="flex items-center gap-1">
                     <component :is="getEventTypeIcon(event.type)" class="w-3 h-3 flex-shrink-0" />
-                    <span class="truncate">{{ event.title.replace(/^(Case Due:|Court:|Action:|Meeting:)\s*/, '') }}</span>
+                    <span class="truncate">{{ compactLabels ? shortTypeLabel(event.type) : event.title.replace(/^(Case Due:|Court:|Action:|Meeting:|Discussion:)\s*/, '') }}</span>
                   </div>
                 </div>
                 
@@ -252,7 +259,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { Case, ActionItem, Meeting, User } from '@/services/entities'
 import { Button } from '@/components/ui/button'
 import {
@@ -265,7 +272,8 @@ import {
   Plus,
   Clock,
   Send,
-  CheckCircle
+  CheckCircle,
+  MessageCircle
 } from 'lucide-vue-next'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, addMonths, subMonths, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -284,6 +292,29 @@ const currentUser = ref(null)
 const notification = ref({ show: false, message: '', type: 'success' })
 // Hold temporary due date selections per-case so selections persist across recomputes
 const tempDueDates = ref({})
+// Compact label mode: show short type labels (Discussion/Meeting/etc.) instead of full titles
+const compactLabels = ref(false)
+
+// Restore compact label preference from localStorage
+onMounted(() => {
+  try {
+    const stored = localStorage.getItem('schedule.compactLabels')
+    if (stored !== null) {
+      compactLabels.value = stored === '1' || stored === 'true'
+    }
+  } catch (e) {
+    // ignore localStorage errors (e.g., private mode)
+  }
+})
+
+// Persist compact label changes to localStorage
+watch(compactLabels, (val) => {
+  try {
+    localStorage.setItem('schedule.compactLabels', val ? '1' : '0')
+  } catch (e) {
+    // ignore
+  }
+})
 
 const isAdmin = computed(() => {
   return currentUser.value?.user_type === 'admin'
@@ -378,14 +409,43 @@ const handleMeetingCreated = (meeting) => {
   // If a meeting object was provided emit from the form (local-created), add it to events immediately
   if (meeting) {
     try {
-      const newEvent = {
-        date: new Date(meeting.meeting_date),
-        title: `Meeting: ${meeting.title}`,
-        type: 'meeting',
-        data: meeting
+      const meetingDate = new Date(meeting.meeting_date)
+
+      // admin-controlled flags from the form
+      const addLabel = meeting.add_label !== undefined ? Boolean(meeting.add_label) : true
+      const reminderOffsetMinutes = Number(meeting.reminder_offset_minutes || 0)
+
+      // Optionally add the main label/event on the meeting date
+      if (addLabel) {
+        const isDiscussion = meeting.event_type === 'discussion'
+        const newEvent = {
+          date: meetingDate,
+          title: isDiscussion ? `Discussion: ${meeting.title}` : `Meeting: ${meeting.title}`,
+          type: isDiscussion ? 'discussion' : 'meeting',
+          data: meeting
+        }
+        // Add to current events so the calendar updates instantly
+        events.value = [newEvent, ...events.value]
       }
-      // Add to current events so the calendar updates instantly
-      events.value = [newEvent, ...events.value]
+
+      // Optionally add a reminder at meetingDate - offset minutes
+      try {
+        if (reminderOffsetMinutes > 0) {
+          const reminderDate = new Date(meetingDate.getTime() - reminderOffsetMinutes * 60 * 1000)
+          // Only add reminder if it's in the future
+          if (reminderDate > new Date()) {
+            const reminderEvent = {
+              date: reminderDate,
+              title: `Reminder: ${meeting.title}`,
+              type: 'reminder',
+              data: { meetingId: meeting.id }
+            }
+            events.value = [reminderEvent, ...events.value]
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to add reminder event', e)
+      }
     } catch (e) {
       console.warn('Failed to add local meeting to events', e)
     }
@@ -459,9 +519,22 @@ const getDayEvents = (day) => {
   return events.value.filter(e => isSameDay(e.date, day))
 }
 
+const shortTypeLabel = (type) => {
+  switch (type) {
+    case 'case': return 'Case'
+    case 'discussion': return 'Discussion'
+    case 'action': return 'Action'
+    case 'meeting': return 'Meeting'
+    case 'reminder': return 'Reminder'
+    default: return 'Event'
+  }
+}
+
 const getEventTypeStyles = (type) => {
   switch (type) {
     case 'case': return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400'
+    case 'reminder': return 'bg-gradient-to-r from-teal-400 to-teal-500 text-white border-teal-400'
+    case 'discussion': return 'bg-gradient-to-r from-green-500 to-teal-500 text-white border-green-400'
     case 'action': return 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400'
     case 'meeting': return 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-purple-400'
     default: return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-400'
@@ -471,6 +544,7 @@ const getEventTypeStyles = (type) => {
 const getEventTypeIcon = (type) => {
   switch (type) {
     case 'case': return Briefcase
+    case 'discussion': return MessageCircle
     case 'action': return ListTodo
     case 'meeting': return Users
     default: return null

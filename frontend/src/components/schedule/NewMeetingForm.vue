@@ -111,6 +111,25 @@
       />
     </div>
 
+    <div class="grid grid-cols-2 gap-4 items-end">
+      <div class="flex items-center gap-2">
+        <input id="add-label" type="checkbox" v-model="formData.add_label" class="w-4 h-4" />
+        <label for="add-label" class="text-sm text-gray-700">Add calendar label</label>
+      </div>
+
+      <div>
+        <label class="text-sm text-gray-700">Reminder</label>
+        <div class="mt-1">
+          <select v-model.number="formData.reminder_offset_minutes" class="border rounded px-3 py-2 w-full">
+            <option :value="0">No reminder</option>
+            <option :value="15">15 minutes before</option>
+            <option :value="30">30 minutes before</option>
+            <option :value="60">1 hour before</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <div class="flex justify-end items-center gap-3">
       <button
         type="button"
@@ -173,6 +192,10 @@ const formData = reactive({
   attendee_ids: [],
   location: ''
 });
+
+// allow admin to request a calendar label and a reminder
+formData.add_label = true
+formData.reminder_offset_minutes = 30
 
 const startTime = ref('09:00');
 const endTime = ref('10:00');
@@ -245,7 +268,13 @@ const handleSubmit = async (e) => {
         case_id: finalFormData.case_id,
         attendee_ids: formData.attendee_ids,
         location: formData.location,
-        description: formData.description
+        description: formData.description,
+        // mark this local meeting as a discussion event so the calendar can render it accordingly
+        event_type: 'discussion',
+        // whether to add a calendar label on the meeting date
+        add_label: !!formData.add_label,
+        // number of minutes before meeting to create a reminder (0 = none)
+        reminder_offset_minutes: Number(formData.reminder_offset_minutes || 0)
       };
 
       toast({
