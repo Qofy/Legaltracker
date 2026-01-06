@@ -33,6 +33,7 @@
           </div>
             <div class="flex items-center gap-2">
               <button @click="openCaseModal(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">View</button>
+              <button v-if="isLawyer" @click="closeCase(c)" class="px-3 py-1 bg-red-600 text-white rounded text-sm">Close Case</button>
             </div>
         </div>
       </div>
@@ -78,6 +79,37 @@
           </svg>
         </div>
         <p class="text-3xl font-bold text-gray-900">{{ taskStats.completed }}</p>
+      </div>
+    </div>
+
+    <!-- Due / Overdue Counts -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div class="p-4 bg-white rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-600 font-medium">Due Today</p>
+        </div>
+        <p class="text-2xl font-bold text-gray-900 mt-2">{{ taskDueToday }}</p>
+      </div>
+
+      <div class="p-4 bg-white rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-600 font-medium">Due This Week</p>
+        </div>
+        <p class="text-2xl font-bold text-gray-900 mt-2">{{ taskThisWeek }}</p>
+      </div>
+
+      <div class="p-4 bg-white rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-600 font-medium">Overdue</p>
+        </div>
+        <p class="text-2xl font-bold text-red-600 mt-2">{{ taskOverdue }}</p>
+      </div>
+
+      <div class="p-4 bg-white rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-gray-600 font-medium">Meetings</p>
+        </div>
+        <p class="text-2xl font-bold text-gray-900 mt-2">{{ taskMeetings }}</p>
       </div>
     </div>
 
@@ -262,10 +294,32 @@ import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
 import { useRouter } from 'vue-router';
 import CaseOverview from '@/components/casedetails/CaseOverview.vue';
+import { useToast } from '@/components/ui/use-toast';
 
 const authStore = useAuthStore();
 
 const router = useRouter();
+
+// toast helper (safe fallback)
+let toast = (opts) => { console.info('toast', opts); };
+try { const t = useToast ? useToast() : null; if (t && t.toast) toast = t.toast; } catch (e) { /* fallback */ }
+
+const isLawyer = computed(() => authStore.user?.user_type === 'lawyer');
+
+// Date helpers for due counts
+const isSameDay = (date) => {
+  try { return new Date(date).toDateString() === new Date().toDateString(); } catch (e) { return false; }
+};
+
+const isWithinNext7Days = (date) => {
+  try {
+    const d = new Date(date);
+    const now = new Date();
+    const end = new Date();
+    end.setDate(now.getDate() + 7);
+    return d >= now && d <= end;
+  } catch (e) { return false; }
+};
 
 const activeTab = ref('all');
 const searchQuery = ref('');
@@ -294,6 +348,27 @@ const taskStats = computed(() => ({
   in_progress: tasks.value.filter(t => t.status === 'in_progress').length,
   completed: tasks.value.filter(t => t.status === 'completed').length,
 }));
+
+const taskDueToday = computed(() => tasks.value.filter(t => t.due_date && isSameDay(t.due_date) && t.status !== 'completed').length);
+
+const taskThisWeek = computed(() => tasks.value.filter(t => t.due_date && !isSameDay(t.due_date) && isWithinNext7Days(t.due_date) && t.status !== 'completed').length);
+
+const taskOverdue = computed(() => tasks.value.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length);
+
+// Placeholder for meetings - this component currently lists action items; set to 0 for now.
+const taskMeetings = computed(() => 0);
+
+const closeCase = async (c) => {
+  try {
+    if (!confirm(`Close case "${c.title || 'case'}"? This will mark it as closed.`)) return;
+    await Case.update(c.id, { status: 'closed' });
+    cases.value = cases.value.map(x => x.id === c.id ? { ...x, status: 'closed' } : x);
+    toast({ title: 'Case closed', description: `"${c.title || 'Case'}" has been closed.` });
+  } catch (e) {
+    console.error('Failed to close case', e);
+    alert('Failed to close case');
+  }
+};
 
 const filteredTasks = computed(() => {
   let filtered = tasks.value;

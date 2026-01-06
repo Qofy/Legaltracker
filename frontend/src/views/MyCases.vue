@@ -41,6 +41,9 @@
             <Plus class="w-4 h-4" />
             New Case
           </button>
+          <button @click="assignedOnly = !assignedOnly" :class="['px-3 py-2 rounded-md text-sm font-medium border', assignedOnly ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-gray-700 border-gray-300']">
+            Assigned Cases ({{ assignedCases.length }})
+          </button>
         </div>
       </div>
     
@@ -199,6 +202,15 @@
                   View Case Details
                 </button>
               </router-link>
+              <div class="mt-2">
+                <button
+                  v-if="isLawyer && caseItem.status !== 'closed'"
+                  @click.prevent="closeCase(caseItem)"
+                  class="w-full mt-2 px-3 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+                >
+                  Close Case
+                </button>
+              </div>
             </div>
           </div>
 
@@ -229,9 +241,16 @@
                   </td>
                   <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ caseItem.next_deadline ? formatDate(caseItem.next_deadline) : '-' }}</td>
                   <td class="px-4 py-3 whitespace-nowrap text-right text-sm">
-                    <router-link :to="`/case-details?caseId=${caseItem.id}`">
-                      <button class="text-[#003aca] hover:text-[#0031a0] font-medium">View</button>
-                    </router-link>
+                    <div class="flex items-center justify-end gap-3">
+                      <router-link :to="`/case-details?caseId=${caseItem.id}`">
+                        <button class="text-[#003aca] hover:text-[#0031a0] font-medium">View</button>
+                      </router-link>
+                      <button
+                        v-if="isLawyer && caseItem.status !== 'closed'"
+                        @click.prevent="closeCase(caseItem)"
+                        class="text-sm px-2 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
+                      >Close</button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -245,9 +264,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { format } from 'date-fns';
-// TODO: Import Case and User entities when API is ready
-// import { Case } from '@/entities/Case';
-// import { User } from '@/entities/User';
+import { Case } from '@/services/entities';
+import { useAuthStore } from '@/stores/auth';
+import { useToast } from '@/components/ui/use-toast';
 import {
   FileText,
   Calendar,
@@ -272,6 +291,7 @@ const searchQuery = ref('');
 const statusFilter = ref('all');
 const priorityFilter = ref('all');
 const viewMode = ref('cards');
+const assignedOnly = ref(false);
 
 // Options for selects (label shown to user, value used internally)
 const statusOptions = [
@@ -330,6 +350,18 @@ const loadUserAndCases = async () => {
 const applyFilters = () => {
   let filtered = cases.value;
 
+  if (assignedOnly.value) {
+    const uid = authStore.user?.id;
+    if (uid) {
+      filtered = filtered.filter(c => {
+        const assignedId = c.assigned_lawyer?.id || c.assigned_lawyer_id || c.lawyer_id || c.lawyerId || c.assignedLawyerId || null;
+        const isAssigned = assignedId && String(assignedId) === String(uid);
+        const isOwner = c.owners && c.owners.some(o => String(o.id) === String(uid));
+        return !!(isAssigned || isOwner);
+      });
+    }
+  }
+
   if (searchQuery.value) {
     filtered = filtered.filter(caseItem =>
       caseItem.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -348,6 +380,17 @@ const applyFilters = () => {
 
   filteredCases.value = filtered;
 };
+
+const assignedCases = computed(() => {
+  const uid = authStore.user?.id;
+  if (!uid) return [];
+  return cases.value.filter(c => {
+    const assignedId = c.assigned_lawyer?.id || c.assigned_lawyer_id || c.lawyer_id || c.lawyerId || c.assignedLawyerId || null;
+    const isAssigned = assignedId && String(assignedId) === String(uid);
+    const isOwner = c.owners && c.owners.some(o => String(o.id) === String(uid));
+    return !!(isAssigned || isOwner);
+  });
+});
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -392,6 +435,38 @@ onMounted(() => {
 
 const setView = (mode) => {
   viewMode.value = mode;
+};
+
+const authStore = useAuthStore();
+const { toast } = useToast();
+
+const isLawyer = computed(() => authStore.user?.user_type === 'lawyer');
+
+const closeCase = async (caseItem) => {
+  if (!caseItem || !caseItem.id) return;
+  if (!isLawyer.value) {
+    toast({ variant: 'destructive', title: 'Permission denied', description: 'Only lawyers can close cases.' });
+    return;
+  }
+
+  const ok = window.confirm(`Close case "${caseItem.title}"? This will mark the case as closed.`);
+  if (!ok) return;
+
+  try {
+    // call backend update
+    await Case.update(caseItem.id, { status: 'closed' });
+    // update local state
+    const idx = cases.value.findIndex(c => c.id === caseItem.id);
+    if (idx !== -1) {
+      cases.value[idx].status = 'closed';
+      cases.value[idx].updated_date = new Date().toISOString();
+    }
+    applyFilters();
+    toast({ title: 'Case closed', description: `${caseItem.title} marked as closed.` });
+  } catch (e) {
+    console.error('Failed to close case', e);
+    toast({ variant: 'destructive', title: 'Error', description: 'Could not close the case.' });
+  }
 };
 
 // Watchers
