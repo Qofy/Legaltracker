@@ -425,7 +425,12 @@ const loadCalendarData = async () => {
     if (caseIds.length > 0) {
       // Fetch meetings
       const allMeetings = await Meeting.list();
-      const lawyerMeetings = allMeetings.filter(m => caseIds.includes(m.case_id));
+      // A meeting is relevant if it's attached to one of the lawyer's cases or the user is an attendee
+      const lawyerMeetings = allMeetings.filter(m => {
+        const byCase = m.case_id && caseIds.includes(m.case_id);
+        const byAttendee = Array.isArray(m.attendee_ids) && m.attendee_ids.includes(userId);
+        return !!(byCase || byAttendee);
+      });
       stats.value.totalMeetings = lawyerMeetings.length;
 
       // Fetch tasks/deadlines
@@ -462,21 +467,6 @@ const loadCalendarData = async () => {
       const weekEnd = new Date(todayStart);
       weekEnd.setDate(weekEnd.getDate() + 7);
 
-      stats.value.today = lawyerMeetings.filter(m => {
-        const meetingDate = new Date(m.meeting_date);
-        return meetingDate >= todayStart && meetingDate < todayEnd;
-      }).length;
-
-      stats.value.thisWeek = lawyerMeetings.filter(m => {
-        const meetingDate = new Date(m.meeting_date);
-        return meetingDate >= todayStart && meetingDate < weekEnd;
-      }).length;
-
-      stats.value.overdue = deadlines.value.filter(d => {
-        const dueDate = new Date(d.due_date);
-        return dueDate < now && d.status !== 'completed';
-      }).length;
-
       // Prepare upcoming events (meetings + deadlines)
       const events = [
         ...lawyerMeetings.map(m => ({
@@ -494,6 +484,22 @@ const loadCalendarData = async () => {
           type: 'deadline',
         })),
       ];
+
+      // Stats: count events (meetings + deadlines) for Today and This Week
+      stats.value.today = events.filter(e => {
+        const evDate = new Date(e.date);
+        return evDate >= todayStart && evDate < todayEnd;
+      }).length;
+
+      stats.value.thisWeek = events.filter(e => {
+        const evDate = new Date(e.date);
+        return evDate >= todayStart && evDate < weekEnd;
+      }).length;
+
+      stats.value.overdue = deadlines.value.filter(d => {
+        const dueDate = new Date(d.due_date);
+        return dueDate < now && d.status !== 'completed';
+      }).length;
 
       upcomingEvents.value = events
         .filter(e => new Date(e.date) >= now)
