@@ -10,6 +10,16 @@
         class="w-full mt-2 p-3 border rounded min-h-[100px] resize-vertical"
       ></textarea>
 
+      <div class="mt-3">
+        <label class="text-sm font-medium">Include cases in context (optional)</label>
+        <select v-model="selectedCaseIds" multiple class="w-full mt-2 p-2 border rounded text-sm">
+          <option v-for="c in availableCases" :key="c.id" :value="c.id">
+            {{ c.title }} - {{ c.case_number || '' }}
+          </option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Hold Shift/Ctrl (or Cmd) to select multiple cases.</p>
+      </div>
+
       <div class="flex items-center gap-3 mt-3">
         <button @click="ask" :disabled="isLoading || !prompt.trim()" class="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-60">
           <span v-if="!isLoading">Ask</span>
@@ -34,8 +44,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from '@/plugins/axios'
+import { casesService } from '@/services/api/cases'
 
 // Props: caseId (optional), onSaveToCase (optional callback)
 defineProps({
@@ -47,6 +58,8 @@ const prompt = ref('')
 const answer = ref('')
 const isLoading = ref(false)
 const error = ref('')
+const availableCases = ref([])
+const selectedCaseIds = ref([])
 
 async function ask() {
   error.value = ''
@@ -57,13 +70,14 @@ async function ask() {
   }
 
   isLoading.value = true
-  try {
-    const payload = {
-      prompt: prompt.value,
-      add_context_from_internet: true
-    }
+    try {
+      const payload = {
+        prompt: prompt.value,
+        add_context_from_internet: true,
+        case_ids: selectedCaseIds.value
+      }
 
-    const res = await axios.post('/llm/generate', payload)
+      const res = await axios.post('/llm/generate', payload)
     // backend returns { response }
     if (res && res.data && res.data.response) {
       answer.value = typeof res.data.response === 'string' ? res.data.response : JSON.stringify(res.data.response, null, 2)
@@ -95,6 +109,16 @@ function saveToCase() {
   }
   onSaveToCase(research)
 }
+
+onMounted(async () => {
+  try {
+    const list = await casesService.getCases()
+    // casesService.getCases returns an array of case objects
+    availableCases.value = list || []
+  } catch (err) {
+    console.warn('Could not load cases for LegalResearchAssistant:', err)
+  }
+})
 </script>
 
 <style scoped>

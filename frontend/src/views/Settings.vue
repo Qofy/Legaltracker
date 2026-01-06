@@ -236,6 +236,8 @@
                   <Switch
                     :checked="settings.notification_preferences.email"
                     @update:checked="updateNotificationPref('email', $event)"
+                    :on-class="user?.user_type === 'admin' ? 'bg-green-500' : ''"
+                    :off-class="user?.user_type === 'admin' ? 'bg-gray-300' : ''"
                   />
                 </div>
 
@@ -247,6 +249,8 @@
                   <Switch
                     :checked="settings.notification_preferences.case_updates"
                     @update:checked="updateNotificationPref('case_updates', $event)"
+                    :on-class="user?.user_type === 'admin' ? 'bg-green-500' : ''"
+                    :off-class="user?.user_type === 'admin' ? 'bg-gray-300' : ''"
                   />
                 </div>
 
@@ -258,6 +262,8 @@
                   <Switch
                     :checked="settings.notification_preferences.document_uploads"
                     @update:checked="updateNotificationPref('document_uploads', $event)"
+                    :on-class="user?.user_type === 'admin' ? 'bg-green-500' : ''"
+                    :off-class="user?.user_type === 'admin' ? 'bg-gray-300' : ''"
                   />
                 </div>
 
@@ -269,6 +275,8 @@
                   <Switch
                     :checked="settings.notification_preferences.ai_responses"
                     @update:checked="updateNotificationPref('ai_responses', $event)"
+                    :on-class="user?.user_type === 'admin' ? 'bg-green-500' : ''"
+                    :off-class="user?.user_type === 'admin' ? 'bg-gray-300' : ''"
                   />
                 </div>
               </div>
