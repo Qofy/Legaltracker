@@ -1,5 +1,22 @@
 <template>
   <div class="space-y-6">
+    <!-- Task Report Modal (moved here to keep inside root) -->
+    <div v-if="showTaskReportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showTaskReportModal = false">
+      <div class="bg-white rounded-lg p-6 max-w-lg w-full">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Report on Task</h3>
+        <div v-if="taskToReport" class="space-y-3">
+          <p class="text-sm text-gray-600">Reporting for: <strong>{{ taskToReport.title }}</strong></p>
+          <p class="text-xs text-gray-500">Case: {{ cases.find(c => c.id === taskToReport.case_id)?.title || '—' }}</p>
+          <label class="block text-sm font-medium text-gray-700 mt-3 mb-1">Report</label>
+          <textarea v-model="taskReportContent" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+          <div class="flex justify-end gap-3 mt-4">
+            <button @click="showTaskReportModal = false" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button @click="sendTaskReport" class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0]">Send Report</button>
+          </div>
+        </div>
+        <div v-else class="text-sm text-gray-500">No task selected.</div>
+      </div>
+    </div>
     <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -117,17 +134,39 @@
       </div>
     </div>
 
-    <!-- Report Preview -->
+      <!-- Task Reports (Lawyer -> Admin) -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">Task Reports</h3>
+          <p class="text-sm text-gray-500">Send a report about a task to admin</p>
+        </div>
+
+        <div v-if="assignedTasks.length === 0" class="text-sm text-gray-500">No tasks found to report on.</div>
+
+        <div v-else class="space-y-3">
+          <div v-for="t in assignedTasks" :key="t.id" class="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
+            <div>
+              <div class="font-medium text-gray-900">{{ t.title }}</div>
+              <div class="text-xs text-gray-500">{{ t.case_title }} • Due: {{ formatDate(t.due_date) }}</div>
+            </div>
+            <div>
+              <button @click="openTaskReportModal(t)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">Report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Preview -->
     <div v-if="selectedReportType" class="bg-white rounded-lg border border-gray-200 p-6">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-semibold text-gray-800">Report Preview</h3>
         <div class="flex items-center gap-2">
-          <button class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-            Export PDF
+          <button @click="exportPDF" class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+              Export PDF
           </button>
-          <button class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-            Export Excel
-          </button>
+            <button @click="exportExcel" class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+              Export Excel
+            </button>
         </div>
       </div>
 
@@ -140,6 +179,8 @@
               <p class="text-sm text-gray-600">Total Cases</p>
               <p class="text-2xl font-bold text-gray-900 mt-1">{{ reportData.totalCases }}</p>
             </div>
+
+         
             <div class="p-4 bg-blue-50 rounded-lg">
               <p class="text-sm text-gray-600">Active Cases</p>
               <p class="text-2xl font-bold text-blue-900 mt-1">{{ reportData.activeCases }}</p>
@@ -154,7 +195,35 @@
             </div>
           </div>
         </div>
+   <!-- Export & Save Section -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Export & Save</h3>
+                <p class="text-sm text-gray-500">Save this report as a PDF or Excel file</p>
+              </div>
 
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">File name</label>
+                  <input v-model="exportFilename" type="text" placeholder="report" class="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                  <p class="text-xs text-gray-500 mt-2">Leave empty to use the default filename.</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Include</label>
+                  <div class="flex flex-col gap-2">
+                    <label class="text-sm"><input type="checkbox" v-model="includeCaseDetails" class="mr-2"> Case details</label>
+                    <label class="text-sm"><input type="checkbox" v-model="includeRecentActivities" class="mr-2"> Recent activities</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 mt-4">
+                <button @click="savePDF" class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0]">Save PDF</button>
+                <button @click="saveExcel" class="px-4 py-2 border border-gray-300 rounded-md">Save Excel</button>
+                <div class="text-sm text-gray-500">If advanced exports fail, allow popups or install optional libs (SheetJS/jsPDF).</div>
+              </div>
+            </div>
         <div>
           <h4 class="font-semibold text-gray-900 mb-3">Cases by Status</h4>
           <div class="space-y-2">
@@ -265,12 +334,15 @@
     </div>
   </div>
 </template>
+ 
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { Case } from '@/services/entities';
+import { Case, ActionItem } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+import { useToast } from '@/components/ui/use-toast';
+import api from '@/plugins/axios';
 
 const authStore = useAuthStore();
 
@@ -283,6 +355,7 @@ const filters = ref({
 
 const cases = ref([]);
 const recentActivities = ref([]);
+const assignedTasks = ref([]);
 
 const reportData = ref({
   totalCases: 0,
@@ -375,10 +448,345 @@ const formatDate = (date) => {
 };
 
 const generateReport = () => {
-  alert('Report generation feature will be implemented with PDF/Excel export functionality');
+  // Build HTML for the selected report and open in a print-friendly window.
+  try {
+    const html = buildReportHTML();
+    const w = window.open('', '_blank');
+    if (!w) {
+      alert('Popup blocked. Please allow popups for this site to generate the report.');
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Give the new window a moment to render, then focus it.
+    setTimeout(() => {
+      try { w.focus(); } catch (e) {}
+    }, 300);
+  } catch (e) {
+    console.error('Failed to generate report', e);
+    alert('Failed to generate report');
+  }
+};
+
+const buildReportHTML = () => {
+  const title = selectedReportType.value === 'case-progress' ? 'Case Progress Report'
+    : selectedReportType.value === 'client-summary' ? 'Client Summary Report'
+    : 'Performance Report';
+
+  const stylesheet = `
+    <style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4;color:#111827;padding:20px}
+      h1{font-size:20px;margin-bottom:6px}
+      .meta{color:#6b7280;margin-bottom:18px}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      th,td{border:1px solid #e5e7eb;padding:8px;text-align:left}
+      th{background:#f9fafb}
+      .section{margin-top:18px}
+      .print-btn{position:fixed;right:20px;top:20px;padding:8px 12px;background:#003aca;color:white;border-radius:6px;cursor:pointer}
+    </style>
+  `;
+
+  let body = `<h1>${title}</h1><div class="meta">Generated: ${format(new Date(), 'PPP p')}</div>`;
+
+  if (selectedReportType.value === 'case-progress') {
+    body += `
+      <div class="section">
+        <h2>Summary</h2>
+        <p>Total cases: ${reportData.value.totalCases} • Active: ${reportData.value.activeCases} • Closed: ${reportData.value.closedCases} • Success Rate: ${reportData.value.successRate}%</p>
+      </div>
+      <div class="section">
+        <h2>Cases</h2>
+        <table><thead><tr><th>Case</th><th>Status</th><th>Updated</th></tr></thead><tbody>`;
+    (cases.value || []).forEach(c => {
+      body += `<tr><td>${c.title || c.case_number || c.id}</td><td>${c.status || '—'}</td><td>${format(c.updated_date || c.updatedAt || new Date(), 'PPP')}</td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  } else if (selectedReportType.value === 'client-summary') {
+    body += `
+      <div class="section">
+        <h2>Client Cases</h2>
+        <table><thead><tr><th>Case</th><th>Client</th><th>Case #</th><th>Notes</th></tr></thead><tbody>`;
+    (filteredCases.value || []).forEach(c => {
+      const clientName = (c.customers && c.customers[0] && (c.customers[0].name || c.customers[0].full_name)) || c.customer_name || '-';
+      body += `<tr><td>${c.title || c.id}</td><td>${clientName}</td><td>${c.case_number || '—'}</td><td>${(c.description || '').replace(/</g,'&lt;')}</td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  } else {
+    body += `
+      <div class="section">
+        <h2>Performance Metrics</h2>
+        <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+          <tr><td>Cases Handled</td><td>${reportData.value.totalCases}</td></tr>
+          <tr><td>Active Cases</td><td>${reportData.value.activeCases}</td></tr>
+          <tr><td>Closed Cases</td><td>${reportData.value.closedCases}</td></tr>
+        </tbody></table>
+      </div>
+    `;
+  }
+
+  // Append recent activities if present
+  if ((recentActivities.value || []).length > 0) {
+    body += `<div class="section"><h2>Recent Activities</h2><table><thead><tr><th>Case</th><th>Activity</th><th>Date</th></tr></thead><tbody>`;
+    (recentActivities.value || []).forEach(a => {
+      body += `<tr><td>${a.case_title || '—'}</td><td>${a.description || '—'}</td><td>${format(a.date || new Date(), 'PPP')}</td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  // Print helper button + script
+  const script = `
+    <script>
+      function doPrint(){ window.print(); }
+      window.onload = function(){ /* optional auto-open print dialog: comment out if undesired */ }
+    <\/script>
+  `;
+
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>${stylesheet}</head><body><button class="print-btn" onclick="doPrint()">Print / Save PDF</button>${body}${script}</body></html>`;
+};
+
+const downloadCSV = (filename, rows) => {
+  const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+const exportExcel = () => {
+  try {
+    // For simplicity export CSV representing the current view
+    if (selectedReportType.value === 'case-progress') {
+      const rows = [["Case","Status","Updated"]];
+      (cases.value || []).forEach(c => rows.push([c.title || c.id, c.status || '', format(c.updated_date || c.updatedAt || new Date(), 'PPP')]));
+      downloadCSV('case-progress.csv', rows);
+    } else if (selectedReportType.value === 'client-summary') {
+      const rows = [["Case","Client","Case #","Notes"]];
+      (filteredCases.value || []).forEach(c => rows.push([c.title || c.id, (c.customers && c.customers[0] && (c.customers[0].name || c.customers[0].full_name)) || c.customer_name || '-', c.case_number || '', c.description || '']));
+      downloadCSV('client-summary.csv', rows);
+    } else {
+      const rows = [["Metric","Value"],["Total Cases", reportData.value.totalCases],["Active Cases", reportData.value.activeCases],["Closed Cases", reportData.value.closedCases],["Success Rate", reportData.value.successRate + '%']];
+      downloadCSV('performance-report.csv', rows);
+    }
+  } catch (e) {
+    console.error('Failed to export CSV', e);
+    alert('Failed to export Excel/CSV');
+  }
+};
+
+const exportPDF = () => {
+  // Reuse generateReport: open printable window and let user Save as PDF
+  try {
+    const html = buildReportHTML();
+    const w = window.open('', '_blank');
+    if (!w) { alert('Popup blocked. Please allow popups for this site to export PDF.'); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Delay to allow rendering then call print
+    setTimeout(() => { try { w.print(); } catch (e) { console.error(e); } }, 500);
+  } catch (e) {
+    console.error('Failed to export PDF', e);
+    alert('Failed to export PDF');
+  }
 };
 
 onMounted(() => {
   loadReportData();
+  loadAssignedTasks();
 });
+
+// Task report modal
+// Insert modal HTML at end of template via patch
+
+const { toast } = useToast ? useToast() : { toast: (opts) => console.info('toast', opts) };
+
+// Export & Save state
+const exportFilename = ref('report');
+const includeCaseDetails = ref(true);
+const includeRecentActivities = ref(true);
+
+const saveExcel = async () => {
+  const filename = (exportFilename.value && exportFilename.value.trim() !== '' ? exportFilename.value.trim() : 'report') + '.xlsx';
+  try {
+    // Try to use SheetJS (xlsx) if available
+    let XLSX;
+    try {
+      // Avoid Vite import analysis for optional dependency by using a variable specifier
+      const xlsxPkg = 'xlsx';
+      XLSX = (await import(/* @vite-ignore */ xlsxPkg)).default || (await import(/* @vite-ignore */ xlsxPkg));
+    } catch (e) {
+      XLSX = null;
+    }
+
+    if (XLSX) {
+      // Build workbook
+      const wb = XLSX.utils.book_new();
+      const rows = [];
+      if (includeCaseDetails.value) {
+        rows.push(['Case', 'Status', 'Updated']);
+        (cases.value || []).forEach(c => rows.push([c.title || c.id, c.status || '', format(c.updated_date || c.updatedAt || new Date(), 'PPP')]));
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, 'Cases');
+      }
+      if (includeRecentActivities.value) {
+        const actRows = [['Case', 'Activity', 'Date']];
+        (recentActivities.value || []).forEach(a => actRows.push([a.case_title || '', a.description || '', format(a.date || new Date(), 'PPP')]));
+        const ws2 = XLSX.utils.aoa_to_sheet(actRows);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Activities');
+      }
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } else {
+      // Fallback to CSV download with provided filename
+      const csvName = (exportFilename.value && exportFilename.value.trim() !== '' ? exportFilename.value.trim() : 'report') + '.csv';
+      const rows = [];
+      if (includeCaseDetails.value) {
+        rows.push(["Case","Status","Updated"]);
+        (cases.value || []).forEach(c => rows.push([c.title || c.id, c.status || '', format(c.updated_date || c.updatedAt || new Date(), 'PPP')]));
+      }
+      if (includeRecentActivities.value) {
+        rows.push([]);
+        rows.push(["Case","Activity","Date"]);
+        (recentActivities.value || []).forEach(a => rows.push([a.case_title || '', a.description || '', format(a.date || new Date(), 'PPP')]));
+      }
+      downloadCSV(csvName, rows);
+    }
+  } catch (e) {
+    console.error('saveExcel failed', e);
+    alert('Failed to save Excel. Check console for details.');
+  }
+};
+
+const savePDF = async () => {
+  const filename = (exportFilename.value && exportFilename.value.trim() !== '' ? exportFilename.value.trim() : 'report') + '.pdf';
+  try {
+    // Try to use jsPDF + html2canvas if available
+    let jsPDFModule = null;
+    let html2canvas = null;
+    try {
+      // Avoid Vite import analysis for optional dependencies by using variable specifiers
+      const jspdfPkg = 'jspdf';
+      const html2Pkg = 'html2canvas';
+      jsPDFModule = (await import(/* @vite-ignore */ jspdfPkg)).jsPDF || (await import(/* @vite-ignore */ jspdfPkg));
+      html2canvas = (await import(/* @vite-ignore */ html2Pkg)).default || (await import(/* @vite-ignore */ html2Pkg));
+    } catch (e) {
+      jsPDFModule = null;
+      html2canvas = null;
+    }
+
+    if (jsPDFModule && html2canvas) {
+      // Build a temporary element with the report HTML
+      const html = buildReportHTML();
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.innerHTML = html;
+      document.body.appendChild(container);
+      const canvas = await html2canvas(container, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDFModule('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pageWidth;
+      const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      pdf.save(filename);
+      container.remove();
+    } else {
+      // Fallback: open printable window and inform user to Save as PDF manually
+      exportPDF();
+      toast({ title: 'PDF export', description: 'If Save failed, install jsPDF + html2canvas for direct PDF downloads.' });
+    }
+  } catch (e) {
+    console.error('savePDF failed', e);
+    alert('Failed to save PDF');
+  }
+};
+
+const loadAssignedTasks = async () => {
+  try {
+    const userId = authStore.user?.id;
+    if (!userId) return;
+    const allTasks = await ActionItem.list();
+    // Determine lawyer's cases robustly (handle different field shapes)
+    let myCases = cases.value || [];
+    if (!myCases || myCases.length === 0) {
+      const allCases = await Case.list();
+      myCases = (allCases || []).filter(c => {
+        const assignedId = c.assigned_lawyer?.id || c.assigned_lawyer_id || c.lawyer_id || c.lawyerId || c.assignedLawyerId || null;
+        if (assignedId && String(assignedId) === String(userId)) return true;
+        if (Array.isArray(c.owners) && c.owners.some(o => (o && (o.id === userId || o === String(userId))) || o === userId || o === String(userId))) return true;
+        if (Array.isArray(c.owner_ids) && c.owner_ids.some(id => String(id) === String(userId))) return true;
+        return false;
+      });
+      // update cases so filters/selects reflect the lawyer's cases
+      cases.value = myCases;
+    }
+
+    const caseIds = myCases.map(c => c.id);
+
+    // Include tasks that are linked to the lawyer's cases OR assigned directly to the lawyer
+    assignedTasks.value = (allTasks || []).filter(t => {
+      if (t.case_id && caseIds.includes(t.case_id)) return true;
+      const assignedTo = t.assigned_lawyer?.id || t.assigned_lawyer_id || t.assigned_to || t.assignee_id || t.user_id || null;
+      if (assignedTo && String(assignedTo) === String(userId)) return true;
+      if (Array.isArray(t.owners) && t.owners.some(o => (o && (o.id === userId || o === String(userId))) || o === userId || o === String(userId))) return true;
+      return false;
+    }).map(t => ({ ...t, case_title: cases.value.find(c => c.id === t.case_id)?.title || t.case_title || 'Unknown Case' }));
+  } catch (e) {
+    console.error('Failed to load assigned tasks', e);
+  }
+};
+
+// Report modal state
+const showTaskReportModal = ref(false);
+const taskToReport = ref(null);
+const taskReportContent = ref('');
+
+const openTaskReportModal = (task) => {
+  taskToReport.value = task;
+  taskReportContent.value = '';
+  showTaskReportModal.value = true;
+};
+
+const sendTaskReport = async () => {
+  if (!taskToReport.value) return;
+  if (!taskReportContent.value || taskReportContent.value.trim().length < 5) {
+    alert('Please enter a short report (at least 5 characters)');
+    return;
+  }
+  try {
+    const payload = {
+      to_role: 'admin',
+      subject: `Task report: ${taskToReport.value.title || taskToReport.value.id}`,
+      content: taskReportContent.value,
+      message_type: 'report',
+      report_data: JSON.stringify({ task_id: taskToReport.value.id, case_id: taskToReport.value.case_id })
+    };
+    await api.post('/messages', payload);
+    toast({ title: 'Report sent', description: 'Your report was sent to admin.' });
+    showTaskReportModal.value = false;
+    taskToReport.value = null;
+    taskReportContent.value = '';
+  } catch (e) {
+    console.error('Failed to send task report', e);
+    alert('Failed to send task report');
+  }
+};
 </script>
+ 

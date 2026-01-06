@@ -34,6 +34,7 @@
             <div class="flex items-center gap-2">
               <button @click="openCaseModal(c)" class="px-3 py-1 bg-[#003aca] text-white rounded text-sm">View</button>
               <button v-if="isLawyer" @click="closeCase(c)" class="px-3 py-1 bg-red-600 text-white rounded text-sm">Close Case</button>
+              
             </div>
         </div>
       </div>
@@ -285,6 +286,8 @@
       </div>
     </div>
   </div>
+
+  
 </template>
 
 <script setup>
@@ -369,6 +372,8 @@ const closeCase = async (c) => {
     alert('Failed to close case');
   }
 };
+
+
 
 const filteredTasks = computed(() => {
   let filtered = tasks.value;
