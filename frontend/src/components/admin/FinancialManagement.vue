@@ -75,14 +75,137 @@
       </div>
     </div>
 
-    <!-- Revenue Trends (Placeholder for chart) -->
+    <!-- Revenue Trends + Chat -->
     <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">Revenue Trends</h3>
-      <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <div class="text-center">
-          <TrendingUpIcon class="w-12 h-12 text-gray-400 mx-auto mb-2" />
-          <p class="text-gray-600 text-sm">Revenue chart visualization</p>
-          <p class="text-gray-500 text-xs mt-1">Integrate chart library for visual analytics</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Chart area: Bar chart (last 6 months) + small pie chart -->
+        <div class="lg:col-span-2 h-64 flex items-center justify-center bg-white rounded-lg border border-gray-200 p-4">
+          <div class="flex-1 flex items-center gap-4">
+            <!-- Bar chart -->
+            <div class="flex-1 h-full flex flex-col">
+              <div class="text-sm font-medium text-gray-700 mb-2">Revenue (last 6 months)</div>
+              <div class="flex-1 flex items-end">
+                <svg viewBox="0 0 600 240" class="w-full h-full">
+                  <g transform="translate(20,10)">
+                    <!-- grid lines -->
+                    <g stroke="#e6e6e6">
+                      <line x1="0" y1="0" x2="520" y2="0" />
+                      <line x1="0" y1="48" x2="520" y2="48" />
+                      <line x1="0" y1="96" x2="520" y2="96" />
+                      <line x1="0" y1="144" x2="520" y2="144" />
+                      <line x1="0" y1="192" x2="520" y2="192" />
+                    </g>
+                    <!-- bars -->
+                    <g>
+                      <!-- computed bars -->
+                      <template v-for="(val, idx) in monthlySeries" :key="idx">
+                        <rect
+                          :x="idx * 86"
+                          :y="(200 - Math.round((val / monthlyMax) * 180))"
+                          :width="60"
+                          :height="Math.max(4, Math.round((val / monthlyMax) * 180))"
+                          :fill="`url(#barGrad${idx})`">
+                          <title>{{ months[idx] }}: ${{ formatCurrency(val) }}</title>
+                        </rect>
+                      </template>
+                    </g>
+                    <!-- labels -->
+                    <g transform="translate(0,205)" fill="#6b7280" font-size="12">
+                      <template v-for="(m, i) in months" :key="i">
+                        <text :x="i * 86 + 30" text-anchor="middle">{{ m }}</text>
+                      </template>
+                    </g>
+                    <!-- gradients defs -->
+                    <defs>
+                      <linearGradient id="barGrad0" x1="0" x2="1">
+                        <stop offset="0%" stop-color="#60a5fa" />
+                        <stop offset="100%" stop-color="#3b82f6" />
+                      </linearGradient>
+                      <linearGradient id="barGrad1" x1="0" x2="1">
+                        <stop offset="0%" stop-color="#93c5fd" />
+                        <stop offset="100%" stop-color="#3b82f6" />
+                      </linearGradient>
+                      <linearGradient id="barGrad2" x1="0" x2="1">
+                        <stop offset="0%" stop-color="#a7f3d0" />
+                        <stop offset="100%" stop-color="#10b981" />
+                      </linearGradient>
+                      <linearGradient id="barGrad3" x1="0" x2="1">
+                        <stop offset="0%" stop-color="#fef9c3" />
+                        <stop offset="100%" stop-color="#f97316" />
+                      </linearGradient>
+                      <linearGradient id="barGrad4" x1="0" x2="1">
+                        <stop offset="0%" stop-color="#fbcfe8" />
+                        <stop offset="100%" stop-color="#ec4899" />
+                      </linearGradient>
+                      <linearGradient id="barGrad5" x1="0" x2="1">
+                        <stop offset="0%" stop-color="#c7b2ff" />
+                        <stop offset="100%" stop-color="#7c3aed" />
+                      </linearGradient>
+                    </defs>
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Small pie chart (revenue by lawyer) -->
+            <div class="w-40 flex-shrink-0">
+              <div class="text-sm font-medium text-gray-700 mb-2">By Lawyer</div>
+              <svg viewBox="0 0 120 120" class="w-40 h-40">
+                <g transform="translate(60,60)">
+                  <template v-for="(slice, idx) in pieData" :key="idx">
+                    <path :d="slice.path" :fill="slice.color">
+                      <title>{{ slice.label }}: ${{ formatCurrency(slice.value) }}</title>
+                    </path>
+                  </template>
+                </g>
+              </svg>
+              <div class="mt-2 text-xs text-gray-600 space-y-1">
+                <div v-for="(slice,i) in pieData" :key="i" class="flex items-center gap-2">
+                  <span :style="{background:slice.color}" class="w-3 h-3 rounded-sm inline-block"></span>
+                  <span class="truncate">{{ slice.label }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat panel for Revenue Trends -->
+        <div class="h-64 flex flex-col bg-white border rounded-lg p-2">
+          <div class="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <TrendingUpIcon class="w-5 h-5 text-blue-600" />
+              <div>
+                <p class="text-sm font-semibold">Revenue Trends Chat</p>
+                <p class="text-xs text-gray-400">Discussion and notes about revenue</p>
+              </div>
+            </div>
+            <div class="text-xs text-gray-400">Admin only</div>
+          </div>
+
+          <div ref="chatContainer" class="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50">
+            <div v-if="messages.length === 0" class="text-center text-sm text-gray-400 py-6">
+              No messages yet. Start the conversation about Revenue Trends.
+            </div>
+            <div v-else>
+              <div v-for="msg in messages" :key="msg.id" class="flex items-start gap-3">
+                <div class="flex-1">
+                  <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-900">{{ msg.text }}</p>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1">{{ formatTime(msg.ts) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 border-t border-gray-100 bg-white">
+            <div class="flex items-center gap-2">
+              <input v-model="newMessage" @keydown.enter.prevent="sendMessage" placeholder="Write a note or question..." class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" />
+              <button @click="sendMessage" :disabled="!newMessage.trim()" class="px-3 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50">Send</button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Messages are stored locally (for now).</p>
+          </div>
         </div>
       </div>
     </div>
@@ -99,6 +222,14 @@
             <div>
               <p class="text-sm font-medium text-gray-900">{{ lawyer.name }}</p>
               <p class="text-xs text-gray-500">{{ lawyer.caseCount }} active cases</p>
+              <div class="mt-2 text-xs text-gray-600">
+                <div v-if="lawyer.casesList && lawyer.casesList.length">
+                  <ul class="list-disc list-inside">
+                    <li v-for="c in lawyer.casesList" :key="c.id">{{ c.title }}</li>
+                  </ul>
+                </div>
+                <div v-else class="text-xs text-gray-500">No active cases</div>
+              </div>
             </div>
           </div>
           <div class="text-right">
@@ -112,7 +243,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { casesService, usersService } from '@/services/api';
 import { TrendingUp as TrendingUpIcon, Briefcase as BriefcaseIcon } from 'lucide-vue-next';
 
@@ -143,16 +274,23 @@ const lawyerBilling = computed(() => {
   const billing = lawyers.value
     .filter(l => l.user_type === 'lawyer')
     .map(lawyer => {
-      const lawyerCases = cases.value.filter(c =>
-        c.owners?.some(o => o.id === lawyer.id) || false
-      );
+      const lawyerCases = cases.value.filter(c => {
+        // check common assignment fields: assigned_lawyer object or id aliases
+        const assignedId = c.assigned_lawyer?.id || c.assigned_lawyer_id || c.lawyer_id || c.lawyerId || c.assignedLawyerId || null;
+        const isAssigned = assignedId && String(assignedId) === String(lawyer.id);
+        const isOwner = c.owners && c.owners.some(o => String(o.id) === String(lawyer.id));
+        // also consider cases where the lawyer may appear in an owners array or other fields
+        return !!(isAssigned || isOwner);
+      });
 
       return {
         id: lawyer.id,
         name: lawyer.full_name,
         caseCount: lawyerCases.length,
         totalBilled: lawyerCases.reduce((sum, c) => sum + (parseFloat(c.case_value) || 0), 0),
-        totalHours: lawyerCases.reduce((sum, c) => sum + (parseInt(c.estimated_hours) || 0), 0)
+        totalHours: lawyerCases.reduce((sum, c) => sum + (parseInt(c.estimated_hours) || 0), 0),
+        // include the actual case objects so the template can list them
+        casesList: lawyerCases
       };
     })
     .sort((a, b) => b.totalBilled - a.totalBilled);
@@ -209,5 +347,93 @@ const getStatusClass = (status) => {
 
 onMounted(() => {
   loadData();
+  // load revenue trends chat from localStorage
+  try {
+    const raw = localStorage.getItem('financial.revenueTrends.messages')
+    if (raw) messages.value = JSON.parse(raw)
+  } catch (e) {
+    console.debug('Failed to load revenue chat from storage', e)
+  }
 });
+
+// Chat state for Revenue Trends
+const messages = ref([])
+const newMessage = ref('')
+const chatContainer = ref(null)
+
+const persistMessages = () => {
+  try {
+    localStorage.setItem('financial.revenueTrends.messages', JSON.stringify(messages.value))
+  } catch (e) {
+    console.debug('Failed to persist revenue chat', e)
+  }
+}
+
+const sendMessage = () => {
+  const text = (newMessage.value || '').trim()
+  if (!text) return
+  const msg = { id: `m-${Date.now()}`, text, ts: new Date().toISOString() }
+  messages.value.push(msg)
+  newMessage.value = ''
+  persistMessages()
+  nextTick(() => {
+    try { chatContainer.value.scrollTop = chatContainer.value.scrollHeight } catch (e) {}
+  })
+}
+
+const formatTime = (iso) => {
+  try { return new Date(iso).toLocaleString() } catch (e) { return '' }
+}
+
+// --- Chart computations ---
+const getLastNMonths = (n) => {
+  const months = []
+  const now = new Date()
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    months.push(d)
+  }
+  return months
+}
+
+const monthsRef = getLastNMonths(6)
+
+const months = monthsRef.map(d => d.toLocaleString(undefined, { month: 'short' }))
+
+const monthlySeries = computed(() => {
+  const series = monthsRef.map(m => 0)
+  cases.value.forEach(c => {
+    const created = c.created_date ? new Date(c.created_date) : null
+    if (!created) return
+    monthsRef.forEach((m, idx) => {
+      if (created.getFullYear() === m.getFullYear() && created.getMonth() === m.getMonth()) {
+        series[idx] += parseFloat(c.case_value) || 0
+      }
+    })
+  })
+  return series
+})
+
+const monthlyMax = computed(() => Math.max(1, ...monthlySeries.value))
+
+const pieData = computed(() => {
+  // take top 6 lawyers by billed amount (from lawyerBilling computed)
+  const data = lawyerBilling.value.slice(0, 6).map((l, i) => ({ label: l.name, value: l.totalBilled }))
+  const total = data.reduce((s, x) => s + x.value, 0) || 1
+  let angle = 0
+  const colors = ['#60a5fa', '#93c5fd', '#10b981', '#f97316', '#ec4899', '#7c3aed']
+  return data.map((d, idx) => {
+    const portion = d.value / total
+    const start = angle
+    const end = angle + portion * Math.PI * 2
+    angle = end
+    const large = end - start > Math.PI ? 1 : 0
+    const x1 = Math.cos(start) * 40
+    const y1 = Math.sin(start) * 40
+    const x2 = Math.cos(end) * 40
+    const y2 = Math.sin(end) * 40
+    const path = `M 0 0 L ${x1} ${y1} A 40 40 0 ${large} 1 ${x2} ${y2} Z`
+    return { label: d.label, value: d.value, path, color: colors[idx % colors.length] }
+  })
+})
 </script>
