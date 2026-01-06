@@ -111,13 +111,24 @@
       />
     </div>
 
-    <div class="flex justify-end space-x-2">
-      <Button type="button" variant="outline" @click="handleCancel">
-        Cancel
-      </Button>
-      <Button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? 'Scheduling...' : 'Schedule Meeting' }}
-      </Button>
+    <div class="flex justify-end items-center gap-3">
+      <button
+        type="button"
+        @click="handleCancel"
+        class="inline-flex items-center gap-2 px-4 py-2 border border-red-600 text-red-600 rounded-md bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 transition"
+      >
+        <X class="w-4 h-4" />
+        <span class="text-sm font-medium">Cancel</span>
+      </button>
+
+      <button
+        type="submit"
+        :disabled="isSubmitting"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#003aca] to-[#0052e8] text-white rounded-md shadow hover:from-[#002a8a] hover:to-[#003aca] disabled:opacity-60 disabled:cursor-not-allowed transition"
+      >
+        <Save class="w-4 h-4" />
+        <span class="text-sm font-semibold">{{ isSubmitting ? 'Scheduling...' : 'Schedule Meeting' }}</span>
+      </button>
     </div>
   </form>
 </template>

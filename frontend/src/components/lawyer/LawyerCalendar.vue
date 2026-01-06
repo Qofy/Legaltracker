@@ -400,9 +400,12 @@ const myCaseDeadlines = computed(() => {
   
   return cases.value
     .filter(c => {
-      // Check if this lawyer is assigned to the case and case has a due_date
-      const isAssigned = c.owners && c.owners.some(owner => owner.id === userId);
-      return isAssigned && c.due_date;
+      // Check if this lawyer is assigned/related to the case and case has a due_date
+      const isOwner = c.owners && c.owners.some(owner => owner.id === userId);
+      const isAssignedLawyer = (c.assigned_lawyer && c.assigned_lawyer.id === userId) || c.assigned_lawyer_id === userId;
+      const isShared = c.shared_users && c.shared_users.some(su => su.id === userId);
+      const isRelated = isOwner || isAssignedLawyer || isShared;
+      return isRelated && c.due_date;
     })
     .sort((a, b) => new Date(a.due_date) - new Date(b.due_date)); // Sort by due date
 });
@@ -427,12 +430,28 @@ const loadCalendarData = async () => {
 
       // Fetch tasks/deadlines
       const allTasks = await ActionItem.list();
-      deadlines.value = allTasks
+      const actionDeadlines = allTasks
         .filter(t => caseIds.includes(t.case_id))
         .map(t => ({
           ...t,
           case_title: cases.value.find(c => c.id === t.case_id)?.title || 'Unknown Case',
         }));
+
+      // Also include case-level due_date items assigned by admin as deadlines
+      const caseDeadlines = cases.value
+        .filter(c => caseIds.includes(c.id) && c.due_date)
+        .map(c => ({
+          id: `case-${c.id}`,
+          title: `Case Due: ${c.title}`,
+          case_id: c.id,
+          case_title: c.title,
+          due_date: c.due_date,
+          priority: 'medium',
+          status: 'pending'
+        }));
+
+      // Merge action item deadlines and case due-date deadlines
+      deadlines.value = [...actionDeadlines, ...caseDeadlines];
 
       // Calculate stats
       const now = new Date();

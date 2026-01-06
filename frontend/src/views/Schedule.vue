@@ -108,14 +108,14 @@
                 <div class="flex flex-col gap-1">
                   <label class="text-xs font-medium text-gray-600">Due Date</label>
                   <input
-                    v-model="caseItem.tempDueDate"
+                    v-model="tempDueDates[caseItem.id]"
                     type="datetime-local"
                     class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <Button
                   @click="assignDueDate(caseItem)"
-                  :disabled="!caseItem.tempDueDate"
+                  :disabled="!tempDueDates[caseItem.id]"
                   class="bg-gradient-to-r from-[#003aca] to-[#0052e8] hover:from-[#002a8a] hover:to-[#003aca] text-white font-semibold px-6 py-2 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   <Send class="w-4 h-4 mr-2" />
@@ -282,6 +282,8 @@ const initialAttendeeIds = ref([])
 const allCases = ref([])
 const currentUser = ref(null)
 const notification = ref({ show: false, message: '', type: 'success' })
+// Hold temporary due date selections per-case so selections persist across recomputes
+const tempDueDates = ref({})
 
 const isAdmin = computed(() => {
   return currentUser.value?.user_type === 'admin'
@@ -295,10 +297,6 @@ const casesWithoutDueDate = computed(() => {
                        (c.owners && c.owners.some(owner => owner.user_type === 'lawyer'))
       return !c.due_date && hasLawyer
     })
-    .map(c => ({
-      ...c,
-      tempDueDate: ''
-    }))
 })
 
 const calendarDays = computed(() => {
@@ -402,33 +400,34 @@ const getAssignedLawyerName = (caseItem) => {
 }
 
 const assignDueDate = async (caseItem) => {
-  if (!caseItem.tempDueDate) {
+  const selected = tempDueDates.value[caseItem.id]
+  if (!selected) {
     showNotification('⚠️ Please select a due date and time', 'warning')
     return
   }
-  
+
   console.log('Assigning due date:', {
     caseId: caseItem.id,
-    tempDueDate: caseItem.tempDueDate,
+    tempDueDate: selected,
     caseTitle: caseItem.title
   })
-  
+
   try {
-    const dueDateISO = new Date(caseItem.tempDueDate).toISOString()
+    const dueDateISO = new Date(selected).toISOString()
     console.log('Sending update request with due_date:', dueDateISO)
-    
+
     const updatedCase = await Case.update(caseItem.id, {
       due_date: dueDateISO
     })
-    
+
     console.log('Case updated successfully:', updatedCase)
-    
-    // Clear the temp due date
-    caseItem.tempDueDate = ''
-    
+
+    // Clear the temp due date for this case
+    tempDueDates.value[caseItem.id] = ''
+
     // Refresh data to update the calendar and case list
     await loadEvents()
-    
+
     // Show green success notification
     showNotification(`✅ Due date successfully assigned to case: ${caseItem.title}`, 'success')
   } catch (error) {
