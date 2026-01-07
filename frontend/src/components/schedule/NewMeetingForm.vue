@@ -11,21 +11,38 @@
 
     <!-- Associated Case (native select) -->
     <div class="flex items-start flex-col">
-      <Label for="case-select">Associated Case (Optional)</Label>
+      <Label for="case-select">Associated Case (Required)</Label>
       <select
         id="case-select"
         v-model="formData.case_id"
-        class="border rounded px-3 py-2 w-full max-w-md "
+        class="border rounded px-3 py-2 w-full max-w-md"
+        @change="onCaseChange"
+        required
       >
-        <option value="">No case</option>
+        <option value="">Select a case...</option>
         <option
           v-for="caseItem in allCases"
           :key="caseItem.id"
           :value="caseItem.id"
         >
-          {{ caseItem.title }}
+          {{ caseItem.case_number }} - {{ caseItem.title }}
         </option>
       </select>
+      
+      <!-- Show selected case details -->
+      <div v-if="selectedCaseInfo" class="mt-2 p-3 bg-blue-50 rounded-md">
+        <p class="text-sm font-medium text-blue-900 mb-2">Meeting attendees will include:</p>
+        <div class="space-y-1 text-sm text-blue-800">
+          <div v-if="selectedCaseInfo.assigned_lawyer" class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Lawyer: {{ selectedCaseInfo.assigned_lawyer.full_name }}</span>
+          </div>
+          <div v-for="client in selectedCaseInfo.clients" :key="client.id" class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>Client: {{ client.full_name }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div >
@@ -59,39 +76,41 @@
       </div>
     </div>
 
-    <div>
-      <Label>Attendees</Label>
-      <Popover v-model:open="openUserSelector">
-        <PopoverTrigger as-child>
-          <Button variant="outline" role="combobox" class="w-full justify-between">
-            <span class="truncate">
-              {{ selectedUsersText }}
-            </span>
-            <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent class="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Search users..." />
-            <CommandEmpty>No users found.</CommandEmpty>
-            <CommandGroup>
-              <CommandItem
-                v-for="user in allUsers"
-                :key="user.id"
-                @select="toggleAttendee(user.id)"
-              >
-                <Check
-                  :class="[
-                    'mr-2 h-4 w-4',
-                    formData.attendee_ids.includes(user.id) ? 'opacity-100' : 'opacity-0'
-                  ]"
-                />
-                {{ user.full_name }}
-              </CommandItem>
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
+    <!-- Auto-selected Attendees Display -->
+    <div v-if="formData.case_id && autoSelectedAttendees.length > 0">
+      <Label>Meeting Attendees (Auto-selected from case)</Label>
+      <div class="mt-2 space-y-2">
+        <div 
+          v-for="attendee in autoSelectedAttendees" 
+          :key="attendee.id"
+          class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border"
+        >
+          <div :class="[
+            'w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold',
+            attendee.user_type === 'lawyer' ? 'bg-purple-500' : 'bg-blue-500'
+          ]">
+            {{ attendee.full_name?.charAt(0) || '?' }}
+          </div>
+          <div class="flex-1">
+            <p class="font-medium text-gray-900">{{ attendee.full_name || 'Unknown' }}</p>
+            <p class="text-sm text-gray-500 capitalize">
+              {{ attendee.user_type === 'customer' ? 'Client' : (attendee.user_type === 'lawyer' ? 'Assigned Lawyer' : attendee.user_type) }}
+            </p>
+            <p v-if="attendee.email" class="text-xs text-gray-400">{{ attendee.email }}</p>
+          </div>
+          <div class="ml-auto">
+            <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+              <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-2 text-sm text-gray-600">
+        💡 Attendees are automatically selected based on the case assignment (lawyer + clients)
+      </div>
     </div>
 
     <div>
@@ -155,8 +174,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { format } from 'date-fns';
-// import { Meeting } from '@/entities/Meeting'; // Commented out - API call
-// import { User } from '@/entities/User'; // Commented out - API call
+import { Case, Meeting } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -211,24 +229,46 @@ const isSubmitting = ref(false);
 
 const loadData = async () => {
   try {
-    // API calls commented out
-    // const users = await User.list();
-    // allUsers.value = users;
+    // Load cases from actual API
+    const casesData = await Case.list('-updated_date');
+    allCases.value = casesData || [];
 
-    // Mock data for demonstration
+    // Mock user data for demonstration
     allUsers.value = [
-      { id: 'user-1', full_name: 'John Doe' },
-      { id: 'user-2', full_name: 'Jane Smith' },
-      { id: 'user-3', full_name: 'Bob Johnson' }
-    ];
-
-    allCases.value = [
-      { id: 'case-abc', title: 'Acme Corp Project Launch' },
-      { id: 'case-xyz', title: 'Internal Strategy Review' },
-      { id: 'case-123', title: 'Client Follow-up Z' }
+      { id: 'lawyer-1', full_name: 'Sarah Williams', user_type: 'lawyer', email: 'sarah@law.com' },
+      { id: 'lawyer-2', full_name: 'Michael Brown', user_type: 'lawyer', email: 'michael@law.com' },
+      { id: 'lawyer-3', full_name: 'Lisa Davis', user_type: 'lawyer', email: 'lisa@law.com' },
+      { id: 'client-1', full_name: 'John Anderson', user_type: 'customer', email: 'john@client.com' },
+      { id: 'client-2', full_name: 'Emma Wilson', user_type: 'customer', email: 'emma@client.com' },
+      { id: 'client-3', full_name: 'Robert Taylor', user_type: 'customer', email: 'robert@client.com' },
+      { id: 'admin-1', full_name: 'Admin User', user_type: 'admin', email: 'admin@law.com' }
     ];
   } catch (error) {
     console.error('Failed to load data:', error);
+    // Fallback to mock data if API fails
+    allCases.value = [
+      { 
+        id: 'case-abc', 
+        title: 'Acme Corp Contract Dispute',
+        case_number: 'CASE-001',
+        assigned_lawyer: { id: 'lawyer-1', full_name: 'Sarah Williams' },
+        clients: [{ id: 'client-1', full_name: 'John Anderson' }]
+      },
+      { 
+        id: 'case-xyz', 
+        title: 'Employment Termination Case',
+        case_number: 'CASE-002',
+        assigned_lawyer: { id: 'lawyer-2', full_name: 'Michael Brown' },
+        clients: [{ id: 'client-2', full_name: 'Emma Wilson' }]
+      },
+      { 
+        id: 'case-123', 
+        title: 'Property Rights Issue',
+        case_number: 'CASE-003', 
+        assigned_lawyer: { id: 'lawyer-3', full_name: 'Lisa Davis' },
+        clients: [{ id: 'client-3', full_name: 'Robert Taylor' }]
+      }
+    ];
   }
 };
 
@@ -241,12 +281,45 @@ const combineDateAndTime = (date, time) => {
 };
 
 const handleSubmit = async (e) => {
-  console.log('NewMeetingForm: handleSubmit called', { title: formData.title, start_time: formData.start_time, attendees: formData.attendee_ids })
-  if (!formData.title || !formData.start_time || formData.attendee_ids.length === 0) {
+  console.log('NewMeetingForm: handleSubmit called', { 
+    title: formData.title, 
+    start_time: formData.start_time, 
+    attendee_ids: formData.attendee_ids,
+    attendee_ids_length: formData.attendee_ids.length 
+  })
+  
+  if (!formData.title) {
     toast({
       variant: 'destructive',
-      title: 'Missing Information',
-      description: 'Title, start date, and at least one attendee are required.'
+      title: 'Missing Title',
+      description: 'Meeting title is required.'
+    });
+    return;
+  }
+  
+  if (!formData.start_time) {
+    toast({
+      variant: 'destructive',
+      title: 'Missing Date',
+      description: 'Meeting date is required.'
+    });
+    return;
+  }
+  
+  if (!formData.case_id) {
+    toast({
+      variant: 'destructive',
+      title: 'Missing Case',
+      description: 'Please select a case for this meeting.'
+    });
+    return;
+  }
+  
+  if (autoSelectedAttendees.value.length === 0) {
+    toast({
+      variant: 'destructive',
+      title: 'No Attendees',
+      description: 'Selected case has no assigned lawyer or clients.'
     });
     return;
   }
@@ -260,10 +333,14 @@ const handleSubmit = async (e) => {
     case_id: formData.case_id === '' ? null : formData.case_id
   };
 
+  console.log('NewMeetingForm: finalFormData prepared:', finalFormData)
+
     try {
-      // API call commented out
-      // const created = await Meeting.create(finalFormData);
-      // For now create a local meeting object so UI can update immediately
+      // Save meeting to API first
+      const apiResponse = await Meeting.create(finalFormData);
+      console.log('Meeting saved to API:', apiResponse)
+      
+      // Create enriched meeting object for immediate UI update
       const created = {
         id: `local-${Date.now()}`,
         title: formData.title,
@@ -272,15 +349,24 @@ const handleSubmit = async (e) => {
         end_time: finalFormData.end_time,
         case_id: finalFormData.case_id,
         attendee_ids: formData.attendee_ids,
+        attendees: autoSelectedAttendees.value, // Use auto-selected attendees
         location: formData.location,
         description: formData.description,
-        // mark this local meeting as a discussion event so the calendar can render it accordingly
-        event_type: 'discussion',
+        // Use 'meeting' as default event type for meetings
+        event_type: 'meeting',
         // whether to add a calendar label on the meeting date
         add_label: !!formData.add_label,
         // number of minutes before meeting to create a reminder (0 = none)
-        reminder_offset_minutes: Number(formData.reminder_offset_minutes || 0)
+        reminder_offset_minutes: Number(formData.reminder_offset_minutes || 0),
+        // Track who created the meeting
+        created_by: 'admin',
+        created_at: new Date().toISOString(),
+        status: 'scheduled',
+        // Include case information for display
+        case_info: selectedCaseInfo.value
       };
+
+      console.log('NewMeetingForm: created meeting object:', created)
 
       toast({
         title: 'Meeting Created!',
@@ -290,6 +376,7 @@ const handleSubmit = async (e) => {
       // Optional immediate alert popup for visibility
       try { window.alert(`Meeting "${formData.title}" scheduled for ${format(new Date(created.meeting_date), 'PPP p')}`) } catch (e) { /* ignore */ }
 
+      console.log('NewMeetingForm: about to emit meetingCreated with:', created)
       // Emit the created meeting so parent can update calendar immediately
       emit('meetingCreated', created);
   } catch (error) {
@@ -308,22 +395,77 @@ const handleCancel = () => {
 };
 
 const toggleAttendee = (userId) => {
+  console.log('toggleAttendee called with userId:', userId)
   const currentIds = formData.attendee_ids;
+  console.log('current attendee_ids before toggle:', currentIds)
+  
   if (currentIds.includes(userId)) {
     formData.attendee_ids = currentIds.filter(id => id !== userId);
+    console.log('removed attendee, new ids:', formData.attendee_ids)
   } else {
     formData.attendee_ids = [...currentIds, userId];
+    console.log('added attendee, new ids:', formData.attendee_ids)
   }
 };
 
 const selectedUsers = computed(() => {
-  return allUsers.value.filter(u => formData.attendee_ids.includes(u.id));
+  return autoSelectedAttendees.value;
 });
 
+// Computed property for currently selected case information
+const selectedCaseInfo = computed(() => {
+  if (!formData.case_id) return null
+  return allCases.value.find(c => c.id === formData.case_id)
+})
+
+// Auto-selected attendees based on case
+const autoSelectedAttendees = computed(() => {
+  if (!formData.case_id) return []
+  
+  const selectedCase = allCases.value.find(c => c.id === formData.case_id)
+  if (!selectedCase) return []
+  
+  const attendees = []
+  
+  // Add assigned lawyer (handle both mock and real data structures)
+  if (selectedCase.assigned_lawyer) {
+    // Try to find in allUsers first, otherwise use case data directly
+    const lawyer = allUsers.value.find(u => u.id === selectedCase.assigned_lawyer.id) || {
+      id: selectedCase.assigned_lawyer.id,
+      full_name: selectedCase.assigned_lawyer.full_name,
+      user_type: 'lawyer',
+      email: selectedCase.assigned_lawyer.email
+    }
+    attendees.push(lawyer)
+  }
+  
+  // Add clients/customers (handle both mock and real data structures)
+  const clientList = selectedCase.clients || selectedCase.customers || []
+  clientList.forEach(client => {
+    // Try to find in allUsers first, otherwise use case data directly
+    const clientUser = allUsers.value.find(u => u.id === client.id) || {
+      id: client.id,
+      full_name: client.full_name,
+      user_type: 'customer',
+      email: client.email
+    }
+    attendees.push(clientUser)
+  })
+  
+  return attendees
+})
+
+// Method to handle case selection change
+const onCaseChange = () => {
+  // Auto-populate attendee_ids based on selected case
+  formData.attendee_ids = autoSelectedAttendees.value.map(user => user.id)
+  console.log('Case changed, auto-selected attendees:', formData.attendee_ids)
+}
+
 const selectedUsersText = computed(() => {
-  return selectedUsers.value.length > 0
-    ? selectedUsers.value.map(u => u.full_name).join(', ')
-    : 'Select attendees...';
+  return autoSelectedAttendees.value.length > 0
+    ? `${autoSelectedAttendees.value.length} attendee(s) from selected case`
+    : 'No case selected';
 });
 
 const formatDate = (date) => {

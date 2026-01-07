@@ -171,6 +171,15 @@
             <span class="nav-text">Calendar</span>
           </button>
 
+          <button type="button" @click="selectedView = 'MyMeetings'" :class="['nav-link', {active: selectedView === 'MyMeetings'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Meetings</span>
+          </button>
+
           <button type="button" @click="selectedView = 'LawyerTasks'" :class="['nav-link', {active: selectedView === 'LawyerTasks'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -242,6 +251,15 @@
           </span>
           <span class="nav-text">My Cases</span>
         </button>
+
+          <button type="button" @click="selectedView = 'MyMeetings'" :class="['nav-link', {active: selectedView === 'MyMeetings'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </span>
+            <span class="nav-text">My Meetings</span>
+          </button>
          
          <button type="button" @click="selectedView = 'CustomerNewCase'" :class="['nav-link', {active: selectedView === 'CustomerNewCase'}]">
           <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
@@ -547,6 +565,8 @@
 
       <Schedule v-else-if="selectedView === 'Schedule'" />
 
+      <MyMeetings v-else-if="selectedView === 'MyMeetings'" />
+
       <LegalResearch v-else-if="selectedView === 'LegalResearch'" />
 
       <Users v-else-if="selectedView === 'Users'" />
@@ -652,6 +672,7 @@ import MyCases from './MyCases.vue';
 import Documents from './Documents.vue';
 import DocumentViewer from './DocumentViewer.vue';
 import Schedule from './Schedule.vue';
+import MyMeetings from './MyMeetings.vue';
 import LegalResearch from './LegalResearch.vue';
 import Users from './Users.vue';
 import Settings from './Settings.vue';

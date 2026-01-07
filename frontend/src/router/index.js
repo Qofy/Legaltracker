@@ -62,6 +62,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/my-meetings',
+    name: 'MyMeetings',
+    component: () => import('../views/MyMeetings.vue'),
+    meta: { requiresAuth: true, roles: ['lawyer', 'customer'] },
+  },
+  {
     path: '/legal-research',
     name: 'LegalResearch',
     component: () => import('../views/LegalResearch.vue'),
