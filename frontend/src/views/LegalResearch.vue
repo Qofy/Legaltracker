@@ -79,6 +79,10 @@
             <Scale class="w-4 h-4 mr-2" />
             New Research
           </TabsTrigger>
+          <TabsTrigger value="recent">
+            <Clock class="w-4 h-4 mr-2" />
+            Recent Research ({{ recentResearch.length }})
+          </TabsTrigger>
           <TabsTrigger value="saved">
             <BookOpen class="w-4 h-4 mr-2" />
             Saved Research ({{ savedResearch.length }})
@@ -114,7 +118,146 @@
           <LegalResearchAssistant
             :case-id="selectedCase"
             :on-save-to-case="selectedCase ? handleSaveToCase : null"
+            :on-research-complete="handleResearchComplete"
           />
+        </TabsContent>
+
+        <TabsContent value="recent" class="space-y-4">
+          <!-- Recent Research Header -->
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900">Recent Research History</h2>
+              <p class="text-sm text-gray-600 mt-1">Your latest research queries and results</p>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                @click="clearRecentResearch"
+                class="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+                :disabled="recentResearch.length === 0"
+              >
+                Clear History
+              </button>
+            </div>
+          </div>
+
+          <Card v-if="recentResearch.length === 0">
+            <CardContent class="text-center py-12">
+              <Clock class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                No Recent Research
+              </h3>
+              <p class="text-gray-500">
+                Your research history will appear here as you conduct searches
+              </p>
+            </CardContent>
+          </Card>
+
+          <div v-else class="grid gap-4">
+            <Card
+              v-for="(research, index) in recentResearch"
+              :key="index"
+              class="hover:shadow-md transition-shadow border-l-4"
+              :class="{
+                'border-l-green-400': research.status === 'completed',
+                'border-l-yellow-400': research.status === 'pending',
+                'border-l-red-400': research.status === 'error'
+              }"
+            >
+              <CardHeader>
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <CardTitle class="text-lg">{{ research.query }}</CardTitle>
+                      <span
+                        class="text-xs px-2 py-1 rounded-full"
+                        :class="{
+                          'bg-green-100 text-green-800': research.status === 'completed',
+                          'bg-yellow-100 text-yellow-800': research.status === 'pending',
+                          'bg-red-100 text-red-800': research.status === 'error'
+                        }"
+                      >
+                        {{ research.status }}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span
+                        v-if="research.research_type"
+                        class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                      >
+                        {{ research.research_type.replace('-', ' ') }}
+                      </span>
+                      <span
+                        v-if="research.jurisdiction"
+                        class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded"
+                      >
+                        {{ research.jurisdiction.replace('-', ' ') }}
+                      </span>
+                      <span
+                        v-if="research.caseId && getCaseById(research.caseId)"
+                        class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded"
+                      >
+                        {{ getCaseById(research.caseId).case_number }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 text-xs text-gray-500">
+                      <Clock class="w-3 h-3" />
+                      <span>{{ formatDateTime(research.timestamp) }}</span>
+                    </div>
+                    <div class="flex space-x-1">
+                      <button
+                        v-if="research.status === 'completed' && research.result"
+                        @click="saveRecentToSaved(research)"
+                        class="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                        title="Save Research"
+                      >
+                        <BookOpen class="w-4 h-4" />
+                      </button>
+                      <button
+                        @click="deleteRecentResearch(index)"
+                        class="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Delete"
+                      >
+                        <X class="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent v-if="research.status === 'completed' && research.result">
+                <div class="prose prose-sm max-w-none">
+                  <div
+                    v-if="research.expanded"
+                    class="whitespace-pre-wrap text-gray-700"
+                  >
+                    {{ research.result }}
+                  </div>
+                  <div v-else class="line-clamp-3 text-gray-600">
+                    {{ research.result.substring(0, 300) }}{{ research.result.length > 300 ? '...' : '' }}
+                  </div>
+                  <button
+                    v-if="research.result.length > 300"
+                    @click="research.expanded = !research.expanded"
+                    class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {{ research.expanded ? 'Show Less' : 'Read More' }}
+                  </button>
+                </div>
+              </CardContent>
+              <CardContent v-else-if="research.status === 'error'">
+                <p class="text-sm text-red-600">
+                  {{ research.error || 'An error occurred during research' }}
+                </p>
+              </CardContent>
+              <CardContent v-else-if="research.status === 'pending'">
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span>Research in progress...</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="saved" class="space-y-4">
@@ -193,7 +336,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { User, Case } from '@/services/entities'
-import { Scale, BookOpen, TrendingUp, Clock, Sparkles, ChevronDown } from 'lucide-vue-next'
+import { Scale, BookOpen, TrendingUp, Clock, Sparkles, ChevronDown, X } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import LegalResearchAssistant from '../components/ai/LegalResearchAssistant.vue'
@@ -203,6 +346,7 @@ const cases = ref([])
 const selectedCase = ref(null)
 const isLoading = ref(true)
 const savedResearch = ref([])
+const recentResearch = ref([])
 
 onMounted(() => {
   loadData()
@@ -232,6 +376,16 @@ const loadData = async () => {
         console.error('Failed to parse saved research:', e)
       }
     }
+
+    // Load recent research from localStorage
+    const recent = localStorage.getItem('recentLegalResearch')
+    if (recent) {
+      try {
+        recentResearch.value = JSON.parse(recent)
+      } catch (e) {
+        console.error('Failed to parse recent research:', e)
+      }
+    }
   } catch (error) {
     console.error('Failed to load data:', error)
   }
@@ -239,10 +393,59 @@ const loadData = async () => {
 }
 
 const handleSaveToCase = (research) => {
-  // Save to localStorage with case association
-  const saved = {
-    ...research,
+  try {
+    // Validate that we have a selected case
+    if (!selectedCase.value) {
+      console.warn('No case selected for saving research')
+      return
+    }
+    
+    // Save to localStorage with case association
+    const saved = {
+      ...research,
+      caseId: selectedCase.value,
+      savedBy: user.value?.email,
+      savedAt: new Date().toISOString()
+    }
+
+    const updatedResearch = [saved, ...savedResearch.value]
+    savedResearch.value = updatedResearch
+    localStorage.setItem('legalResearch', JSON.stringify(updatedResearch))
+    
+    console.log('Research saved successfully:', saved)
+  } catch (error) {
+    console.error('Failed to save research to case:', error)
+    throw error // Re-throw to allow component to handle the error
+  }
+}
+
+const getCaseById = (caseId) => {
+  return cases.value.find(c => c.id === caseId)
+}
+
+const handleResearchComplete = (researchData) => {
+  // Add to recent research history
+  const recentEntry = {
+    ...researchData,
     caseId: selectedCase.value,
+    timestamp: new Date().toISOString(),
+    status: researchData.result ? 'completed' : 'error',
+    expanded: false
+  }
+
+  // Add to beginning of array and limit to 50 entries
+  recentResearch.value = [recentEntry, ...recentResearch.value].slice(0, 50)
+  localStorage.setItem('recentLegalResearch', JSON.stringify(recentResearch.value))
+}
+
+const saveRecentToSaved = (research) => {
+  const saved = {
+    query: research.query,
+    result: research.result,
+    type: 'LLM Research',
+    jurisdiction: research.jurisdiction,
+    research_type: research.research_type,
+    caseId: research.caseId,
     savedBy: user.value?.email,
     savedAt: new Date().toISOString()
   }
@@ -252,7 +455,25 @@ const handleSaveToCase = (research) => {
   localStorage.setItem('legalResearch', JSON.stringify(updatedResearch))
 }
 
-const getCaseById = (caseId) => {
-  return cases.value.find(c => c.id === caseId)
+const deleteRecentResearch = (index) => {
+  recentResearch.value.splice(index, 1)
+  localStorage.setItem('recentLegalResearch', JSON.stringify(recentResearch.value))
+}
+
+const clearRecentResearch = () => {
+  if (confirm('Are you sure you want to clear all recent research history?')) {
+    recentResearch.value = []
+    localStorage.removeItem('recentLegalResearch')
+  }
+}
+
+const formatDateTime = (isoString) => {
+  const date = new Date(isoString)
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>
