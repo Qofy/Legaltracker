@@ -57,7 +57,13 @@
               <DialogHeader>
                 <DialogTitle>Schedule a New Meeting</DialogTitle>
               </DialogHeader>
-              <NewMeetingForm @meeting-created="handleMeetingCreated" @cancel="showMeetingForm = false" :pinnedCaseId="pinnedCaseId" :initialAttendeeIds="initialAttendeeIds" />
+              <NewMeetingForm 
+                @meeting-created="handleMeetingCreated" 
+                @cancel="() => { showMeetingForm = false; formTitle = ''; }" 
+                @title-changed="handleTitleChanged"
+                :pinnedCaseId="pinnedCaseId" 
+                :initialAttendeeIds="initialAttendeeIds" 
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -140,9 +146,18 @@
         <!-- Calendar Header -->
         <div class="bg-gradient-to-r from-[#003aca] to-[#0052e8] px-8 py-6">
           <div class="flex items-center justify-between">
-            <h2 class="text-3xl font-bold text-white">
-              {{ format(currentDate, 'MMMM yyyy') }}
-            </h2>
+            <div class="flex flex-col">
+              <h2 class="text-3xl font-bold text-white">
+                {{ format(currentDate, 'MMMM yyyy') }}
+              </h2>
+              <!-- Dynamic Form Title Label -->
+              <div v-if="showMeetingForm && formTitle" class="mt-2">
+                <div class="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-2">
+                  <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  <span class="text-white/90 text-sm font-medium">Creating: {{ formTitle }}</span>
+                </div>
+              </div>
+            </div>
             <div class="flex items-center gap-3">
               <Button 
                 @click="currentDate = subMonths(currentDate, 1)"
@@ -285,8 +300,9 @@ const currentDate = ref(new Date())
 const events = ref([])
 const isLoading = ref(true)
 const showMeetingForm = ref(false)
+const formTitle = ref('')
 const pinnedCaseId = ref(null)
-const initialAttendeeIds = ref([])
+const initialAttendeeIds = ref([])  
 const allCases = ref([])
 const currentUser = ref(null)
 const notification = ref({ show: false, message: '', type: 'success' })
@@ -304,6 +320,13 @@ onMounted(() => {
     }
   } catch (e) {
     // ignore localStorage errors (e.g., private mode)
+  }
+})
+
+// Clear form title when dialog closes
+watch(showMeetingForm, (isOpen) => {
+  if (!isOpen) {
+    formTitle.value = ''
   }
 })
 
@@ -405,6 +428,7 @@ const loadEvents = async () => {
 
 const handleMeetingCreated = (meeting) => {
   showMeetingForm.value = false
+  formTitle.value = '' // Clear form title when meeting is created
 
   // If a meeting object was provided emit from the form (local-created), add it to events immediately
   if (meeting) {
@@ -453,6 +477,10 @@ const handleMeetingCreated = (meeting) => {
 
   // Refresh from server to keep data consistent when API is available
   loadEvents()
+}
+
+const handleTitleChanged = (title) => {
+  formTitle.value = title
 }
 
 const showNotification = (message, type = 'success') => {

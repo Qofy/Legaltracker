@@ -179,7 +179,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['meetingCreated', 'cancel']);
+const emit = defineEmits(['meetingCreated', 'cancel', 'title-changed']);
 
 const { toast } = useToast();
 
@@ -196,6 +196,11 @@ const formData = reactive({
 // allow admin to request a calendar label and a reminder
 formData.add_label = true
 formData.reminder_offset_minutes = 30
+
+// Watch for title changes and emit to parent
+watch(() => formData.title, (newTitle) => {
+  emit('title-changed', newTitle)
+})
 
 const startTime = ref('09:00');
 const endTime = ref('10:00');
