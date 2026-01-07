@@ -206,18 +206,71 @@ async function ask() {
 
   isLoading.value = true
   try {
-    // Build enhanced prompt with context
-    let enhancedPrompt = prompt.value
+    // Build enhanced prompt with detailed legal research instructions
+    let enhancedPrompt = `You are a legal research assistant with access to current legal information via the internet. Please provide comprehensive, accurate legal information based on the following request:\n\n`
     
+    enhancedPrompt += `QUESTION: ${prompt.value}\n\n`
+    
+    // Add specific research context and instructions
     if (researchType.value || jurisdiction.value) {
-      enhancedPrompt += '\n\nResearch Context:'
+      enhancedPrompt += `RESEARCH PARAMETERS:\n`
+      
       if (researchType.value) {
-        enhancedPrompt += `\n- Research Type: ${researchType.value.replace('-', ' ')}`
+        const formattedType = researchType.value.replace('-', ' ')
+        enhancedPrompt += `- Research Type: ${formattedType}\n`
+        
+        // Add specific instructions based on research type
+        switch (researchType.value) {
+          case 'case-law':
+            enhancedPrompt += `- Focus on: Relevant case precedents, court decisions, judicial interpretations\n`
+            break
+          case 'statutory':
+            enhancedPrompt += `- Focus on: Applicable statutes, laws, legal codes, legislative provisions\n`
+            break
+          case 'regulatory':
+            enhancedPrompt += `- Focus on: Regulations, administrative rules, compliance requirements\n`
+            break
+          case 'constitutional':
+            enhancedPrompt += `- Focus on: Constitutional provisions, fundamental rights, constitutional interpretations\n`
+            break
+          default:
+            enhancedPrompt += `- Focus on: Comprehensive legal analysis covering all relevant legal sources\n`
+        }
       }
+      
       if (jurisdiction.value) {
-        enhancedPrompt += `\n- Jurisdiction: ${jurisdiction.value.replace('-', ' ')}`
+        const formattedJurisdiction = jurisdiction.value.replace('-', ' ')
+        enhancedPrompt += `- Jurisdiction: ${formattedJurisdiction}\n`
+        
+        // Add jurisdiction-specific instructions
+        if (jurisdiction.value === 'ghana') {
+          enhancedPrompt += `- Apply: Ghanaian laws, Constitution of Ghana, Ghanaian court decisions, local regulations\n`
+          enhancedPrompt += `- Consider: Ghana's legal system, local legal practices, relevant Ghanaian authorities\n`
+        } else if (jurisdiction.value === 'germany') {
+          enhancedPrompt += `- Apply: German laws, Basic Law (Grundgesetz), German court decisions, EU law where applicable\n`
+          enhancedPrompt += `- Consider: German legal system, German legal doctrine, relevant German authorities\n`
+        } else if (jurisdiction.value === 'federal') {
+          enhancedPrompt += `- Apply: Federal laws, federal regulations, federal court decisions, constitutional provisions\n`
+          enhancedPrompt += `- Focus on: Federal jurisdiction matters, interstate commerce, federal agencies\n`
+        } else {
+          enhancedPrompt += `- Apply: Laws and regulations specific to ${formattedJurisdiction}\n`
+          enhancedPrompt += `- Consider: Local legal practices, relevant authorities, jurisdictional precedents\n`
+        }
       }
+      
+      enhancedPrompt += `\n`
     }
+    
+    // Add comprehensive research instructions
+    enhancedPrompt += `RESEARCH INSTRUCTIONS:
+1. Provide specific legal information relevant to the jurisdiction and research type
+2. Cite relevant laws, regulations, or case precedents where applicable
+3. Include practical implications and legal requirements
+4. If information is limited, explain what additional research might be needed
+5. Use current legal information and access internet sources for up-to-date information
+6. Structure your response with clear sections and bullet points where appropriate
+
+Please provide a comprehensive legal research response based on these parameters.`
 
     const payload = {
       prompt: enhancedPrompt,

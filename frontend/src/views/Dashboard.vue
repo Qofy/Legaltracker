@@ -137,6 +137,15 @@
           </span>
           <span class="nav-text">Guest Access</span>
         </button>
+        
+        <button type="button" @click="selectedView = 'AIAssistant'" :class="['nav-link', {active: selectedView === 'AIAssistant'}]">
+          <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </span>
+          <span class="nav-text">AI Assistant</span>
+        </button>
       </nav>
         </div>
 
@@ -203,6 +212,15 @@
             </span>
             <span class="nav-text">Reports</span>
           </button>
+          
+          <button type="button" @click="selectedView = 'AIAssistant'" :class="['nav-link', {active: selectedView === 'AIAssistant'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </span>
+            <span class="nav-text">AI Assistant</span>
+          </button>
         </div>
 
         <!-- Customer-only navigation -->
@@ -265,30 +283,23 @@
             </span>
             <span class="nav-text">Invoices</span>
           </button>
+          
+          <button type="button" @click="selectedView = 'AIAssistant'" :class="['nav-link', {active: selectedView === 'AIAssistant'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </span>
+            <span class="nav-text">AI Assistant</span>
+          </button>
         </div>
       
     </aside>
 
-     <!----------------Ai Assistant------------------------------->
-<div class="w-50 border-gray-400 border-r flex flex-col bg-gray-50">
-  <div class="bg-white px-4 py-3 border-b border-gray-400 h-23">
-    <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-      <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-      AI Assistant
-    </h2>
-  </div>
-
-  <div>
-    <!-----------------------------------Content---------------------------->
-    <div class="p-4">
-      <LegalResearchAssistant />
-    </div>
-  </div>
-</div>
-<!------------- MAin---------------->
-    <main class="flex-1 p-6 overflow-x-hidden" style="height: 100vh; overflow-y: auto;">
+<!------------- Main Content Area ----------------->
+    <div class="flex-1 flex">
+      <!-- Main Content -->
+      <main class="flex-1 p-6 overflow-x-hidden" style="height: 100vh; overflow-y: auto;">
       <div class="max-w-7xl mx-auto">
         <div v-if="selectedView === 'Dashboard'">
           <div class="flex items-center justify-between mb-6">
@@ -546,6 +557,22 @@
 
       <GuestAccess v-else-if="selectedView === 'GuestAccess'"  />
 
+      <!-- AI Assistant View -->
+      <div v-else-if="selectedView === 'AIAssistant'" class="max-w-4xl mx-auto">
+        <div class="mb-6">
+          <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <svg class="w-8 h-8 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            AI Legal Assistant
+          </h2>
+          <p class="text-gray-500 mt-1">AI-powered legal research and case analysis assistant</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <LegalResearchAssistant />
+        </div>
+      </div>
+
       <!-- Admin Views -->
       <AdminOverview v-else-if="selectedView === 'AdminOverview' && isAdmin" />
 
@@ -589,20 +616,20 @@
       </div>
     </main>
 
- <!---------------------------------------Comment------------------------------------------>
- <div class="w-50 border-gray-400 border-l flex flex-col">
-  <div class="bg-white h-23 text-gray-600 border-b border-gray-400 px-4 py-3 flex justify-center items-center gap-2.5">
-  <MessageCircle class="w-4 h-4 text-blue-600" />
-    <h2 class="font-semibold">Comments</h2>
+    <!-- Comments Section -->
+    <aside class="w-80 border-l border-gray-300 bg-white flex flex-col" style="height: 100vh; overflow-y: auto;">
+      <div class="bg-white px-4 py-3 border-b border-gray-200 sticky top-0 z-10">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <MessageCircle class="w-5 h-5 text-blue-600" />
+          <span class="font-semibold">Comments</span>
+        </h2>
+      </div>
+      <div class="flex-1 min-h-0 p-4">
+        <CommentsPannel :user="user" />
+      </div>
+    </aside>
   </div>
-
-  <div class="flex-1 min-h-0">
-    <CommentsPannel :user="user" />
-  </div>
- </div>
-
-
-  </div>
+</div>
 </template>
 
 <script setup>
