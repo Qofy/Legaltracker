@@ -12,13 +12,13 @@
       <!-- persistent overlay icons (always visible) -->
       <div class="fixed top-29 right-4 flex flex-col items-end space-y-2 z-50">
         <button
-          class="flex items-center justify-center w-10 h-10 rounded-md bg-sky-500 dark:bg-sky-400 shadow-sm hover:shadow-md transition text-white"
+          class="flex items-center justify-center w-10 h-10 rounded-md bg-sky-500 dark:bg-sky-500 shadow-sm hover:shadow-md transition text-white"
           title="Cases"
         >
           <Briefcase class="w-5 h-5 text-white" />
         </button>
         <button
-          class="flex items-center justify-center w-10 h-10 rounded-md bg-purple-500 dark:bg-purple-400 shadow-sm hover:shadow-md transition text-white"
+          class="flex items-center justify-center w-10 h-10 rounded-md bg-purple-500 dark:bg-purple-500 shadow-sm hover:shadow-md transition text-white"
           title="Locations"
         >
           <MapPin class="w-5 h-5 text-white" />

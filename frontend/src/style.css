@@ -77,3 +77,11 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Ensure pointer cursor on elements that act like buttons but aren't <button> */
+.btn,
+.button,
+[role="button"],
+a.button {
+  cursor: pointer;
+}
