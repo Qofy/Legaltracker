@@ -516,7 +516,9 @@
             <div
               v-for="caseItem in filteredCases"
               :key="caseItem.id"
-              class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+              class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+              :class="{ 'ring-2 ring-blue-500': selectedCaseForComments?.id === caseItem.id }"
+              @click="selectCaseForComments(caseItem)"
             >
               <div class="flex items-start justify-between mb-2">
                 <h3 class="font-semibold text-gray-900 text-base">{{ caseItem.title }}</h3>
@@ -548,8 +550,11 @@
                 </span>
               </div>
 
-              <button class="w-full py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 transition">
-                View Case
+              <button 
+                class="w-full py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 transition"
+                @click.stop="selectCaseForComments(caseItem)"
+              >
+                {{ selectedCaseForComments?.id === caseItem.id ? 'Selected for Comments' : 'View Case & Comments' }}
               </button>
             </div>
           </div>
@@ -651,9 +656,16 @@
           <MessageCircle class="w-5 h-5 text-blue-600" />
           <span class="font-semibold">Comments</span>
         </h2>
+        <div v-if="selectedCaseForComments" class="mt-1">
+          <p class="text-xs text-gray-500">Case: {{ selectedCaseForComments.title }}</p>
+          <p class="text-xs text-gray-400">#{{ selectedCaseForComments.case_number }}</p>
+        </div>
+        <div v-else class="mt-1">
+          <p class="text-xs text-gray-500">Click on a case to view comments</p>
+        </div>
       </div>
       <div class="flex-1 min-h-0 p-4">
-        <CommentsPannel :user="user" />
+        <CommentsPannel :case-id="selectedCaseForComments?.id" :user="user" />
       </div>
     </aside>
   </div>
@@ -981,6 +993,7 @@ const getLawyerName = (c) => {
 // Local view selection for aside -> main content behavior
 const selectedView = ref('Dashboard');
 const selectedCase = ref(null);
+const selectedCaseForComments = ref(null);
 
 // Handler for viewing customer case details
 const handleViewCustomerCase = (caseItem) => {
@@ -1026,6 +1039,11 @@ const scheduleCase = (caseItem, client) => {
     console.error('Failed to schedule case:', e);
     alert('Unable to open schedule for this case.');
   }
+};
+
+// Select a case for comments
+const selectCaseForComments = (caseItem) => {
+  selectedCaseForComments.value = caseItem;
 };
 
 // `createPageUrl` is imported above and available to the template

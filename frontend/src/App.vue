@@ -10,7 +10,7 @@
       </button>
 
       <!-- persistent overlay icons (always visible) -->
-      <div class="fixed top-29 right-4 flex flex-col items-end space-y-2 z-50">
+      <div class="fixed top-35 right-4 flex flex-col items-end space-y-2 z-50">
         <button
           @click="navigateTo('/cases')"
           class="flex items-center justify-center w-10 h-10 rounded-md bg-sky-500 dark:bg-sky-500 shadow-sm hover:shadow-md transition text-white"

@@ -7,7 +7,7 @@
           <MessageCircle class="w-4 h-4 text-blue-600" />
           <h3 class="font-medium text-gray-900 text-sm">Comments</h3>
         </div>
-        <Button variant="ghost" size="icon" @click="showAddForm = !showAddForm" class="h-6 w-6">
+        <Button variant="ghost" size="icon" @click="showAddForm = !showAddForm" class="h-6 w-6" :disabled="!currentCaseId">
           <Plus class="w-3 h-3" />
         </Button>
       </div>
@@ -16,12 +16,12 @@
     <!-- Add Comment Form -->
     <div v-if="showAddForm" class="p-3 border-b border-gray-200 bg-gray-50">
       <form @submit.prevent="handleAddComment" class="space-y-2">
-        <Textarea
+        <textarea
           v-model="newComment"
           placeholder="Add a comment..."
-          class="text-xs resize-none"
+          class="w-full text-xs resize-none border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           rows="3"
-        />
+        ></textarea>
 
         <div class="space-y-2">
         
@@ -79,15 +79,15 @@
       <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
     </div>
 
-    <div v-else-if="!caseId" class="flex-1 flex items-center justify-center p-3">
+    <div v-else-if="!currentCaseId" class="flex-1 flex items-center justify-center p-3">
       <div class="text-center">
         <MessageCircle class="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p class="text-xs text-gray-500">Select a case</p>
+        <p class="text-xs text-gray-500">Select a case to view comments</p>
       </div>
     </div>
 
     <!-- Comments List -->
-    <ScrollArea v-else class="flex-1">
+    <div v-else class="flex-1 overflow-y-auto">
       <div class="p-2 space-y-3">
         <div v-if="comments.length === 0" class="text-center py-8">
           <MessageCircle class="w-6 h-6 text-gray-400 mx-auto mb-2" />
@@ -140,7 +140,7 @@
           </Card>
         </div>
       </div>
-    </ScrollArea>
+    </div>
   </div>
 </template>
 
@@ -148,11 +148,9 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { Comment } from '@/services/entities';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 // using native <select> for comment type
 import { useToast } from '@/components/ui/use-toast';
@@ -170,9 +168,12 @@ import {
 } from 'lucide-vue-next';
 
 const props = defineProps({
-  caseId: { type: [String, Number], required: false },
-  user: { type: Object, required: false },
+  caseId: { type: [String, Number], required: false, default: null },
+  user: { type: Object, required: false, default: null },
 });
+
+// Reactive computed for caseId to ensure reactivity
+const currentCaseId = computed(() => props.caseId);
 
 const comments = ref([]);
 const newComment = ref('');
@@ -197,13 +198,14 @@ const userIsLawyerOrAdmin = computed(() => {
 
 const loadComments = async () => {
   isLoading.value = true;
-  if (!props.caseId) {
+  if (!currentCaseId.value) {
+    comments.value = [];
     isLoading.value = false;
     return;
   }
 
   try {
-    const allComments = await Comment.filter({ case_id: props.caseId }, '-created_date', 50);
+    const allComments = await Comment.filter({ case_id: currentCaseId.value }, '-created_date', 50);
 
     const visibleComments = allComments.filter((comment) => {
       if (comment.created_by === props.user?.email) return true;
@@ -226,21 +228,25 @@ const loadComments = async () => {
 };
 
 onMounted(() => {
-  if (props.caseId) loadComments();
+  if (currentCaseId.value) loadComments();
   else isLoading.value = false;
 });
 
-watch(() => props.caseId, (nv) => {
-  if (nv) loadComments();
-  else comments.value = [];
+watch(currentCaseId, (newValue) => {
+  if (newValue) {
+    loadComments();
+  } else {
+    comments.value = [];
+    isLoading.value = false;
+  }
 });
 
 const handleAddComment = async () => {
-  if (!newComment.value.trim() || !props.caseId) return;
+  if (!newComment.value.trim() || !currentCaseId.value) return;
   isSubmitting.value = true;
   try {
     const commentData = {
-      case_id: props.caseId,
+      case_id: currentCaseId.value,
       content: newComment.value,
       comment_type: commentType.value,
       is_shared: isShared.value,
