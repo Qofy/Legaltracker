@@ -24,6 +24,7 @@ import BugReport from './BugReport'
 import FeatureRequest from './FeatureRequest'
 import Customer from './Customer'
 import Lawyer from './Lawyer'
+import Report from './Report'
 
 export {
   Case,
@@ -41,6 +42,7 @@ export {
   FeatureRequest,
   Customer,
   Lawyer,
+  Report,
 }
 
 export default {
@@ -59,4 +61,6 @@ export default {
   FeatureRequest,
   Customer,
   Lawyer,
+  Report,
 }
+

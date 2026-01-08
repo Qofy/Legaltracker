@@ -134,6 +134,74 @@
       </div>
     </div>
 
+    <!-- Generate & Send Report to Admin -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">Generate Case Report</h3>
+        <p class="text-sm text-gray-500">Create and send a report to admin</p>
+      </div>
+      
+      <div class="space-y-4">
+        <!-- Case Selection for Report -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Select Case to Report On <span class="text-red-500">*</span></label>
+          <select v-model="selectedCaseForReport" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+            <option value="">Choose a case...</option>
+            <option v-for="c in cases" :key="c.id" :value="c.id">{{ c.case_number }} - {{ c.title }}</option>
+          </select>
+        </div>
+
+        <!-- Report Format Selection -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Report Format</label>
+          <div class="flex gap-4">
+            <label class="flex items-center">
+              <input type="radio" v-model="reportFormat" value="pdf" class="mr-2" />
+              <span class="text-sm">PDF</span>
+            </label>
+            <label class="flex items-center">
+              <input type="radio" v-model="reportFormat" value="excel" class="mr-2" />
+              <span class="text-sm">Excel</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Report Notes -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Report Notes (Optional)</label>
+          <textarea 
+            v-model="reportNotes" 
+            rows="4" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md" 
+            placeholder="Add any additional notes or comments about this case report..."
+          ></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3 pt-2">
+          <button 
+            @click="generateAndSendReport" 
+            :disabled="!selectedCaseForReport || isGeneratingReport"
+            class="px-4 py-2 bg-[#003aca] text-white rounded-md hover:bg-[#0031a0] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <svg v-if="isGeneratingReport" class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isGeneratingReport ? 'Generating...' : 'Generate & Send to Admin' }}
+          </button>
+          
+          <button 
+            @click="previewReport" 
+            :disabled="!selectedCaseForReport"
+            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Preview Report
+          </button>
+        </div>
+      </div>
+    </div>
+
       <!-- Task Reports (Lawyer -> Admin) -->
       <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
@@ -157,7 +225,7 @@
       </div>
 
       <!-- Report Preview -->
-    <div v-if="selectedReportType" class="bg-white rounded-lg border border-gray-200 p-6">
+    <div v-if="selectedReportType" data-report-preview class="bg-white rounded-lg border border-gray-200 p-6">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-semibold text-gray-800">Report Preview</h3>
         <div class="flex items-center gap-2">
@@ -356,6 +424,12 @@ const filters = ref({
 const cases = ref([]);
 const recentActivities = ref([]);
 const assignedTasks = ref([]);
+
+// Case report generation state
+const selectedCaseForReport = ref('');
+const reportFormat = ref('pdf');
+const reportNotes = ref('');
+const isGeneratingReport = ref(false);
 
 const reportData = ref({
   totalCases: 0,
@@ -787,6 +861,113 @@ const sendTaskReport = async () => {
     console.error('Failed to send task report', e);
     alert('Failed to send task report');
   }
+};
+
+const generateAndSendReport = async () => {
+  if (!selectedCaseForReport.value) {
+    toast({ 
+      variant: 'destructive',
+      title: 'Case Required', 
+      description: 'Please select a case to generate report for.' 
+    });
+    return;
+  }
+
+  isGeneratingReport.value = true;
+  
+  try {
+    const selectedCase = cases.value.find(c => c.id === selectedCaseForReport.value);
+    if (!selectedCase) {
+      throw new Error('Selected case not found');
+    }
+
+    // Build report content based on the selected case and current filters
+    let reportContent = '';
+    let reportFile = null;
+    
+    if (reportFormat.value === 'pdf') {
+      // Generate PDF report
+      reportContent = await generatePDFReport(selectedCase);
+      reportFile = await generateReportFile(selectedCase, 'pdf');
+    } else {
+      // Generate Excel report
+      reportContent = await generateExcelReport(selectedCase);
+      reportFile = await generateReportFile(selectedCase, 'excel');
+    }
+
+    // Send report to admin via messages system
+    const payload = {
+      to_role: 'admin',
+      subject: `Case Report: ${selectedCase.case_number} - ${selectedCase.title}`,
+      content: `Case report generated for case: ${selectedCase.case_number}\n\nReport Type: ${selectedReportType.value}\nFormat: ${reportFormat.value.toUpperCase()}\nGenerated: ${format(new Date(), 'PPP p')}\n\n${reportNotes.value ? 'Notes: ' + reportNotes.value + '\n\n' : ''}Report Content:\n${reportContent}`,
+      message_type: 'case_report',
+      report_data: JSON.stringify({ 
+        case_id: selectedCase.id,
+        report_type: selectedReportType.value,
+        format: reportFormat.value,
+        generated_at: new Date().toISOString(),
+        case_data: selectedCase,
+        notes: reportNotes.value
+      }),
+      file_attachment: reportFile ? {
+        name: `${selectedCase.case_number}_report.${reportFormat.value}`,
+        content: reportFile,
+        type: reportFormat.value === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      } : null
+    };
+    
+    await api.post('/messages', payload);
+    
+    toast({ 
+      title: 'Report Sent Successfully!', 
+      description: `${reportFormat.value.toUpperCase()} report for case ${selectedCase.case_number} has been sent to admin.` 
+    });
+    
+    // Reset form
+    selectedCaseForReport.value = '';
+    reportNotes.value = '';
+    
+  } catch (error) {
+    console.error('Failed to generate and send report:', error);
+    toast({ 
+      variant: 'destructive',
+      title: 'Report Generation Failed', 
+      description: 'Could not generate or send the report. Please try again.' 
+    });
+  } finally {
+    isGeneratingReport.value = false;
+  }
+};
+
+const previewReport = () => {
+  if (!selectedCaseForReport.value) return;
+  
+  const selectedCase = cases.value.find(c => c.id === selectedCaseForReport.value);
+  if (!selectedCase) return;
+  
+  // Set filters to show only the selected case
+  filters.value.caseId = selectedCaseForReport.value;
+  
+  // Show preview by scrolling to report preview section
+  const previewSection = document.querySelector('[data-report-preview]');
+  if (previewSection) {
+    previewSection.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+const generatePDFReport = async (caseData) => {
+  return `Case Progress Report for ${caseData.case_number}\n\nCase Details:\n- Title: ${caseData.title}\n- Status: ${caseData.status}\n- Created: ${format(new Date(caseData.created_date || caseData.createdAt || new Date()), 'PPP')}\n- Last Updated: ${format(new Date(caseData.updated_date || caseData.updatedAt || new Date()), 'PPP')}\n\nCase Summary:\n${caseData.description || 'No description available'}\n\nRecent Activities:\n${recentActivities.value.filter(a => a.case_id === caseData.id || a.case_title?.includes(caseData.case_number)).map(a => `- ${a.description} (${format(new Date(a.date), 'PPP')})`).join('\n')}`;
+};
+
+const generateExcelReport = async (caseData) => {
+  return `Case Analysis Report for ${caseData.case_number}\n\nCase Information:\n- ID: ${caseData.id}\n- Title: ${caseData.title}\n- Status: ${caseData.status}\n- Priority: ${caseData.priority || 'Normal'}\n\nTimeline:\n- Created: ${format(new Date(caseData.created_date || caseData.createdAt || new Date()), 'PPP')}\n- Last Updated: ${format(new Date(caseData.updated_date || caseData.updatedAt || new Date()), 'PPP')}\n\nClient Information:\n${caseData.customers ? caseData.customers.map(c => `- ${c.full_name || c.name} (${c.email})`).join('\n') : 'No client information available'}`;
+};
+
+const generateReportFile = async (caseData, format) => {
+  // This would typically generate actual file content
+  // For now, return a simple text representation
+  const content = format === 'pdf' ? await generatePDFReport(caseData) : await generateExcelReport(caseData);
+  return btoa(content); // Base64 encode for transmission
 };
 </script>
  

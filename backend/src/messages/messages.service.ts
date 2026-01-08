@@ -1,134 +1,86 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from './message.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectRepository(Message)
     private messagesRepository: Repository<Message>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   async sendMessage(messageData: {
-    from_email: string;
-    to_email: string;
+    from_email?: string;
+    to_email?: string;
     from_role: string;
     to_role: string;
     subject: string;
     content: string;
-    student_id?: number;
-    mentor_email?: string;
+    from_user_id?: string;
+    to_user_id?: string;
     message_type?: string;
     report_data?: string;
-  }): Promise<Message> {
-    const message = this.messagesRepository.create(messageData);
+    file_attachment?: any;
+  }, currentUser?: User): Promise<Message> {
+    const message = this.messagesRepository.create({
+      ...messageData,
+      from_user_id: messageData.from_user_id || currentUser?.id,
+      file_attachment: messageData.file_attachment ? JSON.stringify(messageData.file_attachment) : null,
+      status: 'new'
+    });
+    
     return this.messagesRepository.save(message);
   }
 
-  async getMentorMessages(mentorEmail: string): Promise<Message[]> {
-    const whereConditions: any[] = [
-      { to_email: mentorEmail },  // All messages TO this mentor (regardless of role)
-      { from_email: mentorEmail } // All messages FROM this mentor
-    ];
-
-    return this.messagesRepository.find({
-      where: whereConditions,
-      order: { created_at: 'DESC' }
-    });
-  }
-
-  async getStudentMessages(studentEmail: string): Promise<Message[]> {
-    const whereConditions: any[] = [
-      { to_email: studentEmail },   // All messages TO this student
-      { from_email: studentEmail } // All messages FROM this student
-    ];
-
-    return this.messagesRepository.find({
-      where: whereConditions,
-      order: { created_at: 'DESC' }
-    });
-  }
-
-  async getConversation(email1: string, email2: string): Promise<Message[]> {
+  async getUserMessages(userId: string): Promise<Message[]> {
     return this.messagesRepository.find({
       where: [
-        { from_email: email1, to_email: email2 },
-        { from_email: email2, to_email: email1 }
+        { from_user_id: userId },
+        { to_user_id: userId }
       ],
-      order: { created_at: 'ASC' }
+      relations: ['from_user', 'to_user'],
+      order: { created_date: 'DESC' }
     });
   }
 
-  async markAsRead(messageId: number): Promise<Message> {
-    await this.messagesRepository.update(messageId, { is_read: true });
-    return this.messagesRepository.findOne({ where: { id: messageId } });
-  }
+  async getReportsForAdmin(filters: {
+    message_type?: string;
+    from_user_id?: string;
+    status?: string;
+  } = {}): Promise<Message[]> {
+    const queryBuilder = this.messagesRepository.createQueryBuilder('message')
+      .leftJoinAndSelect('message.from_user', 'from_user')
+      .where('message.to_role = :toRole', { toRole: 'admin' })
+      .andWhere('message.message_type IN (:...types)', { types: ['report', 'case_report'] });
 
-  async markAllAsRead(userEmail: string): Promise<void> {
-    await this.messagesRepository.update(
-      { to_email: userEmail, is_read: false },
-      { is_read: true }
-    );
-  }
-
-  async getUnreadCount(userEmail: string): Promise<number> {
-    return this.messagesRepository.count({
-      where: { to_email: userEmail, is_read: false }
-    });
-  }
-
-  async deleteMessage(messageId: number): Promise<void> {
-    await this.messagesRepository.delete(messageId);
-  }
-
-  async getAdminMessages(adminEmail: string): Promise<Message[]> {
-    const whereConditions: any[] = [
-      { to_email: adminEmail },   // All messages TO this admin
-      { from_email: adminEmail }  // All messages FROM this admin
-    ];
-
-    return this.messagesRepository.find({
-      where: whereConditions,
-      order: { created_at: 'DESC' }
-    });
-  }
-
-  async getAdminReports(adminEmail: string): Promise<Message[]> {
-    const whereCondition: any = {
-      to_email: adminEmail,
-      message_type: 'report'
-    };
-
-    return this.messagesRepository.find({
-      where: whereCondition,
-      order: { created_at: 'DESC' }
-    });
-  }
-
-  async replyToReport(reportId: number, replyContent: string, adminEmail: string): Promise<Message> {
-    // Get the original report
-    const report = await this.messagesRepository.findOne({ where: { id: reportId } });
-    if (!report || !report.report_data) {
-      throw new Error('Report not found');
+    if (filters.message_type) {
+      queryBuilder.andWhere('message.message_type = :messageType', { messageType: filters.message_type });
     }
 
-    const reportData = JSON.parse(report.report_data);
+    if (filters.from_user_id) {
+      queryBuilder.andWhere('message.from_user_id = :fromUserId', { fromUserId: filters.from_user_id });
+    }
+
+    if (filters.status) {
+      queryBuilder.andWhere('message.status = :status', { status: filters.status });
+    }
+
+    return queryBuilder
+      .orderBy('message.created_date', 'DESC')
+      .getMany();
+  }
+
+  async updateMessageStatus(messageId: string, status: string): Promise<Message> {
+    const message = await this.messagesRepository.findOne({ where: { id: messageId } });
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
     
-    // Create reply message to mentor
-    const reply = this.messagesRepository.create({
-      from_email: adminEmail,
-      to_email: reportData.mentor_email,
-      from_role: 'Admin',
-      to_role: 'Mentor',
-      subject: `Re: ${report.subject}`,
-      content: replyContent,
-      student_id: reportData.student_id,
-      mentor_email: reportData.mentor_email,
-      message_type: 'message',
-      is_read: false
-    });
-    
-    return this.messagesRepository.save(reply);
+    message.status = status;
+    return this.messagesRepository.save(message);
   }
 }

@@ -100,16 +100,23 @@
             <span class="nav-text">Overview</span>
           </button>
 
-            <button type="button" @click="selectedView = 'AdminMessages'" :class="['nav-link', {active: selectedView === 'AdminMessages'}]">
-              <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              </span>
-              <span class="nav-text">Messages</span>
-            </button>
+          <button type="button" @click="selectedView = 'AdminMessages'" :class="['nav-link', {active: selectedView === 'AdminMessages'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <span class="nav-text">Messages</span>
+          </button>
 
-          <button type="button" @click="selectedView = 'FinancialManagement'" :class="['nav-link', {active: selectedView === 'FinancialManagement'}]">
+          <button type="button" @click="selectedView = 'AdminReports'" :class="['nav-link', {active: selectedView === 'AdminReports'}]">
+            <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
+              <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </span>
+            <span class="nav-text">Lawyer Reports</span>
+          </button>          <button type="button" @click="selectedView = 'FinancialManagement'" :class="['nav-link', {active: selectedView === 'FinancialManagement'}]">
             <span class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center">
               <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="1" x2="12" y2="23"/>
@@ -601,6 +608,7 @@
       <SystemActivityLogs v-else-if="selectedView === 'SystemLogs' && isAdmin" />
 
       <AdminMessages v-else-if="selectedView === 'AdminMessages' && isAdmin" />
+      <AdminReports v-else-if="selectedView === 'AdminReports' && isAdmin" />
 
       <!-- Lawyer Views -->
       <LawyerOverview v-else-if="selectedView === 'LawyerOverview' && isLawyer" />
@@ -690,6 +698,7 @@ import LawyerReports from '@/components/lawyer/LawyerReports.vue';
 import LawyerMessages from '@/components/lawyer/LawyerMessages.vue';
 import LawyerDocuments from '@/components/lawyer/LawyerDocuments.vue';
 import AdminMessages from '@/components/admin/AdminMessages.vue';
+import AdminReports from '@/components/admin/AdminReports.vue';
 import CustomerOverview from '@/components/customer/CustomerOverview.vue';
 import CustomerMyCases from '@/components/customer/CustomerMyCases.vue';
 import CustomerCaseDetails from '@/components/customer/CustomerCaseDetails.vue';

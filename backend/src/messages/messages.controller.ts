@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Request, Query, Patch } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { Message } from './message.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -11,14 +11,14 @@ export class MessagesController {
   @Post()
   async sendMessage(
     @Body() messageData: {
-      to_email: string;
+      to_email?: string;
       to_role: string;
       subject: string;
       content: string;
-      student_id?: number;
-      mentor_email?: string;
+      to_user_id?: string;
       message_type?: string;
       report_data?: string;
+      file_attachment?: any;
     },
     @Request() req
   ): Promise<Message> {
@@ -31,95 +31,53 @@ export class MessagesController {
       to_role: messageData.to_role,
       subject: messageData.subject,
       content: messageData.content,
-      student_id: messageData.student_id,
-      mentor_email: messageData.mentor_email,
+      to_user_id: messageData.to_user_id,
       message_type: messageData.message_type || 'message',
-      report_data: messageData.report_data
+      report_data: messageData.report_data,
+      file_attachment: messageData.file_attachment
     };
     
     console.log('[Messages] Storing message:', messagePayload);
     
-    return this.messagesService.sendMessage(messagePayload);
+    return this.messagesService.sendMessage(messagePayload, user);
   }
 
-  @Get('mentor')
-  async getMentorMessages(@Request() req): Promise<Message[]> {
-    const { user } = req;
-    console.log('[Messages] getMentorMessages for user:', user.email);
-    const messages = await this.messagesService.getMentorMessages(user.email);
-    console.log('[Messages] Found', messages.length, 'messages for mentor');
-    messages.forEach((msg, index) => {
-      console.log(`[Messages] Message ${index}: from="${msg.from_email}" to="${msg.to_email}" subject="${msg.subject}"`);
-    });
-    return messages;
-  }
-
-  @Get('student')
-  async getStudentMessages(@Request() req): Promise<Message[]> {
-    const { user } = req;
-    return this.messagesService.getStudentMessages(user.email);
-  }
-
-  @Get('conversation/:otherEmail')
-  async getConversation(
-    @Param('otherEmail') otherEmail: string,
-    @Request() req
+  @Get()
+  async getMessages(
+    @Request() req,
+    @Query('to_role') toRole?: string,
+    @Query('message_type') messageType?: string,
+    @Query('from_user_id') fromUserId?: string,
+    @Query('status') status?: string
   ): Promise<Message[]> {
     const { user } = req;
-    return this.messagesService.getConversation(user.email, otherEmail);
+    
+    // If admin is requesting reports
+    if (user.user_type === 'admin' && toRole === 'admin' && (messageType === 'report' || messageType === 'case_report' || messageType === 'report,case_report')) {
+      const filters: any = {};
+      
+      if (messageType && messageType !== 'report,case_report') {
+        filters.message_type = messageType;
+      }
+      if (fromUserId) filters.from_user_id = fromUserId;
+      if (status) filters.status = status;
+      
+      return this.messagesService.getReportsForAdmin(filters);
+    }
+    
+    // Default: get user's messages
+    return this.messagesService.getUserMessages(user.id);
   }
 
-  @Put(':id/read')
-  async markAsRead(@Param('id') id: number): Promise<Message> {
-    return this.messagesService.markAsRead(id);
-  }
-
-  @Put('mark-all-read')
-  async markAllAsRead(@Request() req): Promise<{ message: string }> {
-    const { user } = req;
-    await this.messagesService.markAllAsRead(user.email);
-    return { message: 'All messages marked as read' };
-  }
-
-  @Get('unread-count')
-  async getUnreadCount(@Request() req): Promise<{ count: number }> {
-    const { user } = req;
-    const count = await this.messagesService.getUnreadCount(user.email);
-    return { count };
-  }
-
-  @Delete(':id')
-  async deleteMessage(@Param('id') id: number): Promise<{ message: string }> {
-    await this.messagesService.deleteMessage(id);
-    return { message: 'Message deleted successfully' };
-  }
-
-  @Get('admin')
-  async getAdminMessages(@Request() req): Promise<Message[]> {
-    const { user } = req;
-    console.log('[Messages] getAdminMessages for user:', user.email);
-    const messages = await this.messagesService.getAdminMessages(user.email);
-    console.log('[Messages] Found', messages.length, 'messages for admin');
-    return messages;
-  }
-
-  @Get('admin/reports')
-  async getAdminReports(@Request() req): Promise<Message[]> {
-    const { user } = req;
-    console.log('[Messages] getAdminReports for user:', user.email);
-    const reports = await this.messagesService.getAdminReports(user.email);
-    console.log('[Messages] Found', reports.length, 'reports for admin');
-    return reports;
-  }
-
-  @Post('report/:id/reply')
-  async replyToReport(
-    @Param('id') id: number,
-    @Body() body: { content: string },
+  @Patch(':id')
+  async updateMessage(
+    @Param('id') id: string,
+    @Body() updateData: { status?: string },
     @Request() req
   ): Promise<Message> {
-    const { user } = req;
-    console.log('[Messages] Admin replying to report:', id, 'from:', user.email);
-    return this.messagesService.replyToReport(id, body.content, user.email);
+    if (updateData.status) {
+      return this.messagesService.updateMessageStatus(id, updateData.status);
+    }
+    throw new Error('No valid update fields provided');
   }
 }

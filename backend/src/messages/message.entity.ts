@@ -1,21 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { User } from '../users/user.entity';
 
 @Entity('messages')
 export class Message {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column()
+  @Column({ nullable: true })
   from_email: string;
 
-  @Column()
+  @Column({ nullable: true })
   to_email: string;
 
   @Column()
-  from_role: string; // 'Student' or 'Mentor'
+  from_role: string; // 'lawyer', 'customer', 'admin'
 
   @Column()
-  to_role: string; // 'Student', 'Mentor', or 'Admin'
+  to_role: string; // 'lawyer', 'customer', 'admin'
 
   @Column()
   subject: string;
@@ -27,23 +28,32 @@ export class Message {
   is_read: boolean;
 
   @Column({ nullable: true })
-  student_id: number;
+  from_user_id: string;
 
   @Column({ nullable: true })
-  mentor_email: string;
+  to_user_id: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  from_user: User;
+
+  @ManyToOne(() => User, { nullable: true })
+  to_user: User;
 
   @Column({ nullable: true })
-  company_id: number;
-
-  @Column({ nullable: true })
-  message_type: string; // 'message' or 'report'
+  message_type: string; // 'message', 'report', 'case_report'
 
   @Column({ type: 'text', nullable: true })
   report_data: string; // JSON string for report metadata
 
+  @Column({ nullable: true })
+  status: string; // 'new', 'reviewed', 'archived'
+
+  @Column({ type: 'text', nullable: true })
+  file_attachment: string; // JSON string for file attachment data
+
   @CreateDateColumn()
-  created_at: Date;
+  created_date: Date;
 
   @UpdateDateColumn()
-  updated_at: Date;
+  updated_date: Date;
 }
