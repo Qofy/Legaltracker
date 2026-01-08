@@ -243,8 +243,17 @@
         <div
           v-for="report in paginatedReports"
           :key="report.id"
-          class="p-6 hover:shadow-md cursor-pointer transition duration-150 ease-in-out"
+          class="p-6 hover:shadow-md cursor-pointer transition duration-150 ease-in-out relative"
         >
+          <!-- Fixed-position icon column (top-right of the report card) -->
+          <div class="absolute top-3 right-3 flex flex-col items-center gap-2">
+            <button v-if="report.from_user" class="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-blue-50" :title="(report.from_user?.full_name || '') + ' • Briefcase'">
+              <Briefcase class="w-4 h-4 text-gray-600" />
+            </button>
+            <button v-if="report.from_user" class="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-blue-50" :title="(report.from_user?.full_name || '') + ' • Location'">
+              <MapPin class="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
@@ -446,6 +455,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { format } from "date-fns";
+import { Briefcase, MapPin } from 'lucide-vue-next';
 import api from "@/plugins/axios";
 import { useToast } from "@/components/ui/use-toast";
 
