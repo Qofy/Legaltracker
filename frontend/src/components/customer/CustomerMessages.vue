@@ -822,9 +822,34 @@ onMounted(() => {
   }
 });
 
+// Listen for open-messages-for-case events dispatched by other components (e.g., CustomerCaseDetails)
+const _openMessagesHandler = (e) => {
+  try {
+    const caseId = e?.detail?.caseId || e?.detail?.case_id || e?.detail;
+    if (!caseId) return;
+
+    const attemptOpen = async () => {
+      if (!myCases.value || myCases.value.length === 0) {
+        await loadMyCases();
+      }
+      const found = myCases.value.find(c => String(c.id) === String(caseId));
+      if (found) {
+        startConversationForCase(found);
+      }
+    };
+
+    attemptOpen();
+  } catch (err) {
+    // ignore
+  }
+};
+
+window.addEventListener('open-messages-for-case', _openMessagesHandler);
+
 onUnmounted(() => {
   const socket = getSocket();
   if (socket) socket.off('new_message');
   stopAdminPolling();
+  try { window.removeEventListener('open-messages-for-case', _openMessagesHandler); } catch (e) {}
 });
 </script>

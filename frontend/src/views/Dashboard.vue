@@ -1196,6 +1196,7 @@
             :selected-case="selectedCase"
             :current-user="user"
             @back="selectedView = 'MyCases'"
+            @open-messages="handleOpenMessages"
           />
 
           <CustomerMessages
@@ -1266,7 +1267,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import { Case, Comment, ActionItem } from "@/services/entities";
 import { User } from "@/services/entities";
 import { useTheme } from "@/stores/useTheme";
@@ -1672,8 +1673,22 @@ const handleViewCustomerCase = (caseItem) => {
 
 // Handler for contacting lawyer
 const handleContactLawyer = (caseItem) => {
+  // If a lawyer is assigned, switch to the Messages view and open the conversation for this case
+  if (caseItem && (caseItem.lawyer_id || caseItem.lawyerInfo)) {
+    selectedView.value = 'CustomerMessages';
+    // notify messages component after view switches/mounts
+    nextTick().then(() => {
+      try {
+        window.dispatchEvent(new CustomEvent('open-messages-for-case', { detail: { caseId: caseItem.id } }));
+      } catch (e) {
+        // ignore
+      }
+    });
+    return;
+  }
+
+  // Fallback: if we have an email, open mail client
   if (caseItem.lawyerInfo?.email) {
-    // Open email client or messaging system
     const subject = encodeURIComponent(
       `Regarding Case: ${caseItem.title} (#${caseItem.case_number})`
     );
@@ -1681,8 +1696,22 @@ const handleContactLawyer = (caseItem) => {
       `Dear ${caseItem.lawyerInfo.name},\n\nI would like to discuss my case.\n\nCase Details:\nTitle: ${caseItem.title}\nCase Number: ${caseItem.case_number}\n\nThank you.`
     );
     window.location.href = `mailto:${caseItem.lawyerInfo.email}?subject=${subject}&body=${body}`;
-  } else {
-    alert("Lawyer contact information not available");
+    return;
+  }
+
+  alert("Lawyer contact information not available");
+};
+
+// Open messages view for a specific case (called when child emits 'open-messages')
+const handleOpenMessages = async (caseId) => {
+  // Switch view to CustomerMessages
+  selectedView.value = 'CustomerMessages';
+  // After view mounts, dispatch a window event with the case id so CustomerMessages can open the conversation
+  await nextTick();
+  try {
+    window.dispatchEvent(new CustomEvent('open-messages-for-case', { detail: { caseId } }));
+  } catch (e) {
+    // ignore
   }
 };
 

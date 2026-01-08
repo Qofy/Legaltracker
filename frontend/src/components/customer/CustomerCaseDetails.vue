@@ -108,7 +108,7 @@
             </span>
           </div>
         </div>
-        <button class="px-4 py-2 bg-[#003aca] text-white rounded-md text-sm font-medium hover:bg-[#0031a0]">
+        <button @click="handleSendMessage" class="px-4 py-2 bg-[#003aca] text-white rounded-md text-sm font-medium hover:bg-[#0031a0]">
           Send Message
         </button>
       </div>
@@ -200,7 +200,7 @@ const props = defineProps({
 });
 
 // Emits
-defineEmits(['back']);
+const emit = defineEmits(['back', 'open-messages']);
 
 const authStore = useAuthStore();
 
@@ -361,6 +361,25 @@ onMounted(() => {
     loadCaseDetails(props.selectedCase);
   }
 });
+
+// When the user clicks "Send Message":
+// - If a lawyer is assigned, ask the parent to open the Messages view for this case
+// - Otherwise fall back to mailto if we have an email, or show an alert
+const handleSendMessage = () => {
+  if (currentCase.value && (currentCase.value.lawyer_id || lawyerInfo.value?.email || lawyerInfo.value?.name)) {
+    emit('open-messages', currentCase.value.id);
+    return;
+  }
+
+  if (lawyerInfo.value && lawyerInfo.value.email) {
+    const subject = encodeURIComponent(`Regarding Case: ${currentCase.value?.title || ''} (#${currentCase.value?.case_number || ''})`);
+    const body = encodeURIComponent(`Dear ${lawyerInfo.value.name || 'Lawyer'},\n\nI would like to discuss my case.\n\nThank you.`);
+    window.location.href = `mailto:${lawyerInfo.value.email}?subject=${subject}&body=${body}`;
+    return;
+  }
+
+  alert('No lawyer assigned to this case yet. Please check back later or contact support.');
+}
 </script>
 
 <style scoped>
