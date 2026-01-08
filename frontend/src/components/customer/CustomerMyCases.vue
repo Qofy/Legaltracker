@@ -237,7 +237,7 @@ defineProps({
 });
 
 // Emits
-const emit = defineEmits(['newCase', 'viewCase', 'contactLawyer']);
+const emit = defineEmits(['newCase', 'viewCase', 'contactLawyer', 'select-case-for-comments']);
 
 // Auth store
 const authStore = useAuthStore();
@@ -399,6 +399,7 @@ const formatDate = (date) => {
 
 const viewCaseDetails = (caseItem) => {
   emit('viewCase', caseItem);
+  emit('select-case-for-comments', caseItem);
 };
 
 const contactLawyer = (caseItem) => {

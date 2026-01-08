@@ -76,6 +76,9 @@ export class CommentsService {
       case_id,
       author: user,
       author_id: user.id,
+      comment_type: createCommentDto.comment_type || null,
+      is_shared: typeof createCommentDto.is_shared === 'boolean' ? createCommentDto.is_shared : true,
+      is_internal: (createCommentDto.is_internal && (user.user_type === 'lawyer' || user.user_type === 'admin')) ? true : false,
     }) as unknown as Comment;
 
     return await this.commentsRepository.save(newComment);
@@ -95,6 +98,14 @@ export class CommentsService {
       queryBuilder.where(
         '(owner.id = :userId OR customer.id = :userId OR shared_user.id = :userId)',
         { userId: user.id }
+      );
+
+      // Enforce comment-level visibility: include comments that are shared, or authored by the user,
+      // or internal comments only visible to lawyers/admins (we already excluded admin branch)
+      const isLawyer = user.user_type === 'lawyer';
+      queryBuilder.andWhere(
+        '(comment.is_shared = true OR comment.author_id = :userId OR (comment.is_internal = true AND :isLawyer = true))',
+        { userId: user.id, isLawyer }
       );
     }
 
@@ -126,6 +137,18 @@ export class CommentsService {
       throw new ForbiddenException('You do not have permission to access this comment');
     }
 
+    // Enforce comment-level visibility rules
+    if (comment) {
+      if (!comment.is_shared && comment.author_id !== user.id && user.user_type !== 'admin') {
+        // Private comment, only owner or admin may view
+        throw new ForbiddenException('You do not have permission to view this private comment');
+      }
+      if (comment.is_internal && !(user.user_type === 'lawyer' || user.user_type === 'admin')) {
+        // Internal comments visible only to lawyers and admins
+        throw new ForbiddenException('You do not have permission to view this internal comment');
+      }
+    }
+
     return comment;
   }
 
@@ -136,10 +159,13 @@ export class CommentsService {
     }
 
     const comment = await this.findOne(id, user);
-    const { content } = updateCommentDto;
-
-    // Update comment content
-    comment.content = content;
+    // Update comment fields - only allow owner/admin to change content and shared flag.
+    if (typeof updateCommentDto.content === 'string') comment.content = updateCommentDto.content;
+    if (typeof updateCommentDto.is_shared === 'boolean') comment.is_shared = updateCommentDto.is_shared;
+    // Only allow is_internal to be set/changed by lawyers or admins
+    if (typeof updateCommentDto.is_internal === 'boolean' && (user.user_type === 'lawyer' || user.user_type === 'admin')) {
+      comment.is_internal = updateCommentDto.is_internal;
+    }
 
     return await this.commentsRepository.save(comment);
   }

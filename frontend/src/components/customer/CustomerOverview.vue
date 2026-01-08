@@ -131,7 +131,7 @@
                 </div>
               </div>
             </div>
-            <button class="ml-4 px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50">
+            <button @click.stop="$emit('select-case-for-comments', caseItem); $emit('viewCase', caseItem)" class="ml-4 px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50">
               View Details
             </button>
           </div>

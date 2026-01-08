@@ -207,19 +207,19 @@ const loadComments = async () => {
   try {
     const allComments = await Comment.filter({ case_id: currentCaseId.value }, '-created_date', 50);
 
-    const visibleComments = allComments.filter((comment) => {
-      if (comment.created_by === props.user?.email) return true;
-      if (props.user?.user_type === 'admin') return true;
-      if (comment.is_shared) {
-        if (comment.is_internal) {
-          return props.user?.user_type === 'lawyer' || props.user?.user_type === 'admin';
-        }
-        return true;
-      }
-      return false;
-    });
+    // Normalize server response: ensure author info and flags are accessible in a consistent shape
+    const normalized = (allComments || []).map(c => ({
+      ...c,
+      created_by: c.author?.email || c.author?.full_name || c.author_id,
+      created_date: c.created_date || c.createdAt || c.created_at,
+      comment_type: c.comment_type || 'note',
+      is_shared: typeof c.is_shared === 'boolean' ? c.is_shared : true,
+      is_internal: !!c.is_internal,
+      author_id: c.author_id || (c.author && c.author.id),
+    }));
 
-    comments.value = visibleComments;
+    // Server enforces most visibility rules; the client will display the normalized list.
+    comments.value = normalized;
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('Failed to load comments:', err);
@@ -312,7 +312,11 @@ const getCommentTypeColor = (type) => {
   }
 };
 
-const isOwner = (comment) => comment.created_by === props.user?.email;
+const isOwner = (comment) => {
+  if (!props.user) return false;
+  if (comment.author_id && props.user.id) return String(comment.author_id) === String(props.user.id);
+  return comment.created_by === props.user?.email || false;
+};
 
 const formatDate = (d) => {
   try {

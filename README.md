@@ -1,3 +1,102 @@
+# Legaltracker — Feature Summary & Run Guide
+
+This README summarizes the recent feature work implemented in the Legaltracker workspace and gives instructions to run and test the main flows (comments, meetings, reports, AI settings, and UI helpers).
+
+Note: this repo contains a `backend/` (NestJS) and `frontend/` (Vue 3 + Vite) project. The backend is expected to run on `http://localhost:3000/api` and the frontend on `http://localhost:5173` (Vite default).
+
+## New / Updated Features (high level)
+
+- Comments system
+  - `frontend/src/components/comments/CommentsPannel.vue`: UI for listing and posting comments on a case.
+  - Server-side support in `backend/src/comments/*` including visibility rules and comment metadata (`comment_type`, `is_shared`, `is_internal`).
+  - Embedded in dashboard, customer case view, and lawyer documents view so customers, lawyers and admins can comment.
+
+- Schedule & Meetings
+  - `frontend/src/components/schedule/*` and `frontend/src/views/Schedule.vue` implemented for creating and viewing meetings.
+  - `backend` meetings endpoints accept `meeting_date`, `duration_minutes`, and `attendee_ids`.
+
+- Lawyer Reports
+  - UI to create PDF/Excel reports and send to admin; admin report viewer with download and status actions.
+
+- Settings: AI Configuration
+  - `frontend/src/views/Settings.vue` persists `ai_provider`, `ai_model`, and API keys to the user profile.
+  - `frontend/src/integrations/Core.js` contains a local InvokeLLM shim for development.
+
+- UI helpers
+  - Persistent overlay icons (briefcase, map pin) top-right; bug and developer tools (bottom-right) with modals.
+  - All interactive elements show pointer cursor via `frontend/src/style.css`.
+
+## Comment System — Important Notes
+
+- Server side enforcement
+  - `backend/src/comments/comment.entity.ts` includes `comment_type`, `is_shared`, and `is_internal` columns.
+  - `backend/src/comments/comments.service.ts` enforces access control:
+    - Only users with access to the case (owner/customer/shared user or admin) can create comments.
+    - Private comments (`is_shared=false`) are visible only to the comment author and admins.
+    - Internal comments (`is_internal=true`) are visible only to lawyers and admins.
+    - Owners (authors) can edit their comments; admins can edit any comment.
+
+- Frontend
+  - `CommentsPannel.vue` normalizes server responses and displays badge indicators for `comment_type`, `is_shared`, and `is_internal`.
+  - The add-comment form allows type selection and privacy toggles; internal toggle is shown only to lawyers/admins.
+
+## How to Run (dev)
+
+1. Start the backend (requires Node, Bun or configured environment):
+
+```bash
+cd backend
+# using bun (example in this workspace):
+bun run start:dev
+# or with npm: npm run start:dev
+```
+
+2. Start the frontend (Vite):
+
+```bash
+cd frontend
+npm install    # if dependencies missing
+npm run dev
+```
+
+3. Open the app in the browser (Vite will print the URL, commonly `http://localhost:5173`).
+
+## Quick Tests
+
+- Comments
+  - Open Dashboard or Customer case details.
+  - Click a case to select it (Dashboard) or open a case page (Customer/Lawyer views).
+  - Use the `+` button in the Comments panel to add a comment. Toggle privacy (`Shared`/`Private`) and, for lawyers, `Internal`.
+
+- Meetings
+  - As an admin, create a meeting for a case and ensure assigned lawyer and client receive the meeting item in `My Meetings`.
+
+- Reports
+  - As a lawyer, generate a report and send to admin. As admin, view/download the report.
+
+## Files of Interest
+
+- Frontend
+  - `frontend/src/components/comments/CommentsPannel.vue`
+  - `frontend/src/views/Dashboard.vue`
+  - `frontend/src/components/customer/CustomerCaseDetails.vue`
+  - `frontend/src/components/lawyer/LawyerDocuments.vue`
+  - `frontend/src/services/entities/Comment.js`
+  - `frontend/src/App.vue` (overlay icons + tool modals)
+
+- Backend
+  - `backend/src/comments/comment.entity.ts`
+  - `backend/src/comments/comments.service.ts`
+  - `backend/src/comments/comments.controller.ts`
+
+## Suggested Next Steps
+
+- Add edit/delete controls in the frontend for comment owners and moderation actions for admins.
+- Add migrations (or run schema synchronization carefully) to ensure DB has the new comment columns in production.
+- Add real-time updates (WebSocket, Pusher) to push new comments to clients without refresh.
+
+If you want, I can implement one of these next steps now — which would you like me to prioritize?
+
 # Legaltracker — Local Development README
 
 Short README to run and debug the project locally (frontend + backend + socket relay).

@@ -16,6 +16,15 @@ export class Comment {
   @Column({ type: 'text' })
   content: string;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  comment_type: string;
+
+  @Column({ type: 'boolean', default: true })
+  is_shared: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  is_internal: boolean;
+
   @ManyToOne(() => User)
   author: User;
 

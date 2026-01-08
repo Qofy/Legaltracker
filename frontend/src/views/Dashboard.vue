@@ -571,6 +571,7 @@
         @newCase="selectedView = 'CustomerNewCase'"
         @viewCase="handleViewCustomerCase"
         @contactLawyer="handleContactLawyer"
+        @select-case-for-comments="selectCaseForComments"
       />
 
       <Documents v-else-if="selectedView === 'Documents'" />
@@ -629,7 +630,7 @@
       <LawyerDocuments v-else-if="selectedView === 'LawyerDocuments' && isLawyer" />
 
       <!-- Customer Views -->
-      <CustomerOverview v-else-if="selectedView === 'CustomerOverview' && isCustomer" />
+      <CustomerOverview v-else-if="selectedView === 'CustomerOverview' && isCustomer" @select-case-for-comments="selectCaseForComments" @viewCase="handleViewCustomerCase" />
 
       <CustomerCaseDetails 
         v-else-if="selectedView === 'CustomerCaseDetails' && isCustomer" 
@@ -661,6 +662,13 @@
           <p class="text-xs text-gray-400">#{{ selectedCaseForComments.case_number }}</p>
         </div>
         <div v-else class="mt-1">
+          <div v-if="!isAdmin && cases.length" class="mb-2">
+            <label class="text-xs text-gray-500">Select case</label>
+            <select v-model="selectedCaseForCommentsId" @change="handleSelectCaseById" class="mt-1 w-full px-2 py-1 border border-gray-300 rounded text-sm">
+              <option value="">Choose a case</option>
+              <option v-for="c in cases" :key="c.id" :value="c.id">{{ c.title || c.case_number || ('Case ' + c.id) }}</option>
+            </select>
+          </div>
           <p class="text-xs text-gray-500">Click on a case to view comments</p>
         </div>
       </div>
@@ -994,6 +1002,8 @@ const getLawyerName = (c) => {
 const selectedView = ref('Dashboard');
 const selectedCase = ref(null);
 const selectedCaseForComments = ref(null);
+// selectedCaseForCommentsId is used by the compact case selector for lawyers/customers
+const selectedCaseForCommentsId = ref('');
 
 // Handler for viewing customer case details
 const handleViewCustomerCase = (caseItem) => {
@@ -1041,9 +1051,21 @@ const scheduleCase = (caseItem, client) => {
   }
 };
 
-// Select a case for comments
+// Select a case for comments (from cards)
 const selectCaseForComments = (caseItem) => {
   selectedCaseForComments.value = caseItem;
+  try { selectedCaseForCommentsId.value = caseItem?.id || ''; } catch (e) {}
+};
+
+// Handler used by the compact select dropdown in the comments aside
+const handleSelectCaseById = () => {
+  const id = selectedCaseForCommentsId.value;
+  if (!id) {
+    selectedCaseForComments.value = null;
+    return;
+  }
+  const found = (cases.value || []).find(c => String(c.id) === String(id));
+  if (found) selectedCaseForComments.value = found;
 };
 
 // `createPageUrl` is imported above and available to the template
