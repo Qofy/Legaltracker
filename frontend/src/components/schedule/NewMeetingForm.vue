@@ -326,11 +326,22 @@ const handleSubmit = async (e) => {
 
   isSubmitting.value = true;
 
+  // Normalize payload to backend expectations: use `meeting_date` and `duration_minutes`
+  const startDt = combineDateAndTime(formData.start_time, startTime.value);
+  const endDt = combineDateAndTime(formData.start_time, endTime.value);
+  const durationMinutes = startDt && endDt ? Math.max(0, Math.round((endDt - startDt) / 60000)) : null;
+
   const finalFormData = {
-    ...formData,
-    start_time: combineDateAndTime(formData.start_time, startTime.value)?.toISOString(),
-    end_time: combineDateAndTime(formData.start_time, endTime.value)?.toISOString(),
-    case_id: formData.case_id === '' ? null : formData.case_id
+    title: formData.title,
+    description: formData.description,
+    meeting_date: startDt ? startDt.toISOString() : null,
+    duration_minutes: durationMinutes,
+    location: formData.location,
+    case_id: formData.case_id === '' ? null : formData.case_id,
+    attendee_ids: Array.isArray(formData.attendee_ids) ? [...formData.attendee_ids] : [],
+    // preserve optional flags for frontend use (backend will ignore unknown fields)
+    add_label: !!formData.add_label,
+    reminder_offset_minutes: Number(formData.reminder_offset_minutes || 0),
   };
 
   console.log('NewMeetingForm: finalFormData prepared:', finalFormData)
@@ -344,11 +355,11 @@ const handleSubmit = async (e) => {
       const created = {
         id: `local-${Date.now()}`,
         title: formData.title,
-        meeting_date: finalFormData.start_time,
-        start_time: finalFormData.start_time,
-        end_time: finalFormData.end_time,
+        meeting_date: finalFormData.meeting_date,
+        start_time: finalFormData.meeting_date,
+        end_time: endDt ? endDt.toISOString() : null,
         case_id: finalFormData.case_id,
-        attendee_ids: formData.attendee_ids,
+        attendee_ids: Array.isArray(finalFormData.attendee_ids) ? [...finalFormData.attendee_ids] : [],
         attendees: autoSelectedAttendees.value, // Use auto-selected attendees
         location: formData.location,
         description: formData.description,
