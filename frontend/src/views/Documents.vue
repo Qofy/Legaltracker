@@ -241,7 +241,7 @@
             <Input
               v-model="searchQuery"
               placeholder="Search by filename, content, or tags..."
-              class="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
+              class="pl-10 bg-gray-50 placeholder-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
             />
           </div>
         </div>
@@ -332,7 +332,7 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="doc in filteredDocuments" :key="doc.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr v-for="doc in filteredDocuments" :key="doc.id" class="hover:bg-blue-50 dark:hover:bg-gray-700 hover:shadow-sm cursor-pointer transition duration-150 ease-in-out">
               <td class="px-6 py-4">
                 <div class="flex items-center">
                   <FileText class="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />

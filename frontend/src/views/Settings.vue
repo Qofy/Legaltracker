@@ -469,18 +469,28 @@ const handleSave = async () => {
 
       // Backend `User` entity only includes a subset of fields. Build a safe payload
       // to avoid sending nested objects or unknown keys that may cause server errors.
-      const payload = {
-        full_name: user.value?.full_name || undefined,
-        phone: settings.value.phone || undefined,
-        bar_number: settings.value.bar_number || undefined,
-        // backend stores specializations as comma-separated string `specializations`
-        specializations: Array.isArray(settings.value.specialization)
-          ? settings.value.specialization.join(', ')
-          : (settings.value.specialization || undefined),
-        address: settings.value.address || undefined,
-      }
+        const payload = {
+          full_name: user.value?.full_name || undefined,
+          phone: settings.value.phone || undefined,
+          bar_number: settings.value.bar_number || undefined,
+          // backend stores specializations as comma-separated string `specializations`
+          specializations: Array.isArray(settings.value.specialization)
+            ? settings.value.specialization.join(', ')
+            : (settings.value.specialization || undefined),
+          address: settings.value.address || undefined,
+          // Persist AI configuration so Save makes the selected provider/model active
+          ai_provider: settings.value.ai_provider || undefined,
+          ai_model: settings.value.ai_model || undefined,
+          openai_api_key: settings.value.openai_api_key || undefined,
+          gemini_api_key: settings.value.gemini_api_key || undefined,
+          claude_api_key: settings.value.claude_api_key || undefined,
+          mistral_api_key: settings.value.mistral_api_key || undefined,
+          deepseek_api_key: settings.value.deepseek_api_key || undefined,
+          kimi_api_key: settings.value.kimi_api_key || undefined,
+          local_ai_url: settings.value.local_ai_url || undefined,
+        };
 
-      await User.update(uid, payload)
+        await User.update(uid, payload);
     } catch (e) {
       // Re-throw so the outer catch handles notification
       throw e

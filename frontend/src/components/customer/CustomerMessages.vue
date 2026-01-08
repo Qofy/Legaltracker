@@ -465,6 +465,23 @@ const loadMessages = async () => {
     // Scroll to bottom
     await nextTick();
     scrollToBottom();
+    // Mark unread messages (from lawyer) as read on load so dashboard count updates
+    try {
+      const unreadToMark = serverMessages.filter(m => !m.sent_by_customer && !m.is_read);
+      if (unreadToMark.length > 0) {
+        await Promise.all(unreadToMark.map(m => ChatMessage.update(m.id, { is_read: true }).catch(() => null)));
+        // reset local unread map for this case
+        if (selectedCaseId.value) unreadMap.value[selectedCaseId.value] = 0;
+        // notify other parts of the app (e.g., dashboard) that messages were read
+        try {
+          window.dispatchEvent(new CustomEvent('messages-read', { detail: { case_id: selectedCaseId.value, count: unreadToMark.length } }));
+        } catch (e) {
+          // ignore
+        }
+      }
+    } catch (e) {
+      console.debug('Failed to mark messages as read:', e);
+    }
   } catch (error) {
     console.error('Failed to load messages:', error);
   }

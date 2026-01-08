@@ -293,7 +293,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Case, ChatMessage, Document, ActionItem } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
@@ -536,7 +536,26 @@ const formatDate = (date) => {
   }
 };
 
+const handleMessagesRead = (e) => {
+  try {
+    const { case_id, count } = e?.detail || {};
+    if (!case_id) return;
+    // If the read messages belong to one of the user's cases, decrement/reset unreadMessages
+    if (myCases.value.some(c => c.id === case_id)) {
+      // safest to recompute by subtracting the count
+      unreadMessages.value = Math.max(0, (unreadMessages.value || 0) - (count || 0));
+    }
+  } catch (err) {
+    // ignore
+  }
+};
+
 onMounted(() => {
   loadCustomerDashboard();
+  try { window.addEventListener('messages-read', handleMessagesRead); } catch (e) {}
+});
+
+onUnmounted(() => {
+  try { window.removeEventListener('messages-read', handleMessagesRead); } catch (e) {}
 });
 </script>

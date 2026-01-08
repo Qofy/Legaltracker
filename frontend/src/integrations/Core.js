@@ -32,13 +32,20 @@ export async function SendEmail(payload = {}) {
 }
 
 export async function InvokeLLM(prompt, opts = {}) {
-  // Shim: return a simple placeholder response. Real integration should call an LLM service.
-  return {
-    success: true,
-    response: {
-      text: typeof prompt === 'string' ? `Shim LLM response for: ${prompt.substring(0,120)}` : 'Shim LLM response',
-    },
-  };
+  // Support calling with either (promptString, opts) or ({ prompt: '...', ...opts })
+  let thePrompt = prompt;
+  let options = opts;
+  if (typeof prompt === 'object' && prompt !== null && 'prompt' in prompt) {
+    thePrompt = prompt.prompt;
+    options = prompt;
+  }
+
+  // Shim: return a simple placeholder response string. Real integration should call an LLM service
+  // and respect options such as model, provider, api keys, etc.
+  if (typeof thePrompt === 'string') {
+    return `Shim LLM response for: ${thePrompt.substring(0, 120)}`;
+  }
+  return 'Shim LLM response';
 }
 
 // Export default for any default imports (not expected but harmless)
