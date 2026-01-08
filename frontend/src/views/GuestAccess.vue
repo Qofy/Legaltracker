@@ -1,20 +1,23 @@
 <template>
   <div v-if="isLoading" class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"
+      ></div>
       <p class="text-gray-600">Validating access...</p>
     </div>
   </div>
 
-  <div v-else-if="error" class="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+  <div
+    v-else-if="error"
+    class="min-h-screen flex items-center justify-center bg-gray-50 p-6"
+  >
     <Card class="max-w-md">
       <CardContent class="p-8 text-center">
         <Lock class="w-16 h-16 text-red-500 mx-auto mb-4" />
         <h2 class="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
         <p class="text-gray-600 mb-4">{{ error }}</p>
-        <Button variant="outline" @click="goHome">
-          Go to Home
-        </Button>
+        <Button variant="outline" @click="goHome"> Go to Home </Button>
       </CardContent>
     </Card>
   </div>
@@ -28,10 +31,7 @@
               <h2 class="text-xl font-semibold">Guest Access Management</h2>
               <p class="text-sm text-gray-500">Create and manage guest access passes</p>
             </div>
-            <!-- placeholder for create button -->
-            <div>
-              <!-- Could wire up a create dialog here -->
-            </div>
+            <Button @click="showCreateDialog = true"> Create Guest Pass </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -39,20 +39,105 @@
             <p>No guest passes found.</p>
           </div>
           <div v-else class="space-y-2">
-            <div v-for="p in guestPasses" :key="p.id" class="flex items-center justify-between p-3 bg-white rounded hover:shadow-sm transition">
+            <div
+              v-for="p in guestPasses"
+              :key="p.id"
+              class="flex items-center justify-between p-3 bg-white rounded hover:shadow-sm transition"
+            >
               <div class="flex items-center gap-4">
-                <div class="font-medium">{{ p.guest_name || p.guest_email || 'Guest' }}</div>
+                <div class="font-medium">{{ p.email || "Guest" }}</div>
                 <div class="text-sm text-gray-500">Case: {{ p.case_id }}</div>
-                <Badge class="ml-2" :class="p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'">{{ p.status }}</Badge>
-                <div class="text-sm text-gray-500">{{ p.access_level.replace('_',' ') }} - Expires: {{ formatDate(p.expires_at) }}</div>
+                <Badge
+                  class="ml-2"
+                  :class="
+                    p.is_active
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-600'
+                  "
+                  >{{ p.is_active ? "active" : "inactive" }}</Badge
+                >
+                <div class="text-sm text-gray-500">
+                  {{ p.access_level.replace("_", " ") }} - Expires:
+                  {{ formatDate(p.expires_at) }}
+                </div>
               </div>
               <div class="flex items-center gap-2">
-                <Button size="sm" variant="ghost" @click="revokeGuest(p.id)" v-if="p.status === 'active'">Revoke</Button>
-                <Button size="sm" variant="outline" as-child>
-                  <a :href="`/guest-access?token=${p.pass_token}&case=${p.case_id}`" target="_blank">Open</a>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  @click="revokeGuest(p.id)"
+                  v-if="p.is_active"
+                  >Revoke</Button
+                >
+                <Button size="sm" variant="outline" @click="copyGuestLink(p)">
+                  Copy Link
                 </Button>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Create Guest Pass Dialog -->
+    <div
+      v-if="showCreateDialog"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showCreateDialog = false"
+    >
+      <Card class="max-w-md w-full mx-4">
+        <CardHeader>
+          <CardTitle>Create Guest Pass</CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Guest Email</label
+            >
+            <input
+              v-model="newGuest.email"
+              type="email"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="guest@example.com"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Case ID</label>
+            <input
+              v-model="newGuest.case_id"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter case ID"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Access Level</label
+            >
+            <select
+              v-model="newGuest.access_level"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="view_only">View Only</option>
+              <option value="view_comment">View & Comment</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Expires In</label>
+            <select
+              v-model="newGuest.expires_in_days"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1">1 Day</option>
+              <option value="7">7 Days</option>
+              <option value="30">30 Days</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-2">
+            <Button variant="outline" @click="showCreateDialog = false">Cancel</Button>
+            <Button @click="createGuestPass" :disabled="creatingPass">{{
+              creatingPass ? "Creating..." : "Create"
+            }}</Button>
           </div>
         </CardContent>
       </Card>
@@ -67,13 +152,11 @@
           <div class="flex items-start justify-between">
             <div>
               <h1 class="text-2xl font-bold mb-2">Guest Access</h1>
-              <p class="text-blue-100">
-                You have temporary access to view this case
-              </p>
+              <p class="text-blue-100">You have temporary access to view this case</p>
             </div>
             <Badge class="bg-white text-blue-600">
               <Eye class="w-3 h-3 mr-1" />
-              {{ guestPass.access_level.replace('_', ' ') }}
+              {{ guestPass.access_level.replace("_", " ") }}
             </Badge>
           </div>
           <div class="mt-4 flex items-center space-x-4 text-sm">
@@ -81,9 +164,7 @@
               <Calendar class="w-4 h-4" />
               <span>Expires: {{ formatDate(guestPass.expires_at) }}</span>
             </div>
-            <div v-if="guestPass.guest_name">
-              Viewing as: {{ guestPass.guest_name }}
-            </div>
+            <div v-if="guestPass.guest_name">Viewing as: {{ guestPass.guest_name }}</div>
           </div>
         </CardContent>
       </Card>
@@ -109,25 +190,26 @@
 
           <div class="flex flex-wrap gap-2">
             <Badge :class="getStatusColor(caseData.status)">
-              {{ caseData.status.replace('_', ' ') }}
+              {{ caseData.status.replace("_", " ") }}
             </Badge>
             <Badge variant="outline">
-              {{ caseData.case_type?.replace('_', ' ') }}
+              {{ caseData.case_type?.replace("_", " ") }}
             </Badge>
-            <Badge variant="outline">
-              {{ caseData.priority }} priority
-            </Badge>
+            <Badge variant="outline"> {{ caseData.priority }} priority </Badge>
           </div>
 
-          <div v-if="caseData.court_date" class="flex items-center space-x-2 text-sm text-gray-600">
+          <div
+            v-if="caseData.court_date"
+            class="flex items-center space-x-2 text-sm text-gray-600"
+          >
             <Calendar class="w-4 h-4" />
-            <span>Court Date: {{ formatDate(caseData.court_date, 'PPP') }}</span>
+            <span>Court Date: {{ formatDate(caseData.court_date, "PPP") }}</span>
           </div>
         </CardContent>
       </Card>
 
       <!-- Documents -->
-      <Card v-if="guestPass.access_level === 'view_documents' || guestPass.access_level === 'full_access'">
+      <Card v-if="guestPass.access_level === 'view_comment'">
         <CardHeader>
           <CardTitle class="flex items-center space-x-2">
             <FileText class="w-5 h-5 text-blue-600" />
@@ -151,15 +233,11 @@
                 <div>
                   <p class="font-medium text-gray-900">{{ doc.file_name }}</p>
                   <p class="text-xs text-gray-500">
-                    {{ formatDate(doc.created_date, 'MMM d, yyyy') }}
+                    {{ formatDate(doc.created_date, "MMM d, yyyy") }}
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                as-child
-              >
+              <Button variant="ghost" size="sm" as-child>
                 <a :href="doc.file_url" target="_blank" rel="noopener noreferrer">
                   <Eye class="w-4 h-4 mr-2" />
                   View
@@ -182,11 +260,8 @@
                 <template v-if="guestPass.access_level === 'view_only'">
                   You can only view case information.
                 </template>
-                <template v-if="guestPass.access_level === 'view_documents'">
-                  You can view case information and documents.
-                </template>
-                <template v-if="guestPass.access_level === 'full_access'">
-                  You can view all case information and documents.
+                <template v-if="guestPass.access_level === 'view_comment'">
+                  You can view case information, documents, and add comments.
                 </template>
                 This link expires on {{ formatDate(guestPass.expires_at) }}.
               </p>
@@ -195,24 +270,82 @@
         </CardContent>
       </Card>
     </div>
+
+    <!-- Create Guest Pass Dialog -->
+    <div
+      v-if="showCreateDialog"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click.self="showCreateDialog = false"
+    >
+      <Card class="max-w-md w-full mx-4">
+        <CardHeader>
+          <CardTitle>Create Guest Pass</CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Guest Email</label
+            >
+            <input
+              v-model="newGuest.email"
+              type="email"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="guest@example.com"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Case ID</label>
+            <input
+              v-model="newGuest.case_id"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter case ID"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Access Level</label
+            >
+            <select
+              v-model="newGuest.access_level"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="view_only">View Only</option>
+              <option value="view_comment">View & Comment</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Expires In</label>
+            <select
+              v-model="newGuest.expires_in_days"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1">1 Day</option>
+              <option value="7">7 Days</option>
+              <option value="30">30 Days</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-2">
+            <Button variant="outline" @click="showCreateDialog = false">Cancel</Button>
+            <Button @click="createGuestPass" :disabled="creatingPass">{{
+              creatingPass ? "Creating..." : "Create"
+            }}</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { format } from 'date-fns';
-import { GuestPass, Case, Document } from '@/services/entities';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  FileText,
-  Calendar,
-  AlertCircle,
-  Eye,
-  Lock
-} from 'lucide-vue-next';
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { format } from "date-fns";
+import { GuestPass, Case, Document } from "@/services/entities";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FileText, Calendar, AlertCircle, Eye, Lock } from "lucide-vue-next";
 
 const route = useRoute();
 
@@ -223,24 +356,79 @@ const isLoading = ref(true);
 const error = ref(null);
 const isAdminMode = ref(false);
 const guestPasses = ref([]);
+const showCreateDialog = ref(false);
+const creatingPass = ref(false);
+const newGuest = ref({
+  email: "",
+  case_id: "",
+  access_level: "view_only",
+  expires_in_days: "7",
+});
 
 const loadAdminGuestPasses = async () => {
   try {
     const list = await GuestPass.list();
     guestPasses.value = list || [];
   } catch (err) {
-    console.error('Failed to load guest passes for admin:', err);
-    error.value = 'Failed to load guest passes.';
+    console.error("Failed to load guest passes for admin:", err);
+    error.value = "Failed to load guest passes.";
+  }
+};
+
+const createGuestPass = async () => {
+  creatingPass.value = true;
+  try {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + parseInt(newGuest.value.expires_in_days));
+
+    const guestData = {
+      email: newGuest.value.email,
+      case_id: newGuest.value.case_id,
+      access_level: newGuest.value.access_level,
+      expires_at: expiresAt.toISOString(),
+    };
+
+    await GuestPass.create(guestData);
+    await loadAdminGuestPasses();
+    showCreateDialog.value = false;
+
+    // Reset form
+    newGuest.value = {
+      email: "",
+      case_id: "",
+      access_level: "view_only",
+      expires_in_days: "7",
+    };
+  } catch (err) {
+    console.error("Failed to create guest pass:", err);
+    error.value = "Failed to create guest pass.";
+  }
+  creatingPass.value = false;
+};
+
+const copyGuestLink = async (guestPass) => {
+  const baseUrl = window.location.origin;
+  const link = `${baseUrl}/#/guest-access?token=${guestPass.token}&case=${guestPass.case_id}`;
+
+  try {
+    await navigator.clipboard.writeText(link);
+    alert("Guest link copied to clipboard!");
+  } catch (err) {
+    console.error("Failed to copy to clipboard:", err);
+    // Fallback: show the link in a prompt
+    prompt("Copy this guest access link:", link);
   }
 };
 
 const revokeGuest = async (id) => {
+  if (!confirm("Are you sure you want to revoke this guest pass?")) return;
+
   try {
-    await GuestPass.update(id, { status: 'revoked' });
+    await GuestPass.update(id, { is_active: false });
     await loadAdminGuestPasses();
   } catch (err) {
-    console.error('Failed to revoke guest pass:', err);
-    error.value = 'Failed to revoke guest pass.';
+    console.error("Failed to revoke guest pass:", err);
+    error.value = "Failed to revoke guest pass.";
   }
 };
 
@@ -257,8 +445,8 @@ const validateAccessAndLoadData = async () => {
     if (!token || !caseId) {
       // check current user
       try {
-        const me = await (await import('@/services/entities')).User.me();
-        if (me && me.user_type === 'admin') {
+        const me = await (await import("@/services/entities")).User.me();
+        if (me && me.user_type === "admin") {
           isAdminMode.value = true;
           await loadAdminGuestPasses();
           isLoading.value = false;
@@ -268,39 +456,29 @@ const validateAccessAndLoadData = async () => {
         // ignore and fallthrough to invalid link
       }
 
-      error.value = 'Invalid access link. Missing token or case ID.';
+      error.value = "Invalid access link. Missing token or case ID.";
       isLoading.value = false;
       return;
     }
 
-    // Validate guest pass
-    const passes = await GuestPass.filter({ pass_token: token, case_id: caseId });
+    // Validate guest pass using the backend validation endpoint
+    const response = await fetch(`/api/guest-passes/validate/${token}`);
+    const validation = await response.json();
 
-    if (passes.length === 0) {
-      error.value = 'Invalid or expired guest pass.';
+    if (!response.ok || !validation.valid) {
+      error.value = validation.message || "Invalid or expired guest pass.";
       isLoading.value = false;
       return;
     }
 
-    const pass = passes[0];
+    const pass = validation.guestPass;
 
-    // Check if pass is active and not expired
-    if (pass.status !== 'active') {
-      error.value = 'This guest pass has been revoked.';
+    // Verify case ID matches
+    if (pass.case_id !== caseId) {
+      error.value = "Invalid case access.";
       isLoading.value = false;
       return;
     }
-
-    if (new Date(pass.expires_at) < new Date()) {
-      error.value = 'This guest pass has expired.';
-      isLoading.value = false;
-      return;
-    }
-
-    // Update last accessed
-    await GuestPass.update(pass.id, {
-      last_accessed: new Date().toISOString()
-    });
 
     guestPass.value = pass;
 
@@ -309,35 +487,44 @@ const validateAccessAndLoadData = async () => {
     caseData.value = caseInfo;
 
     // Load documents if access level permits
-    if (pass.access_level === 'view_documents' || pass.access_level === 'full_access') {
-      const docs = await Document.filter({ case_id: caseId });
-      documents.value = docs;
+    if (pass.access_level === "view_comment") {
+      try {
+        const docs = await Document.filter({ case_id: caseId });
+        documents.value = docs || [];
+      } catch (err) {
+        console.warn("Could not load documents:", err);
+        documents.value = [];
+      }
     }
-
   } catch (err) {
-    console.error('Failed to validate access:', err);
-    error.value = 'Failed to validate access. Please contact the case owner.';
+    console.error("Failed to validate access:", err);
+    error.value = "Failed to validate access. Please contact the case owner.";
   }
 
   isLoading.value = false;
 };
 
 const getStatusColor = (status) => {
-  switch(status) {
-    case 'open': return 'bg-blue-100 text-blue-800';
-    case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-    case 'closed': return 'bg-green-100 text-green-800';
-    case 'on_hold': return 'bg-gray-100 text-gray-800';
-    default: return 'bg-gray-100 text-gray-800';
+  switch (status) {
+    case "open":
+      return "bg-blue-100 text-blue-800";
+    case "in_progress":
+      return "bg-yellow-100 text-yellow-800";
+    case "closed":
+      return "bg-green-100 text-green-800";
+    case "on_hold":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
   }
 };
 
-const formatDate = (date, formatStr = 'PPP p') => {
+const formatDate = (date, formatStr = "PPP p") => {
   return format(new Date(date), formatStr);
 };
 
 const goHome = () => {
-  window.location.href = '/';
+  window.location.href = "/";
 };
 
 onMounted(() => {

@@ -19,8 +19,20 @@ export class GuestPassesController {
   }
 
   @Get('validate/:token')
-  validateToken(@Param('token') token: string) {
-    return this.guestPassesService.validateToken(token);
+  async validateToken(@Param('token') token: string) {
+    try {
+      const guestPass = await this.guestPassesService.validateToken(token);
+      return {
+        valid: true,
+        guestPass: guestPass,
+        message: 'Valid guest pass'
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        message: error.message || 'Invalid guest pass'
+      };
+    }
   }
 
   @Get(':id')
