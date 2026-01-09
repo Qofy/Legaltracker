@@ -140,6 +140,13 @@
               </svg>
               {{ formatLabel(researchType) }}
             </span>
+            <span
+              v-for="lt in lawTypes"
+              :key="lt"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-800"
+            >
+              {{ lt.replace('-', ' ') }}
+            </span>
             <span 
               v-if="jurisdiction" 
               class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
@@ -180,9 +187,12 @@ import { casesService } from '@/services/api/cases'
 // Props: caseId (optional), onSaveToCase (optional callback), onResearchComplete (optional callback)
 const props = defineProps({
   caseId: { type: [String, null], default: null },
+  lawTypes: { type: Array, default: () => [] },
   onSaveToCase: { type: Function, default: null },
   onResearchComplete: { type: Function, default: null }
 })
+
+const lawTypes = props.lawTypes
 
 const prompt = ref('')
 const answer = ref('')
@@ -277,7 +287,8 @@ Please provide a comprehensive legal research response based on these parameters
       add_context_from_internet: true,
       case_ids: selectedCaseIds.value,
       research_type: researchType.value,
-      jurisdiction: jurisdiction.value
+      jurisdiction: jurisdiction.value,
+      law_types: props.lawTypes || []
     }
 
       const res = await axios.post('/llm/generate', payload)
@@ -292,8 +303,9 @@ Please provide a comprehensive legal research response based on these parameters
           query: prompt.value,
           result: answer.value,
           research_type: researchType.value,
-          jurisdiction: jurisdiction.value,
-          case_ids: selectedCaseIds.value
+            jurisdiction: jurisdiction.value,
+            case_ids: selectedCaseIds.value,
+            law_types: props.lawTypes || []
         })
       }
     } else {
