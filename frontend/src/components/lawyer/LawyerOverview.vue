@@ -187,6 +187,32 @@
               </div>
             </div>
             <div class="flex items-center gap-1">
+              <!-- Pin button -->
+              <div class="relative group">
+                <button
+                  @click.stop="togglePin(caseItem)"
+                  :class="[
+                    'p-1 rounded transition',
+                    isPinned(caseItem.id) 
+                      ? 'text-orange-600 hover:text-orange-800' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  ]"
+                >
+                  <Pin v-if="isPinned(caseItem.id)" class="w-4 h-4 fill-current" />
+                  <PinOff v-else class="w-4 h-4" />
+                </button>
+                <!-- Tooltip -->
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                  <div v-if="isPinned(caseItem.id)" class="text-center">
+                    <div class="font-medium">Pinned Task</div>
+                    <div class="text-gray-300">{{ getPinnedTaskDescription(caseItem.id) }}</div>
+                  </div>
+                  <div v-else>Pin case for quick access</div>
+                  <!-- Tooltip arrow -->
+                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-800"></div>
+                </div>
+              </div>
+              
               <!-- Add Point button -->
               <button
                 @click.stop="openAddPointModal(caseItem)"
@@ -320,6 +346,32 @@
               </div>
             </div>
             <div class="flex items-center gap-1">
+              <!-- Pin button -->
+              <div class="relative group">
+                <button
+                  @click.stop="togglePin(caseItem)"
+                  :class="[
+                    'p-1 rounded transition',
+                    isPinned(caseItem.id) 
+                      ? 'text-orange-600 hover:text-orange-800' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  ]"
+                >
+                  <Pin v-if="isPinned(caseItem.id)" class="w-4 h-4 fill-current" />
+                  <PinOff v-else class="w-4 h-4" />
+                </button>
+                <!-- Tooltip -->
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                  <div v-if="isPinned(caseItem.id)" class="text-center">
+                    <div class="font-medium">Pinned Task</div>
+                    <div class="text-gray-300">{{ getPinnedTaskDescription(caseItem.id) }}</div>
+                  </div>
+                  <div v-else>Pin case for quick access</div>
+                  <!-- Tooltip arrow -->
+                  <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-800"></div>
+                </div>
+              </div>
+              
               <!-- Add Point button -->
               <button
                 @click.stop="openAddPointModal(caseItem)"
@@ -693,6 +745,7 @@ import { ref, computed, onMounted } from 'vue';
 import { Case, ActionItem, ChatMessage } from '@/services/entities';
 import { useAuthStore } from '@/stores/auth';
 import { format } from 'date-fns';
+import { Pin, PinOff } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 
@@ -728,6 +781,10 @@ const newPoint = ref({
   date: new Date().toISOString().split('T')[0]
 });
 const isSavingPoint = ref(false);
+
+// Pin-related state
+const pinnedCases = ref(new Set());
+const pinnedTasks = ref(new Map()); // Map of caseId -> task description
 
 const loadLawyerDashboard = async () => {
   try {
@@ -937,6 +994,80 @@ const loadCasePoints = () => {
   }
 };
 
+// Pin management functions
+const loadPinnedCases = () => {
+  try {
+    const storedPins = localStorage.getItem('lawyer_pinned_cases');
+    const storedTasks = localStorage.getItem('lawyer_pinned_tasks');
+    
+    if (storedPins) {
+      pinnedCases.value = new Set(JSON.parse(storedPins));
+    }
+    
+    if (storedTasks) {
+      pinnedTasks.value = new Map(JSON.parse(storedTasks));
+    }
+  } catch (error) {
+    console.error('Error loading pinned cases:', error);
+  }
+};
+
+const savePinnedCases = () => {
+  try {
+    localStorage.setItem('lawyer_pinned_cases', JSON.stringify(Array.from(pinnedCases.value)));
+    localStorage.setItem('lawyer_pinned_tasks', JSON.stringify(Array.from(pinnedTasks.value.entries())));
+  } catch (error) {
+    console.error('Error saving pinned cases:', error);
+  }
+};
+
+const togglePin = (caseItem) => {
+  const caseId = caseItem.id;
+  
+  if (pinnedCases.value.has(caseId)) {
+    // Unpin
+    pinnedCases.value.delete(caseId);
+    pinnedTasks.value.delete(caseId);
+  } else {
+    // Pin with current task description
+    pinnedCases.value.add(caseId);
+    const taskDescription = getActiveTaskForCase(caseItem);
+    pinnedTasks.value.set(caseId, taskDescription);
+  }
+  
+  savePinnedCases();
+};
+
+const isPinned = (caseId) => {
+  return pinnedCases.value.has(caseId);
+};
+
+const getPinnedTaskDescription = (caseId) => {
+  return pinnedTasks.value.get(caseId) || 'Working on this case';
+};
+
+const getActiveTaskForCase = (caseItem) => {
+  // Generate a meaningful task description based on case status and recent activity
+  const status = caseItem.status;
+  const hasPoints = caseItem.case_points && caseItem.case_points.length > 0;
+  
+  if (hasPoints) {
+    const latestPoint = caseItem.case_points[caseItem.case_points.length - 1];
+    return `Working on: ${latestPoint.description.substring(0, 50)}${latestPoint.description.length > 50 ? '...' : ''}`;
+  }
+  
+  switch (status) {
+    case 'open':
+      return 'Initial case review and evidence gathering';
+    case 'in_progress':
+      return 'Actively working on case proceedings';
+    case 'on_hold':
+      return 'Monitoring case status and next steps';
+    default:
+      return 'Case management and client coordination';
+  }
+};
+
 // Calculate case outcome indicator
 const getCaseOutcomeIndicator = (caseItem) => {
   if (!caseItem.case_points || caseItem.case_points.length === 0) {
@@ -1004,5 +1135,6 @@ const getOutcomeIndicatorColor = (status) => {
 
 onMounted(() => {
   loadLawyerDashboard();
+  loadPinnedCases();
 });
 </script>

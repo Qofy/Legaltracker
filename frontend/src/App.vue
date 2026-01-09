@@ -25,6 +25,13 @@
         >
           <MapPin class="w-5 h-5 text-white" />
         </button>
+        <button
+          @click="navigateTo('/schedule')"
+          class="flex items-center justify-center w-10 h-10 rounded-md bg-blue-500 dark:bg-blue-500 shadow-sm hover:shadow-md transition text-white"
+          title="Current Working Job"
+        >
+          <Pin class="w-5 h-5 text-white" />
+        </button>
       </div>
     </div>
 
@@ -154,7 +161,7 @@ import { onMounted, computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "./composables/useAuth";
 import { useTheme } from "@/stores/useTheme";
-import { Sun, Moon, Briefcase, MapPin, Bug, Hammer } from "lucide-vue-next";
+import { Sun, Moon, Briefcase, MapPin, Bug, Hammer, Pin } from "lucide-vue-next";
 
 const { loadUser, isAuthenticated } = useAuth();
 const themeStore = useTheme();
