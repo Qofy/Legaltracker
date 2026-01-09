@@ -144,6 +144,272 @@
       </div>
     </div>
 
+    <!-- My Cases Section with Case Cards -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        My Cases
+      </h3>
+      
+      <div v-if="lawyerCases.length === 0" class="text-center py-12 text-gray-500">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p>No cases assigned</p>
+      </div>
+      
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="caseItem in lawyerCases"
+          :key="caseItem.id"
+          class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+        >
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-start gap-2 flex-1">
+              <h4 class="font-semibold text-gray-900 text-base">
+                {{ caseItem.title }}
+              </h4>
+              <!-- Case outcome indicator -->
+              <div
+                v-if="caseItem.case_points && caseItem.case_points.length > 0"
+                class="flex items-center gap-1"
+                :title="getCaseOutcomeIndicator(caseItem).text"
+              >
+                <div
+                  class="w-2 h-2 rounded-full"
+                  :class="getOutcomeIndicatorColor(getCaseOutcomeIndicator(caseItem).status)"
+                ></div>
+                <span class="text-xs text-gray-500">
+                  {{ getCaseOutcomeIndicator(caseItem).text }}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <!-- Add Point button -->
+              <button
+                @click.stop="openAddPointModal(caseItem)"
+                class="text-blue-600 hover:text-blue-800 p-1 rounded"
+                title="Add case point"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <p class="text-xs text-gray-500 mb-2">
+            Case #{{ caseItem.case_number }}
+          </p>
+          
+          <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+            {{ caseItem.description || 'No description available' }}
+          </p>
+
+          <div class="flex items-center gap-2 mb-3">
+            <span
+              :class="[
+                'px-2 py-1 rounded text-xs font-medium',
+                getStatusBadgeColor(caseItem.status),
+              ]"
+            >
+              {{ caseItem.status }}
+            </span>
+            <span
+              :class="[
+                'px-2 py-1 rounded text-xs font-medium',
+                getPriorityBadgeColor(caseItem.priority),
+              ]"
+            >
+              {{ caseItem.priority }} priority
+            </span>
+          </div>
+
+          <!-- Case points display -->
+          <div
+            v-if="caseItem.case_points && caseItem.case_points.length > 0"
+            class="mb-3"
+          >
+            <div class="text-xs text-gray-600 mb-1">Recent Points:</div>
+            <div class="flex flex-wrap gap-1">
+              <span
+                v-for="point in caseItem.case_points.slice(-3)"
+                :key="point.id"
+                :class="[
+                  'px-2 py-1 rounded text-xs border',
+                  getPointTypeColor(point.type)
+                ]"
+                :title="`${point.title} - ${point.impact} impact`"
+              >
+                {{ point.type === 'winning' ? '↗️' : point.type === 'losing' ? '↘️' : '➡️' }}
+                {{ point.title.slice(0, 15) }}{{ point.title.length > 15 ? '...' : '' }}
+              </span>
+              <span
+                v-if="caseItem.case_points.length > 3"
+                class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-600 border border-gray-200"
+              >
+                +{{ caseItem.case_points.length - 3 }} more
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+            <span class="flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Updated: {{ formatDate(caseItem.updated_date || caseItem.created_date).split(' ').slice(0, 3).join(' ') }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Cases Section with Case Cards -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-[#003aca]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        My Cases
+      </h3>
+      
+      <div v-if="lawyerCases.length === 0" class="text-center py-12 text-gray-500">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p>No cases assigned</p>
+      </div>
+      
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="caseItem in lawyerCases"
+          :key="caseItem.id"
+          class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+        >
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-start gap-2 flex-1">
+              <h4 class="font-semibold text-gray-900 text-base">
+                {{ caseItem.title }}
+              </h4>
+              <!-- Case outcome indicator -->
+              <div
+                v-if="caseItem.case_points && caseItem.case_points.length > 0"
+                class="flex items-center gap-1"
+                :title="getCaseOutcomeIndicator(caseItem).text"
+              >
+                <div
+                  class="w-2 h-2 rounded-full"
+                  :class="getOutcomeIndicatorColor(getCaseOutcomeIndicator(caseItem).status)"
+                ></div>
+                <span class="text-xs text-gray-500">
+                  {{ getCaseOutcomeIndicator(caseItem).text }}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <!-- Add Point button -->
+              <button
+                @click.stop="openAddPointModal(caseItem)"
+                class="text-blue-600 hover:text-blue-800 p-1 rounded"
+                title="Add case point"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <p class="text-xs text-gray-500 mb-2">
+            Case #{{ caseItem.case_number }}
+          </p>
+          
+          <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+            {{ caseItem.description || 'No description available' }}
+          </p>
+
+          <div class="flex items-center gap-2 mb-3">
+            <span
+              :class="[
+                'px-2 py-1 rounded text-xs font-medium',
+                getStatusBadgeColor(caseItem.status),
+              ]"
+            >
+              {{ caseItem.status }}
+            </span>
+            <span
+              :class="[
+                'px-2 py-1 rounded text-xs font-medium',
+                getPriorityBadgeColor(caseItem.priority),
+              ]"
+            >
+              {{ caseItem.priority }} priority
+            </span>
+          </div>
+
+          <!-- Case points display -->
+          <div
+            v-if="caseItem.case_points && caseItem.case_points.length > 0"
+            class="mb-3"
+          >
+            <div class="text-xs text-gray-600 mb-1">Recent Points:</div>
+            <div class="flex flex-wrap gap-1">
+              <span
+                v-for="point in caseItem.case_points.slice(-3)"
+                :key="point.id"
+                :class="[
+                  'px-2 py-1 rounded text-xs border',
+                  getPointTypeColor(point.type)
+                ]"
+                :title="`${point.title} - ${point.impact} impact`"
+              >
+                {{ point.type === 'winning' ? '↗️' : point.type === 'losing' ? '↘️' : '➡️' }}
+                {{ point.title.slice(0, 15) }}{{ point.title.length > 15 ? '...' : '' }}
+              </span>
+              <span
+                v-if="caseItem.case_points.length > 3"
+                class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-600 border border-gray-200"
+              >
+                +{{ caseItem.case_points.length - 3 }} more
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+            <span class="flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Updated: {{ formatDate(caseItem.updated_date || caseItem.created_date).split(' ').slice(0, 3).join(' ') }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Client Communications Summary -->
     <div class="bg-white rounded-lg border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -171,6 +437,252 @@
             <p class="text-sm text-gray-700 mt-2">{{ comm.message }}</p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Add Point Modal -->
+    <div
+      v-if="showAddPointModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click="closeAddPointModal"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+        @click.stop
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Add Case Point</h3>
+          <button
+            @click="closeAddPointModal"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-sm text-gray-600 mb-2">
+            Case: <span class="font-medium">{{ selectedCaseForPoints?.title }}</span>
+          </p>
+          <p class="text-xs text-gray-500">
+            #{{ selectedCaseForPoints?.case_number }}
+          </p>
+        </div>
+
+        <form @submit.prevent="savePoint" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Point Title *
+            </label>
+            <input
+              v-model="newPoint.title"
+              type="text"
+              required
+              placeholder="Enter point title..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              v-model="newPoint.description"
+              rows="3"
+              placeholder="Describe this point in detail..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Point Type
+              </label>
+              <select
+                v-model="newPoint.type"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="winning">↗️ Winning Point</option>
+                <option value="losing">↘️ Losing Point</option>
+                <option value="neutral">➡️ Neutral Point</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Impact Level
+              </label>
+              <select
+                v-model="newPoint.impact"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Date
+            </label>
+            <input
+              v-model="newPoint.date"
+              type="date"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              @click="closeAddPointModal"
+              class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="isSavingPoint || !newPoint.title.trim()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ isSavingPoint ? 'Adding...' : 'Add Point' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Point Modal -->
+    <div
+      v-if="showAddPointModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click="closeAddPointModal"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+        @click.stop
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Add Case Point</h3>
+          <button
+            @click="closeAddPointModal"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-sm text-gray-600 mb-2">
+            Case: <span class="font-medium">{{ selectedCaseForPoints?.title }}</span>
+          </p>
+          <p class="text-xs text-gray-500">
+            #{{ selectedCaseForPoints?.case_number }}
+          </p>
+        </div>
+
+        <form @submit.prevent="savePoint" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Point Title *
+            </label>
+            <input
+              v-model="newPoint.title"
+              type="text"
+              required
+              placeholder="Enter point title..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              v-model="newPoint.description"
+              rows="3"
+              placeholder="Describe this point in detail..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Point Type
+              </label>
+              <select
+                v-model="newPoint.type"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="winning">↗️ Winning Point</option>
+                <option value="losing">↘️ Losing Point</option>
+                <option value="neutral">➡️ Neutral Point</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Impact Level
+              </label>
+              <select
+                v-model="newPoint.impact"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Date
+            </label>
+            <input
+              v-model="newPoint.date"
+              type="date"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              @click="closeAddPointModal"
+              class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :disabled="isSavingPoint || !newPoint.title.trim()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ isSavingPoint ? 'Adding...' : 'Add Point' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -203,6 +715,19 @@ const casesByStatus = ref({
 
 const recentActivities = ref([]);
 const recentCommunications = ref([]);
+const lawyerCases = ref([]);
+
+// Case points management
+const showAddPointModal = ref(false);
+const selectedCaseForPoints = ref(null);
+const newPoint = ref({
+  title: '',
+  description: '',
+  type: 'winning', // winning, losing, neutral
+  impact: 'medium', // low, medium, high
+  date: new Date().toISOString().split('T')[0]
+});
+const isSavingPoint = ref(false);
 
 const loadLawyerDashboard = async () => {
   try {
@@ -211,9 +736,13 @@ const loadLawyerDashboard = async () => {
 
     // Fetch lawyer's assigned cases
     const cases = await Case.filter({ lawyer_id: userId });
+    lawyerCases.value = cases;
 
     stats.value.totalCases = cases.length;
     stats.value.activeCases = cases.filter(c => c.status === 'open' || c.status === 'in_progress').length;
+
+    // Load case points for all cases
+    loadCasePoints();
 
     // Count cases by status
     casesByStatus.value = {
@@ -299,6 +828,177 @@ const formatDate = (date) => {
     return format(new Date(date), 'MMM d, yyyy h:mm a');
   } catch (e) {
     return '';
+  }
+};
+
+// (Duplicate case-points block removed; single implementation retained earlier)
+
+// Badge color helpers
+const getStatusBadgeColor = (status) => {
+  switch (status) {
+    case 'open':
+      return 'bg-blue-100 text-blue-700 border border-blue-200';
+    case 'in_progress':
+      return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+    case 'closed':
+      return 'bg-green-100 text-green-700 border border-green-200';
+    case 'on_hold':
+      return 'bg-gray-100 text-gray-700 border border-gray-200';
+    case 'archived':
+      return 'bg-purple-100 text-purple-700 border border-purple-200';
+    default:
+      return 'bg-gray-100 text-gray-700 border border-gray-200';
+  }
+};
+
+const getPriorityBadgeColor = (priority) => {
+  switch (priority) {
+    case 'urgent':
+      return 'bg-red-100 text-red-700 border border-red-200';
+    case 'high':
+      return 'bg-orange-100 text-orange-700 border border-orange-200';
+    case 'medium':
+      return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+    case 'low':
+      return 'bg-green-100 text-green-700 border border-green-200';
+    default:
+      return 'bg-gray-100 text-gray-700 border border-gray-200';
+  }
+};
+
+// Case points management functions
+const openAddPointModal = (caseItem) => {
+  selectedCaseForPoints.value = caseItem;
+  showAddPointModal.value = true;
+  // Reset form
+  newPoint.value = {
+    title: '',
+    description: '',
+    type: 'winning',
+    impact: 'medium',
+    date: new Date().toISOString().split('T')[0]
+  };
+};
+
+const closeAddPointModal = () => {
+  showAddPointModal.value = false;
+  selectedCaseForPoints.value = null;
+};
+
+const savePoint = async () => {
+  if (!selectedCaseForPoints.value || !newPoint.value.title.trim()) {
+    alert('Please fill in the point title');
+    return;
+  }
+
+  isSavingPoint.value = true;
+  try {
+    // Initialize case points array if it doesn't exist
+    if (!selectedCaseForPoints.value.case_points) {
+      selectedCaseForPoints.value.case_points = [];
+    }
+
+    const point = {
+      id: Date.now(), // temporary ID
+      ...newPoint.value,
+      added_by: authStore.user.id,
+      added_by_name: authStore.user.full_name || authStore.user.name,
+      created_date: new Date().toISOString()
+    };
+
+    // Add to case points array
+    selectedCaseForPoints.value.case_points.push(point);
+
+    // Save to localStorage
+    const casePoints = JSON.parse(localStorage.getItem('legaltracker_case_points') || '{}');
+    casePoints[selectedCaseForPoints.value.id] = selectedCaseForPoints.value.case_points;
+    localStorage.setItem('legaltracker_case_points', JSON.stringify(casePoints));
+
+    closeAddPointModal();
+    console.log('Point added successfully');
+  } catch (error) {
+    console.error('Failed to save point:', error);
+    alert('Failed to save point. Please try again.');
+  }
+  isSavingPoint.value = false;
+};
+
+// Load case points from storage
+const loadCasePoints = () => {
+  try {
+    const casePoints = JSON.parse(localStorage.getItem('legaltracker_case_points') || '{}');
+    lawyerCases.value.forEach(caseItem => {
+      if (casePoints[caseItem.id]) {
+        caseItem.case_points = casePoints[caseItem.id];
+      }
+    });
+  } catch (error) {
+    console.error('Failed to load case points:', error);
+  }
+};
+
+// Calculate case outcome indicator
+const getCaseOutcomeIndicator = (caseItem) => {
+  if (!caseItem.case_points || caseItem.case_points.length === 0) {
+    return { status: 'neutral', score: 0, text: 'No points added' };
+  }
+
+  let score = 0;
+  caseItem.case_points.forEach(point => {
+    let pointValue = 0;
+    
+    // Base value by type
+    if (point.type === 'winning') pointValue = 1;
+    else if (point.type === 'losing') pointValue = -1;
+    else pointValue = 0; // neutral
+
+    // Multiply by impact
+    if (point.impact === 'high') pointValue *= 3;
+    else if (point.impact === 'medium') pointValue *= 2;
+    else pointValue *= 1; // low
+
+    score += pointValue;
+  });
+
+  let status = 'neutral';
+  let text = 'Balanced case';
+  
+  if (score > 2) {
+    status = 'winning';
+    text = 'Looking favorable';
+  } else if (score < -2) {
+    status = 'losing';
+    text = 'Facing challenges';
+  }
+
+  return { status, score, text };
+};
+
+// Get point type color
+const getPointTypeColor = (type) => {
+  switch (type) {
+    case 'winning':
+      return 'bg-green-100 text-green-700 border-green-200';
+    case 'losing':
+      return 'bg-red-100 text-red-700 border-red-200';
+    case 'neutral':
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+
+// Get outcome indicator color
+const getOutcomeIndicatorColor = (status) => {
+  switch (status) {
+    case 'winning':
+      return 'bg-green-500';
+    case 'losing':
+      return 'bg-red-500';
+    case 'neutral':
+      return 'bg-gray-400';
+    default:
+      return 'bg-gray-400';
   }
 };
 
