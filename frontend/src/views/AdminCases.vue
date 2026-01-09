@@ -180,6 +180,7 @@
               <option value="in_progress">In Progress</option>
               <option value="on_hold">On Hold</option>
               <option value="closed">Closed</option>
+              <option value="dead">Dead</option>
               <option value="archived">Archived</option>
             </Select>
 
@@ -566,8 +567,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { format } from 'date-fns';
-import { Case, User } from '@/services/entities';
+import { format, addDays, setHours, setMinutes, isWeekend } from 'date-fns';
+import { Case, User, Meeting } from '@/services/entities';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -829,8 +830,40 @@ const handleLawyerAssignment = (caseData) => {
 };
 
 const handleStatusUpdate = async (data) => {
+  const computeNextBusinessDayAt = (base = new Date(), hour = 9, minute = 0) => {
+    let d = addDays(base, 1);
+    // skip weekends
+    while (isWeekend(d)) d = addDays(d, 1);
+    d = setHours(d, hour);
+    d = setMinutes(d, minute);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    return d.toISOString();
+  };
+
   try {
-    await Case.update(data.case.id, { status: data.status });
+    if (data.status === 'dead') {
+      // When marking a case dead, set a deadline on the admin schedule
+      const dueIso = computeNextBusinessDayAt(new Date(), 9, 0); // next business day at 09:00
+      await Case.update(data.case.id, { status: data.status, due_date: dueIso });
+
+      // Create a short meeting/event for the admin to review the dead case
+      try {
+        const meetingPayload = {
+          title: `Dead case review: ${data.case.title}`,
+          start_time: dueIso,
+          end_time: new Date(new Date(dueIso).getTime() + 60 * 60 * 1000).toISOString(),
+          case_id: data.case.id,
+          attendee_ids: user.value ? [user.value.id] : []
+        };
+        await Meeting.create(meetingPayload);
+      } catch (mErr) {
+        // non-fatal: meeting creation failed
+        console.error('Failed to create meeting for dead case:', mErr);
+      }
+    } else {
+      await Case.update(data.case.id, { status: data.status });
+    }
     await loadData();
   } catch (error) {
     console.error('Failed to update status:', error);
@@ -895,6 +928,7 @@ const getStatusColor = (status) => {
   switch (status) {
     case 'open': return 'bg-blue-100 text-blue-700 border-blue-200';
     case 'in_progress': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    case 'dead': return 'bg-gray-800 text-white border-gray-700';
     case 'closed': return 'bg-green-100 text-green-700 border-green-200';
     case 'on_hold': return 'bg-gray-100 text-gray-700 border-gray-200';
     case 'archived': return 'bg-purple-100 text-purple-700 border-purple-200';

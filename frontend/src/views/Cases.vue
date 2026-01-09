@@ -24,19 +24,30 @@
       </div>
 
       <!-- Stats Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Cases</p>
-              <div class="p-2 bg-blue-50 rounded-lg">
-                <FileText class="w-4 h-4 text-blue-600" />
-              </div>
-            </div>
-            <p class="text-2xl font-bold text-gray-900">{{ displayedCases.length }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ isLawyer ? 'Assigned to you' : 'All system cases' }}</p>
-          </div>        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div
+          class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        >
           <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Unassigned</p>
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Total Cases
+            </p>
+            <div class="p-2 bg-blue-50 rounded-lg">
+              <FileText class="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ displayedCases.length }}</p>
+          <p class="text-xs text-gray-500 mt-1">
+            {{ isLawyer ? "Assigned to you" : "All system cases" }}
+          </p>
+        </div>
+        <div
+          class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Unassigned
+            </p>
             <div class="p-2 bg-red-50 rounded-lg">
               <AlertTriangle class="w-4 h-4 text-red-600" />
             </div>
@@ -45,9 +56,13 @@
           <p class="text-xs text-red-600 mt-1 font-medium">Need assignment</p>
         </div>
 
-        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div
+          class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        >
           <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Open</p>
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Open
+            </p>
             <div class="p-2 bg-orange-50 rounded-lg">
               <Clock class="w-4 h-4 text-orange-600" />
             </div>
@@ -56,9 +71,13 @@
           <p class="text-xs text-gray-500 mt-1">Recently opened</p>
         </div>
 
-        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div
+          class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        >
           <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">In Progress</p>
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              In Progress
+            </p>
             <div class="p-2 bg-yellow-50 rounded-lg">
               <TrendingUp class="w-4 h-4 text-yellow-600" />
             </div>
@@ -67,9 +86,13 @@
           <p class="text-xs text-gray-500 mt-1">Active work</p>
         </div>
 
-        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div
+          class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        >
           <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Client Issues</p>
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Client Issues
+            </p>
             <div class="p-2 bg-purple-50 rounded-lg">
               <AlertCircle class="w-4 h-4 text-purple-600" />
             </div>
@@ -78,9 +101,13 @@
           <p class="text-xs text-purple-600 mt-1 font-medium">Require attention</p>
         </div>
 
-        <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        <div
+          class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+        >
           <div class="flex items-center justify-between mb-2">
-            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Closed</p>
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Closed
+            </p>
             <div class="p-2 bg-green-50 rounded-lg">
               <CheckCircle class="w-4 h-4 text-green-600" />
             </div>
@@ -96,7 +123,9 @@
           <!-- Search Bar -->
           <div class="flex-1">
             <div class="relative">
-              <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"
+              />
               <Input
                 v-model="searchQuery"
                 placeholder="Search cases by title, number, client name, or lawyer..."
@@ -108,36 +137,45 @@
           <!-- Admin-specific Filters -->
           <div class="flex gap-2 flex-wrap">
             <!-- Status Filter -->
-            <select v-model="filters.status" class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+            <select
+              v-model="filters.status"
+              class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+            >
               <option value="all">All Statuses</option>
               <option value="open">Open</option>
               <option value="in_progress">In Progress</option>
               <option value="on_hold">On Hold</option>
               <option value="closed">Closed</option>
+              <option value="dead">Dead</option>
               <option value="archived">Archived</option>
             </select>
 
             <!-- Assignment Filter -->
-            <select v-model="filters.assignment" class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+            <select
+              v-model="filters.assignment"
+              class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+            >
               <option value="all">All Assignments</option>
               <option value="assigned">Assigned</option>
               <option value="unassigned">Unassigned</option>
             </select>
 
             <!-- Lawyer Filter -->
-            <select v-model="filters.lawyer" class="min-w-[150px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+            <select
+              v-model="filters.lawyer"
+              class="min-w-[150px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+            >
               <option value="all">All Lawyers</option>
-              <option 
-                v-for="lawyer in lawyers" 
-                :key="lawyer.id" 
-                :value="lawyer.id"
-              >
+              <option v-for="lawyer in lawyers" :key="lawyer.id" :value="lawyer.id">
                 {{ lawyer.full_name }}
               </option>
             </select>
 
             <!-- Client Status Filter -->
-            <select v-model="filters.clientStatus" class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm">
+            <select
+              v-model="filters.clientStatus"
+              class="min-w-[140px] px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+            >
               <option value="all">All Client Status</option>
               <option value="satisfied">Satisfied</option>
               <option value="needs_attention">Needs Attention</option>
@@ -169,7 +207,10 @@
       </div>
 
       <!-- Lawyer Assignment Section (Admin Only) -->
-      <div v-if="isAdmin && unassignedCases.length > 0" class="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div
+        v-if="isAdmin && unassignedCases.length > 0"
+        class="bg-white rounded-lg border border-gray-200 shadow-sm"
+      >
         <div class="p-6 border-b border-gray-200">
           <div class="flex items-center justify-between">
             <div>
@@ -177,14 +218,16 @@
                 <UserCheck class="w-5 h-5 text-blue-600" />
                 Quick Lawyer Assignment
               </h3>
-              <p class="text-sm text-gray-600 mt-1">Assign lawyers to unassigned cases quickly</p>
+              <p class="text-sm text-gray-600 mt-1">
+                Assign lawyers to unassigned cases quickly
+              </p>
             </div>
             <Badge class="bg-red-100 text-red-700 border-red-200">
               {{ unassignedCases.length }} Unassigned
             </Badge>
           </div>
         </div>
-        
+
         <div class="p-6">
           <div class="space-y-4">
             <!-- Bulk Assignment -->
@@ -204,8 +247,8 @@
                 </select>
               </div>
               <div class="pt-6">
-                <Button 
-                  @click="bulkAssignUnassigned" 
+                <Button
+                  @click="bulkAssignUnassigned"
                   :disabled="!bulkAssignLawyer || selectedCasesForBulk.length === 0"
                   class="px-4 py-2"
                 >
@@ -219,19 +262,15 @@
               <div class="flex items-center justify-between mb-3">
                 <h4 class="font-medium text-gray-700">Unassigned Cases</h4>
                 <div class="flex items-center gap-2">
-                  <Button 
-                    @click="toggleSelectAll" 
-                    variant="outline" 
-                    size="sm"
-                  >
-                    {{ allSelected ? 'Deselect All' : 'Select All' }}
+                  <Button @click="toggleSelectAll" variant="outline" size="sm">
+                    {{ allSelected ? "Deselect All" : "Select All" }}
                   </Button>
                 </div>
               </div>
-              
+
               <div class="max-h-64 overflow-y-auto space-y-2">
-                <div 
-                  v-for="caseItem in unassignedCases" 
+                <div
+                  v-for="caseItem in unassignedCases"
                   :key="caseItem.id"
                   class="flex items-center gap-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50"
                 >
@@ -244,22 +283,30 @@
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between">
                       <div>
-                        <p class="font-medium text-gray-900 truncate">{{ caseItem.title }}</p>
-                        <p class="text-sm text-gray-500">#{{ caseItem.case_number }} • {{ caseItem.case_type }}</p>
+                        <p class="font-medium text-gray-900 truncate">
+                          {{ caseItem.title }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                          #{{ caseItem.case_number }} • {{ caseItem.case_type }}
+                        </p>
                         <p class="text-xs text-gray-400">
-                          Client: {{ caseItem.customers?.[0]?.full_name || 'No client' }}
+                          Client: {{ caseItem.customers?.[0]?.full_name || "No client" }}
                         </p>
                       </div>
                       <div class="flex items-center gap-2 ml-4">
                         <Badge :class="getStatusColor(caseItem.status)" class="text-xs">
-                          {{ caseItem.status.replace('_', ' ').toUpperCase() }}
+                          {{ caseItem.status.replace("_", " ").toUpperCase() }}
                         </Badge>
                         <select
                           @change="quickAssignLawyer(caseItem.id, $event.target.value)"
                           class="text-xs px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                         >
                           <option value="">Quick assign...</option>
-                          <option v-for="lawyer in lawyers" :key="lawyer.id" :value="lawyer.id">
+                          <option
+                            v-for="lawyer in lawyers"
+                            :key="lawyer.id"
+                            :value="lawyer.id"
+                          >
                             {{ lawyer.full_name }}
                           </option>
                         </select>
@@ -276,9 +323,7 @@
       <!-- Cases Table -->
       <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div class="p-4 border-b border-gray-200">
-          <h3 class="font-semibold text-gray-800">
-            Cases ({{ filteredCases.length }})
-          </h3>
+          <h3 class="font-semibold text-gray-800">Cases ({{ filteredCases.length }})</h3>
         </div>
 
         <div class="overflow-x-auto">
@@ -287,11 +332,19 @@
               <tr>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Case</th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Client</th>
-                <th class="p-4 text-left font-semibold text-gray-800 text-sm">Assigned Lawyer</th>
+                <th class="p-4 text-left font-semibold text-gray-800 text-sm">
+                  Assigned Lawyer
+                </th>
                 <th class="p-4 text-left font-semibold text-gray-800 text-sm">Status</th>
-                <th class="p-4 text-left font-semibold text-gray-800 text-sm">Client Status</th>
-                <th class="p-4 text-left font-semibold text-gray-800 text-sm">Last Update</th>
-                <th class="p-4 text-right font-semibold text-gray-800 text-sm">Actions</th>
+                <th class="p-4 text-left font-semibold text-gray-800 text-sm">
+                  Client Status
+                </th>
+                <th class="p-4 text-left font-semibold text-gray-800 text-sm">
+                  Last Update
+                </th>
+                <th class="p-4 text-right font-semibold text-gray-800 text-sm">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -326,24 +379,30 @@
                       +{{ caseItem.customers.length - 1 }} more
                     </p>
                   </div>
-                  <div v-else class="text-sm text-gray-400">
-                    No client assigned
-                  </div>
+                  <div v-else class="text-sm text-gray-400">No client assigned</div>
                 </td>
                 <td class="p-4">
                   <div v-if="caseItem.assigned_lawyer">
                     <div class="flex items-center gap-2 mb-1">
-                      <Badge class="bg-green-100 text-green-700 border-green-200 text-xs">Assigned</Badge>
+                      <Badge class="bg-green-100 text-green-700 border-green-200 text-xs"
+                        >Assigned</Badge
+                      >
                     </div>
-                    <p class="font-medium text-gray-900">{{ caseItem.assigned_lawyer.full_name }}</p>
-                    <p class="text-sm text-gray-500">{{ caseItem.assigned_lawyer.email }}</p>
+                    <p class="font-medium text-gray-900">
+                      {{ caseItem.assigned_lawyer.full_name }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      {{ caseItem.assigned_lawyer.email }}
+                    </p>
                   </div>
                   <div v-else class="flex items-center gap-2">
-                    <Badge class="bg-red-100 text-red-700 border-red-200">Unassigned</Badge>
-                    <Button 
+                    <Badge class="bg-red-100 text-red-700 border-red-200"
+                      >Unassigned</Badge
+                    >
+                    <Button
                       v-if="isAdmin"
-                      @click="openLawyerAssignment(caseItem)" 
-                      size="sm" 
+                      @click="openLawyerAssignment(caseItem)"
+                      size="sm"
                       variant="outline"
                       class="h-6 px-2 text-xs"
                     >
@@ -353,22 +412,22 @@
                 </td>
                 <td class="p-4">
                   <Badge :class="getStatusColor(caseItem.status)" class="border">
-                    {{ caseItem.status.replace('_', ' ').toUpperCase() }}
+                    {{ caseItem.status.replace("_", " ").toUpperCase() }}
                   </Badge>
                 </td>
                 <td class="p-4">
                   <div class="flex items-center gap-2">
-                    <div 
+                    <div
                       class="w-2 h-2 rounded-full"
                       :class="getClientStatusColor(caseItem.client_status)"
                     ></div>
                     <span class="text-sm capitalize">
-                      {{ caseItem.client_status || 'satisfied' }}
+                      {{ caseItem.client_status || "satisfied" }}
                     </span>
-                    <Button 
+                    <Button
                       v-if="isAdmin"
-                      @click="updateClientStatus(caseItem)" 
-                      size="sm" 
+                      @click="updateClientStatus(caseItem)"
+                      size="sm"
                       variant="ghost"
                       class="h-6 w-6 p-0"
                     >
@@ -381,7 +440,7 @@
                 </td>
                 <td class="p-4 text-right">
                   <div class="flex items-center justify-end gap-1">
-                    <Button 
+                    <Button
                       v-if="isAdmin"
                       @click="scheduleCase(caseItem)"
                       size="sm"
@@ -390,18 +449,18 @@
                     >
                       <Plus class="w-4 h-4" />
                     </Button>
-                    <Button 
-                      @click="viewCase(caseItem)" 
-                      size="sm" 
+                    <Button
+                      @click="viewCase(caseItem)"
+                      size="sm"
                       variant="ghost"
                       class="h-8 w-8 p-0"
                     >
                       <Eye class="w-4 h-4" />
                     </Button>
-                    <Button 
+                    <Button
                       v-if="caseItem.assigned_lawyer && isAdmin"
-                      @click="openLawyerAssignment(caseItem)" 
-                      size="sm" 
+                      @click="openLawyerAssignment(caseItem)"
+                      size="sm"
                       variant="ghost"
                       class="h-8 w-8 p-0"
                     >
@@ -433,11 +492,7 @@
             </label>
             <Select v-model="selectedLawyerId">
               <option value="">Choose a lawyer...</option>
-              <option 
-                v-for="lawyer in lawyers" 
-                :key="lawyer.id" 
-                :value="lawyer.id"
-              >
+              <option v-for="lawyer in lawyers" :key="lawyer.id" :value="lawyer.id">
                 {{ lawyer.full_name }} - {{ lawyer.email }}
               </option>
             </Select>
@@ -479,9 +534,7 @@
             <Button variant="outline" @click="showClientStatusUpdate = false">
               Cancel
             </Button>
-            <Button @click="confirmClientStatusUpdate">
-              Update Status
-            </Button>
+            <Button @click="confirmClientStatusUpdate"> Update Status </Button>
           </div>
         </div>
       </DialogContent>
@@ -490,20 +543,30 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { format } from 'date-fns';
-import { Case, User } from '@/services/entities';
-import { useAuthStore } from '@/stores/auth';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  Scale, Search, FileText, AlertTriangle, Clock, 
-  TrendingUp, AlertCircle, CheckCircle, UserCheck, Edit, Eye, Plus
-} from 'lucide-vue-next';
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { format } from "date-fns";
+import { Case, User } from "@/services/entities";
+import { useAuthStore } from "@/stores/auth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Scale,
+  Search,
+  FileText,
+  AlertTriangle,
+  Clock,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  UserCheck,
+  Edit,
+  Eye,
+  Plus,
+} from "lucide-vue-next";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -512,123 +575,131 @@ const authStore = useAuthStore();
 const isLoading = ref(true);
 const allCases = ref([]);
 const lawyers = ref([]);
-const searchQuery = ref('');
-const quickFilter = ref('');
+const searchQuery = ref("");
+const quickFilter = ref("");
 const showLawyerAssignment = ref(false);
 const showClientStatusUpdate = ref(false);
 
 // Assignment/Status update state
 const selectedCaseForAssignment = ref(null);
 const selectedCaseForStatus = ref(null);
-const selectedLawyerId = ref('');
-const newClientStatus = ref('satisfied');
+const selectedLawyerId = ref("");
+const newClientStatus = ref("satisfied");
 
 // Bulk assignment state
-const bulkAssignLawyer = ref('');
+const bulkAssignLawyer = ref("");
 const selectedCasesForBulk = ref([]);
 
 // Filters
 const filters = ref({
-  status: 'all',
-  assignment: 'all',
-  lawyer: 'all',
-  clientStatus: 'all'
+  status: "all",
+  assignment: "all",
+  lawyer: "all",
+  clientStatus: "all",
 });
 
 // Computed properties
-const isAdmin = computed(() => authStore.user?.user_type === 'admin');
-const isLawyer = computed(() => authStore.user?.user_type === 'lawyer');
+const isAdmin = computed(() => authStore.user?.user_type === "admin");
+const isLawyer = computed(() => authStore.user?.user_type === "lawyer");
 
 const pageTitle = computed(() => {
-  if (isAdmin.value) return 'Admin Case Management';
-  if (isLawyer.value) return 'My Assigned Cases';
-  return 'Cases';
+  if (isAdmin.value) return "Admin Case Management";
+  if (isLawyer.value) return "My Assigned Cases";
+  return "Cases";
 });
 
 const pageSubtitle = computed(() => {
-  if (isAdmin.value) return 'Oversee all cases, assign lawyers, and manage client statuses';
-  if (isLawyer.value) return 'View and manage cases assigned to you';
-  return 'Your cases overview';
+  if (isAdmin.value)
+    return "Oversee all cases, assign lawyers, and manage client statuses";
+  if (isLawyer.value) return "View and manage cases assigned to you";
+  return "Your cases overview";
 });
 
 const displayedCases = computed(() => {
   let cases = [...allCases.value];
-  
+
   // Backend handles role-based filtering via RLS
   // Frontend just displays what the backend returns
-  
+
   return cases;
 });
 
 const unassignedCases = computed(() => {
   // Only admins should see unassigned cases for assignment purposes
   if (!isAdmin.value) return [];
-  
-  const filtered = displayedCases.value.filter(c => !c.assigned_lawyer && !c.assigned_lawyer_id);
+
+  const filtered = displayedCases.value.filter(
+    (c) => !c.assigned_lawyer && !c.assigned_lawyer_id
+  );
   return filtered;
 });
 
-const openCases = computed(() => 
-  displayedCases.value.filter(c => c.status === 'open')
+const openCases = computed(() => displayedCases.value.filter((c) => c.status === "open"));
+
+const inProgressCases = computed(() =>
+  displayedCases.value.filter((c) => c.status === "in_progress")
 );
 
-const inProgressCases = computed(() => 
-  displayedCases.value.filter(c => c.status === 'in_progress')
+const closedCases = computed(() =>
+  displayedCases.value.filter((c) => c.status === "closed")
 );
 
-const closedCases = computed(() => 
-  displayedCases.value.filter(c => c.status === 'closed')
+const clientIssues = computed(() =>
+  displayedCases.value.filter(
+    (c) => c.client_status === "needs_attention" || c.client_status === "at_risk"
+  )
 );
 
-const clientIssues = computed(() => 
-  displayedCases.value.filter(c => c.client_status === 'needs_attention' || c.client_status === 'at_risk')
-);
-
-const allSelected = computed(() => 
-  selectedCasesForBulk.value.length === unassignedCases.value.length && unassignedCases.value.length > 0
+const allSelected = computed(
+  () =>
+    selectedCasesForBulk.value.length === unassignedCases.value.length &&
+    unassignedCases.value.length > 0
 );
 
 const filteredCases = computed(() => {
   let filtered = [...displayedCases.value];
 
   // Apply quick filter first
-  if (quickFilter.value === 'unassigned') {
+  if (quickFilter.value === "unassigned") {
     filtered = unassignedCases.value;
-  } else if (quickFilter.value === 'client_issues') {
+  } else if (quickFilter.value === "client_issues") {
     filtered = clientIssues.value;
   }
 
   // Search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(c =>
-      c.title?.toLowerCase().includes(query) ||
-      c.case_number?.toLowerCase().includes(query) ||
-      c.customers?.some(customer => customer.full_name?.toLowerCase().includes(query)) ||
-      c.assigned_lawyer?.full_name?.toLowerCase().includes(query)
+    filtered = filtered.filter(
+      (c) =>
+        c.title?.toLowerCase().includes(query) ||
+        c.case_number?.toLowerCase().includes(query) ||
+        c.customers?.some((customer) =>
+          customer.full_name?.toLowerCase().includes(query)
+        ) ||
+        c.assigned_lawyer?.full_name?.toLowerCase().includes(query)
     );
   }
 
   // Status filter
-  if (filters.value.status !== 'all') {
-    filtered = filtered.filter(c => c.status === filters.value.status);
+  if (filters.value.status !== "all") {
+    filtered = filtered.filter((c) => c.status === filters.value.status);
   }
 
   // Assignment filter
-  if (filters.value.assignment === 'assigned') {
-    filtered = filtered.filter(c => c.assigned_lawyer);
-  } else if (filters.value.assignment === 'unassigned') {
-    filtered = filtered.filter(c => !c.assigned_lawyer);
+  if (filters.value.assignment === "assigned") {
+    filtered = filtered.filter((c) => c.assigned_lawyer);
+  } else if (filters.value.assignment === "unassigned") {
+    filtered = filtered.filter((c) => !c.assigned_lawyer);
   }
 
   // Lawyer filter
-  if (filters.value.lawyer !== 'all') {
-    filtered = filtered.filter(c => c.assigned_lawyer?.id === filters.value.lawyer);
+  if (filters.value.lawyer !== "all") {
+    filtered = filtered.filter((c) => c.assigned_lawyer?.id === filters.value.lawyer);
   }
 
   // Client status filter
-  if (filters.value.clientStatus !== 'all') {
-    filtered = filtered.filter(c => c.client_status === filters.value.clientStatus);
+  if (filters.value.clientStatus !== "all") {
+    filtered = filtered.filter((c) => c.client_status === filters.value.clientStatus);
   }
 
   return filtered;
@@ -640,96 +711,96 @@ const loadData = async () => {
   try {
     // loading data from server
     const [casesData, lawyersData] = await Promise.all([
-      Case.list('-updated_date'),
-      User.list().then(users => users.filter(u => u.user_type === 'lawyer'))
+      Case.list("-updated_date"),
+      User.list().then((users) => users.filter((u) => u.user_type === "lawyer")),
     ]);
-    
+
     // server returned cases
-    
+
     allCases.value = casesData;
     lawyers.value = lawyersData;
   } catch (error) {
-    console.error('Failed to load data:', error);
+    console.error("Failed to load data:", error);
   }
   isLoading.value = false;
 };
 
 const setQuickFilter = (filter) => {
   if (quickFilter.value === filter) {
-    quickFilter.value = '';
+    quickFilter.value = "";
   } else {
     quickFilter.value = filter;
   }
   // Clear other filters when using quick filters
   if (quickFilter.value) {
     filters.value = {
-      status: 'all',
-      assignment: 'all',
-      lawyer: 'all',
-      clientStatus: 'all'
+      status: "all",
+      assignment: "all",
+      lawyer: "all",
+      clientStatus: "all",
     };
   }
 };
 
 const openLawyerAssignment = (caseItem) => {
   selectedCaseForAssignment.value = caseItem;
-  selectedLawyerId.value = caseItem.assigned_lawyer?.id || '';
+  selectedLawyerId.value = caseItem.assigned_lawyer?.id || "";
   showLawyerAssignment.value = true;
 };
 
 const confirmLawyerAssignment = async () => {
   try {
-    const lawyer = lawyers.value.find(l => l.id === selectedLawyerId.value);
+    const lawyer = lawyers.value.find((l) => l.id === selectedLawyerId.value);
     const caseId = selectedCaseForAssignment.value.id;
-    
+
     // dialog assignment data
-    
+
     await Case.update(caseId, {
-      assigned_lawyer_id: selectedLawyerId.value
+      assigned_lawyer_id: selectedLawyerId.value,
     });
-    
+
     // Update the case locally immediately
-    const caseIndex = allCases.value.findIndex(c => c.id === caseId);
+    const caseIndex = allCases.value.findIndex((c) => c.id === caseId);
     if (caseIndex !== -1) {
       allCases.value[caseIndex] = {
         ...allCases.value[caseIndex],
         assigned_lawyer: lawyer,
-        assigned_lawyer_id: selectedLawyerId.value
+        assigned_lawyer_id: selectedLawyerId.value,
       };
     }
-    
+
     showLawyerAssignment.value = false;
     const caseName = selectedCaseForAssignment.value.title;
     selectedCaseForAssignment.value = null;
-    selectedLawyerId.value = '';
-    
+    selectedLawyerId.value = "";
+
     // Refresh from server after delay
     setTimeout(() => loadData(), 500);
-    
+
     // dialog assignment successful
   } catch (error) {
-    console.error('Failed to assign lawyer:', error);
-    alert('Failed to assign lawyer. Please try again.');
+    console.error("Failed to assign lawyer:", error);
+    alert("Failed to assign lawyer. Please try again.");
   }
 };
 
 const updateClientStatus = (caseItem) => {
   selectedCaseForStatus.value = caseItem;
-  newClientStatus.value = caseItem.client_status || 'satisfied';
+  newClientStatus.value = caseItem.client_status || "satisfied";
   showClientStatusUpdate.value = true;
 };
 
 const confirmClientStatusUpdate = async () => {
   try {
     await Case.update(selectedCaseForStatus.value.id, {
-      client_status: newClientStatus.value
+      client_status: newClientStatus.value,
     });
     await loadData(); // Refresh data
     showClientStatusUpdate.value = false;
     selectedCaseForStatus.value = null;
   } catch (error) {
-    console.error('Failed to update client status:', error);
-    alert('Failed to update client status. Please try again.');
+    console.error("Failed to update client status:", error);
+    alert("Failed to update client status. Please try again.");
   }
 };
 
@@ -740,130 +811,151 @@ const viewCase = (caseItem) => {
 // Open Schedule view with preselected case and (if available) client/lawyer as attendees
 const scheduleCase = (caseItem) => {
   try {
-    const clientIds = (caseItem.customers || []).map(c => c.id).filter(Boolean);
-    const lawyerId = caseItem.assigned_lawyer?.id || caseItem.assigned_lawyer_id || caseItem.lawyer_id || null;
+    const clientIds = (caseItem.customers || []).map((c) => c.id).filter(Boolean);
+    const lawyerId =
+      caseItem.assigned_lawyer?.id ||
+      caseItem.assigned_lawyer_id ||
+      caseItem.lawyer_id ||
+      null;
     const attendeeIds = [...clientIds];
     if (lawyerId) attendeeIds.push(lawyerId);
-    try { window.__schedulePreselect = { caseId: caseItem.id, attendeeIds }; } catch (e) {}
-    router.push({ name: 'Schedule' });
+    try {
+      window.__schedulePreselect = { caseId: caseItem.id, attendeeIds };
+    } catch (e) {}
+    router.push({ name: "Schedule" });
   } catch (e) {
-    console.error('Failed to open schedule for case:', e);
-    alert('Unable to open schedule for this case.');
+    console.error("Failed to open schedule for case:", e);
+    alert("Unable to open schedule for this case.");
   }
 };
 
 // Bulk assignment methods
 const assignedCasesCount = (lawyerId) => {
-  return displayedCases.value.filter(c => c.assigned_lawyer?.id === lawyerId).length;
+  return displayedCases.value.filter((c) => c.assigned_lawyer?.id === lawyerId).length;
 };
 
 const toggleSelectAll = () => {
   if (allSelected.value) {
     selectedCasesForBulk.value = [];
   } else {
-    selectedCasesForBulk.value = unassignedCases.value.map(c => c.id);
+    selectedCasesForBulk.value = unassignedCases.value.map((c) => c.id);
   }
 };
 
 const quickAssignLawyer = async (caseId, lawyerId) => {
   if (!lawyerId) return;
-  
+
   try {
     // Find lawyer name for confirmation message
-    const lawyer = lawyers.value.find(l => l.id === lawyerId);
-    const caseItem = allCases.value.find(c => c.id === caseId);
-    
+    const lawyer = lawyers.value.find((l) => l.id === lawyerId);
+    const caseItem = allCases.value.find((c) => c.id === caseId);
+
     // assigning lawyer
-    
+
     // Make the server update first
     const updateResponse = await Case.update(caseId, { assigned_lawyer_id: lawyerId });
     // server update response
-    
+
     // Reload data from server immediately to see what was saved
     await loadData();
-    
+
     // Remove from bulk selection if it was selected
-    selectedCasesForBulk.value = selectedCasesForBulk.value.filter(id => id !== caseId);
-    
+    selectedCasesForBulk.value = selectedCasesForBulk.value.filter((id) => id !== caseId);
+
     // assignment completed
-    
   } catch (error) {
-    console.error('Failed to assign lawyer:', error);
-    console.error('Error details:', error.response?.data || error.message);
-    alert('Failed to assign lawyer. Please try again.');
+    console.error("Failed to assign lawyer:", error);
+    console.error("Error details:", error.response?.data || error.message);
+    alert("Failed to assign lawyer. Please try again.");
   }
 };
 
 const bulkAssignUnassigned = async () => {
   if (!bulkAssignLawyer.value || selectedCasesForBulk.value.length === 0) return;
-  
-  const lawyer = lawyers.value.find(l => l.id === bulkAssignLawyer.value);
-  const confirmed = confirm(`Assign ${selectedCasesForBulk.value.length} cases to ${lawyer?.full_name || 'selected lawyer'}?`);
+
+  const lawyer = lawyers.value.find((l) => l.id === bulkAssignLawyer.value);
+  const confirmed = confirm(
+    `Assign ${selectedCasesForBulk.value.length} cases to ${
+      lawyer?.full_name || "selected lawyer"
+    }?`
+  );
   if (!confirmed) return;
-  
+
   try {
     // bulk assignment starting
-    
-    const promises = selectedCasesForBulk.value.map(caseId =>
+
+    const promises = selectedCasesForBulk.value.map((caseId) =>
       Case.update(caseId, { assigned_lawyer_id: bulkAssignLawyer.value })
     );
-    
+
     await Promise.all(promises);
-    
+
     // Update cases locally immediately
-    selectedCasesForBulk.value.forEach(caseId => {
-      const caseIndex = allCases.value.findIndex(c => c.id === caseId);
+    selectedCasesForBulk.value.forEach((caseId) => {
+      const caseIndex = allCases.value.findIndex((c) => c.id === caseId);
       if (caseIndex !== -1) {
         allCases.value[caseIndex] = {
           ...allCases.value[caseIndex],
           assigned_lawyer: lawyer,
-          assigned_lawyer_id: bulkAssignLawyer.value
+          assigned_lawyer_id: bulkAssignLawyer.value,
         };
       }
     });
-    
+
     const assignedCount = promises.length;
     // Clear selections
     selectedCasesForBulk.value = [];
-    bulkAssignLawyer.value = '';
-    
+    bulkAssignLawyer.value = "";
+
     // Refresh from server after delay
     setTimeout(() => loadData(), 500);
-    
+
     // bulk assignment successful
   } catch (error) {
-    console.error('Failed to bulk assign cases:', error);
-    alert('Failed to assign some cases. Please try again.');
+    console.error("Failed to bulk assign cases:", error);
+    alert("Failed to assign some cases. Please try again.");
   }
 };
 
 // Utility functions
 const formatDate = (date) => {
-  if (!date) return 'N/A';
+  if (!date) return "N/A";
   try {
-    return format(new Date(date), 'MMM d, yyyy');
+    return format(new Date(date), "MMM d, yyyy");
   } catch {
-    return 'Invalid date';
+    return "Invalid date";
   }
 };
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'open': return 'bg-blue-100 text-blue-700 border-blue-200';
-    case 'in_progress': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-    case 'closed': return 'bg-green-100 text-green-700 border-green-200';
-    case 'on_hold': return 'bg-gray-100 text-gray-700 border-gray-200';
-    case 'archived': return 'bg-purple-100 text-purple-700 border-purple-200';
-    default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    case "open":
+      return "bg-blue-100 text-blue-700 border-blue-200";
+    case "in_progress":
+      return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    case "dead":
+      return "bg-gray-800 text-white border-gray-700";
+    case "closed":
+      return "bg-green-100 text-green-700 border-green-200";
+    case "on_hold":
+      return "bg-gray-100 text-gray-700 border-gray-200";
+    case "archived":
+      return "bg-purple-100 text-purple-700 border-purple-200";
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
   }
 };
 
 const getClientStatusColor = (status) => {
   switch (status) {
-    case 'satisfied': return 'bg-green-400';
-    case 'needs_attention': return 'bg-yellow-400';
-    case 'at_risk': return 'bg-red-400';
-    default: return 'bg-green-400';
+    case "satisfied":
+      return "bg-green-400";
+    case "needs_attention":
+      return "bg-yellow-400";
+    case "at_risk":
+      return "bg-red-400";
+    default:
+      return "bg-green-400";
   }
 };
 

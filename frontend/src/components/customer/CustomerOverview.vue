@@ -195,11 +195,59 @@
                 >
                   {{ caseItem.status }}
                 </span>
+                <!-- Case outcome indicator -->
+                <div
+                  v-if="caseItem.case_points && caseItem.case_points.length > 0"
+                  class="flex items-center gap-1"
+                  :title="getCaseOutcomeIndicator(caseItem).text"
+                >
+                  <div
+                    class="w-2 h-2 rounded-full"
+                    :class="getOutcomeIndicatorColor(getCaseOutcomeIndicator(caseItem).status)"
+                  ></div>
+                  <span class="text-xs text-gray-500">
+                    {{ getCaseOutcomeIndicator(caseItem).text }}
+                  </span>
+                </div>
               </div>
               <p class="text-sm text-gray-600 mb-2">Case #{{ caseItem.case_number }}</p>
               <p class="text-sm text-gray-700 mb-3">
                 {{ caseItem.description || "No description available" }}
               </p>
+
+              <!-- Case Progress Points by Lawyer -->
+              <div
+                v-if="caseItem.case_points && caseItem.case_points.length > 0"
+                class="mb-3 p-2 bg-blue-50 rounded-md border border-blue-100"
+              >
+                <div class="flex items-center gap-2 mb-1">
+                  <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <div class="text-xs font-medium text-blue-900">Latest Updates</div>
+                  <div class="text-xs text-blue-600">({{ caseItem.case_points.length }} total)</div>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="point in caseItem.case_points.slice(-2)"
+                    :key="point.id"
+                    :class="[
+                      'px-2 py-1 rounded text-xs border',
+                      getPointTypeColor(point.type)
+                    ]"
+                    :title="`${point.title} (${point.impact} impact) - ${point.description || 'No details'}`"
+                  >
+                    {{ point.type === 'winning' ? '↗️' : point.type === 'losing' ? '↘️' : '➡️' }}
+                    {{ point.title.slice(0, 15) }}{{ point.title.length > 15 ? '...' : '' }}
+                  </span>
+                  <span
+                    v-if="caseItem.case_points.length > 2"
+                    class="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700 border border-blue-200"
+                  >
+                    +{{ caseItem.case_points.length - 2 }} more
+                  </span>
+                </div>
+              </div>
 
               <div class="flex items-center gap-4 text-xs text-gray-600">
                 <div class="flex items-center gap-1">
@@ -687,6 +735,9 @@ const loadCustomerDashboard = async (showLoader = true) => {
       // Sort updates by date (most recent first)
       importantUpdates.value.sort((a, b) => new Date(b.date) - new Date(a.date));
       importantUpdates.value = importantUpdates.value.slice(0, 5);
+      
+      // Load case points for all cases
+      loadCasePoints();
 
       // TODO: Load real invoice data from backend when invoice API is ready
       invoiceStats.value = {
@@ -774,8 +825,87 @@ const getStatusBadge = (status) => {
 const formatDate = (date) => {
   try {
     return format(new Date(date), "MMM d, yyyy");
-  } catch (e) {
+  } catch (error) {
     return "";
+  }
+};
+
+// Load case points from storage
+const loadCasePoints = () => {
+  try {
+    const casePoints = JSON.parse(localStorage.getItem('legaltracker_case_points') || '{}');
+    myCases.value.forEach(caseItem => {
+      if (casePoints[caseItem.id]) {
+        caseItem.case_points = casePoints[caseItem.id];
+      }
+    });
+  } catch (error) {
+    console.error('Failed to load case points:', error);
+  }
+};
+
+// Calculate case outcome indicator
+const getCaseOutcomeIndicator = (caseItem) => {
+  if (!caseItem.case_points || caseItem.case_points.length === 0) {
+    return { status: 'neutral', score: 0, text: 'Case evaluation pending' };
+  }
+
+  let score = 0;
+  caseItem.case_points.forEach(point => {
+    let pointValue = 0;
+    
+    // Base value by type
+    if (point.type === 'winning') pointValue = 1;
+    else if (point.type === 'losing') pointValue = -1;
+    else pointValue = 0; // neutral
+
+    // Multiply by impact
+    if (point.impact === 'high') pointValue *= 3;
+    else if (point.impact === 'medium') pointValue *= 2;
+    else pointValue *= 1; // low
+
+    score += pointValue;
+  });
+
+  let status = 'neutral';
+  let text = 'Case progressing normally';
+  
+  if (score > 2) {
+    status = 'winning';
+    text = 'Looking favorable';
+  } else if (score < -2) {
+    status = 'losing';
+    text = 'Facing challenges';
+  }
+
+  return { status, score, text };
+};
+
+// Get point type color
+const getPointTypeColor = (type) => {
+  switch (type) {
+    case 'winning':
+      return 'bg-green-100 text-green-700 border-green-200';
+    case 'losing':
+      return 'bg-red-100 text-red-700 border-red-200';
+    case 'neutral':
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+
+// Get outcome indicator color
+const getOutcomeIndicatorColor = (status) => {
+  switch (status) {
+    case 'winning':
+      return 'bg-green-500';
+    case 'losing':
+      return 'bg-red-500';
+    case 'neutral':
+      return 'bg-gray-400';
+    default:
+      return 'bg-gray-400';
   }
 };
 
