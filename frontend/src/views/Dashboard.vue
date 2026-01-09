@@ -43,6 +43,32 @@
             </span>
             <span class="nav-text">Dashboard</span>
           </button>
+          <button
+            type="button"
+            @click="selectedView = 'Privacy'"
+            :class="['nav-link', { active: selectedView === 'Privacy' }]"
+          >
+            <span
+              class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center"
+            >
+              <svg
+                class="nav-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </span>
+            <span class="nav-text">Privacy & AI</span>
+          </button>
 
           <button
             type="button"
@@ -339,6 +365,33 @@
 
         <button
           type="button"
+          @click="selectedView = 'Privacy'"
+          :class="['nav-link', { active: selectedView === 'Privacy' }]"
+        >
+          <span
+            class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center"
+          >
+            <svg
+              class="nav-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </span>
+          <span class="nav-text">Privacy & AI</span>
+        </button>
+
+        <button
+          type="button"
           @click="selectedView = 'LawyerCalendar'"
           :class="['nav-link', { active: selectedView === 'LawyerCalendar' }]"
         >
@@ -554,6 +607,33 @@
             </svg>
           </span>
           <span class="nav-text">My Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          @click="selectedView = 'Privacy'"
+          :class="['nav-link', { active: selectedView === 'Privacy' }]"
+        >
+          <span
+            class="icon-wrap bg-white rounded-md p-2 flex items-center justify-center"
+          >
+            <svg
+              class="nav-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </span>
+          <span class="nav-text">Privacy & AI</span>
         </button>
 
         <button
@@ -1171,6 +1251,367 @@
           <AdminMessages v-else-if="selectedView === 'AdminMessages' && isAdmin" />
           <AdminReports v-else-if="selectedView === 'AdminReports' && isAdmin" />
 
+          <!-- Privacy & AI Management -->
+          <div v-else-if="selectedView === 'Privacy'" class="max-w-6xl mx-auto">
+            <div class="mb-6">
+              <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                <svg
+                  class="w-8 h-8 text-[#003aca]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+                Privacy & AI Data Controls
+              </h2>
+              <p class="text-gray-500 mt-1">
+                Manage what data is accessible to AI/LLM processing and configure privacy
+                settings
+              </p>
+            </div>
+
+            <div class="space-y-6">
+              <!-- AI Data Access Controls -->
+              <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="bg-blue-500 rounded-lg p-2">
+                    <svg
+                      class="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    AI Data Access Controls
+                  </h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <!-- Case Data Privacy -->
+                  <div class="space-y-4">
+                    <h4 class="font-medium text-gray-800">Case Information</h4>
+                    <div class="space-y-3">
+                      <label
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <span class="font-medium text-gray-700"
+                            >Case Titles & Descriptions</span
+                          >
+                          <p class="text-sm text-gray-500">
+                            Hide case titles and descriptions from AI processing
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          v-model="privacySettings.hideCaseDetails"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </label>
+
+                      <label
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <span class="font-medium text-gray-700">Client Names</span>
+                          <p class="text-sm text-gray-500">
+                            Anonymize client names in AI interactions
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          v-model="privacySettings.hideClientNames"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </label>
+
+                      <label
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <span class="font-medium text-gray-700"
+                            >Financial Information</span
+                          >
+                          <p class="text-sm text-gray-500">
+                            Hide billing rates, invoices, and financial data
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          v-model="privacySettings.hideFinancialData"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Document & Communication Privacy -->
+                  <div class="space-y-4">
+                    <h4 class="font-medium text-gray-800">Documents & Communications</h4>
+                    <div class="space-y-3">
+                      <label
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <span class="font-medium text-gray-700">Document Contents</span>
+                          <p class="text-sm text-gray-500">
+                            Prevent AI from accessing uploaded document contents
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          v-model="privacySettings.hideDocumentContents"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </label>
+
+                      <label
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <span class="font-medium text-gray-700"
+                            >Messages & Comments</span
+                          >
+                          <p class="text-sm text-gray-500">
+                            Hide internal messages and case comments
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          v-model="privacySettings.hideMessages"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </label>
+
+                      <label
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <span class="font-medium text-gray-700"
+                            >Contact Information</span
+                          >
+                          <p class="text-sm text-gray-500">
+                            Hide phone numbers, addresses, and personal details
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          v-model="privacySettings.hideContactInfo"
+                          class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="font-medium text-gray-800">Global AI Access</h4>
+                      <p class="text-sm text-gray-500">
+                        Completely disable AI access to all sensitive data
+                      </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        v-model="privacySettings.globalAIDisable"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"
+                      ></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Data Anonymization Settings -->
+              <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="bg-green-500 rounded-lg p-2">
+                    <svg
+                      class="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-gray-900">Data Anonymization</h3>
+                </div>
+
+                <div class="space-y-4">
+                  <label
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <span class="font-medium text-gray-700">Auto-Anonymize Names</span>
+                      <p class="text-sm text-gray-500">
+                        Replace real names with pseudonyms in AI contexts
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      v-model="privacySettings.autoAnonymizeNames"
+                      class="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                    />
+                  </label>
+
+                  <label
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <span class="font-medium text-gray-700"
+                        >Mask Sensitive Numbers</span
+                      >
+                      <p class="text-sm text-gray-500">
+                        Hide SSNs, case numbers, and other identifying numbers
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      v-model="privacySettings.maskSensitiveNumbers"
+                      class="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                    />
+                  </label>
+
+                  <label
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <span class="font-medium text-gray-700"
+                        >Location Anonymization</span
+                      >
+                      <p class="text-sm text-gray-500">
+                        Replace specific addresses with general regions
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      v-model="privacySettings.anonymizeLocations"
+                      class="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <!-- AI Usage Audit Log -->
+              <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="bg-purple-500 rounded-lg p-2">
+                    <svg
+                      class="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-semibold text-gray-900">AI Usage Audit</h3>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700"
+                      >AI Requests Today</span
+                    >
+                    <span class="text-lg font-bold text-blue-600">{{
+                      aiUsageStats.today
+                    }}</span>
+                  </div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700"
+                      >Data Accessed This Week</span
+                    >
+                    <span class="text-lg font-bold text-green-600">{{
+                      aiUsageStats.dataAccessed
+                    }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700"
+                      >Privacy Violations</span
+                    >
+                    <span class="text-lg font-bold text-red-600">{{
+                      aiUsageStats.violations
+                    }}</span>
+                  </div>
+                </div>
+
+                <div class="flex gap-3">
+                  <button
+                    @click="exportAuditLog"
+                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                  >
+                    Export Audit Log
+                  </button>
+                  <button
+                    @click="clearAuditLog"
+                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                  >
+                    Clear Log
+                  </button>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div
+                class="flex items-center justify-between pt-6 border-t border-gray-200"
+              >
+                <div class="text-sm text-gray-500">
+                  Changes are saved automatically and take effect immediately
+                </div>
+                <div class="flex gap-3">
+                  <button
+                    @click="resetPrivacySettings"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Reset to Defaults
+                  </button>
+                  <button
+                    @click="savePrivacySettings"
+                    :disabled="isSavingPrivacy"
+                    class="px-6 py-2 bg-[#003aca] text-white rounded-lg hover:bg-[#0031a0] transition-colors font-medium disabled:opacity-50"
+                  >
+                    {{ isSavingPrivacy ? "Saving..." : "Save Settings" }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Lawyer Views -->
           <LawyerOverview v-else-if="selectedView === 'LawyerOverview' && isLawyer" />
 
@@ -1351,6 +1792,28 @@ const stats = ref({
   completedActions: 0,
   pendingActions: 0,
 });
+
+// Privacy settings for AI/LLM data access
+const privacySettings = ref({
+  hideCaseDetails: false,
+  hideClientNames: true,
+  hideFinancialData: true,
+  hideDocumentContents: true,
+  hideMessages: false,
+  hideContactInfo: true,
+  globalAIDisable: false,
+  autoAnonymizeNames: true,
+  maskSensitiveNumbers: true,
+  anonymizeLocations: true,
+});
+
+const aiUsageStats = ref({
+  today: 12,
+  dataAccessed: 47,
+  violations: 0,
+});
+
+const isSavingPrivacy = ref(false);
 const isLoading = ref(true);
 
 // Dashboard filters and state
@@ -1486,6 +1949,7 @@ onMounted(() => {
     authStore.fakeLogin("admin");
   }
   loadDashboardData();
+  loadPrivacySettings();
 });
 
 const getStatusColor = (status) => {
@@ -1675,11 +2139,13 @@ const handleViewCustomerCase = (caseItem) => {
 const handleContactLawyer = (caseItem) => {
   // If a lawyer is assigned, switch to the Messages view and open the conversation for this case
   if (caseItem && (caseItem.lawyer_id || caseItem.lawyerInfo)) {
-    selectedView.value = 'CustomerMessages';
+    selectedView.value = "CustomerMessages";
     // notify messages component after view switches/mounts
     nextTick().then(() => {
       try {
-        window.dispatchEvent(new CustomEvent('open-messages-for-case', { detail: { caseId: caseItem.id } }));
+        window.dispatchEvent(
+          new CustomEvent("open-messages-for-case", { detail: { caseId: caseItem.id } })
+        );
       } catch (e) {
         // ignore
       }
@@ -1705,11 +2171,13 @@ const handleContactLawyer = (caseItem) => {
 // Open messages view for a specific case (called when child emits 'open-messages')
 const handleOpenMessages = async (caseId) => {
   // Switch view to CustomerMessages
-  selectedView.value = 'CustomerMessages';
+  selectedView.value = "CustomerMessages";
   // After view mounts, dispatch a window event with the case id so CustomerMessages can open the conversation
   await nextTick();
   try {
-    window.dispatchEvent(new CustomEvent('open-messages-for-case', { detail: { caseId } }));
+    window.dispatchEvent(
+      new CustomEvent("open-messages-for-case", { detail: { caseId } })
+    );
   } catch (e) {
     // ignore
   }
@@ -1726,6 +2194,118 @@ const handleCustomerNewCase = async (caseData) => {
     // eslint-disable-next-line no-console
     console.error("Failed to create customer case:", err);
     alert("Failed to create case. Please try again.");
+  }
+};
+
+// Privacy management functions
+const savePrivacySettings = async () => {
+  isSavingPrivacy.value = true;
+  try {
+    // Save privacy settings to backend or localStorage
+    localStorage.setItem(
+      "legaltracker_privacy_settings",
+      JSON.stringify(privacySettings.value)
+    );
+
+    // In a real implementation, you would also send to backend:
+    // await PrivacyService.updateSettings(privacySettings.value);
+
+    // Show success notification
+    console.log("Privacy settings saved successfully");
+
+    // Apply privacy filters immediately to AI service
+    applyPrivacyFilters();
+  } catch (error) {
+    console.error("Failed to save privacy settings:", error);
+  }
+  isSavingPrivacy.value = false;
+};
+
+const resetPrivacySettings = () => {
+  privacySettings.value = {
+    hideCaseDetails: false,
+    hideClientNames: true,
+    hideFinancialData: true,
+    hideDocumentContents: true,
+    hideMessages: false,
+    hideContactInfo: true,
+    globalAIDisable: false,
+    autoAnonymizeNames: true,
+    maskSensitiveNumbers: true,
+    anonymizeLocations: true,
+  };
+};
+
+const applyPrivacyFilters = () => {
+  // This function would be called whenever AI/LLM services need data
+  // It would filter out sensitive information based on privacy settings
+
+  if (privacySettings.value.globalAIDisable) {
+    console.log("AI access globally disabled");
+    return null;
+  }
+
+  // Apply specific filters based on settings
+  const filters = {
+    shouldHideCaseDetails: privacySettings.value.hideCaseDetails,
+    shouldHideClientNames: privacySettings.value.hideClientNames,
+    shouldHideFinancialData: privacySettings.value.hideFinancialData,
+    shouldHideDocumentContents: privacySettings.value.hideDocumentContents,
+    shouldHideMessages: privacySettings.value.hideMessages,
+    shouldHideContactInfo: privacySettings.value.hideContactInfo,
+    shouldAutoAnonymizeNames: privacySettings.value.autoAnonymizeNames,
+    shouldMaskSensitiveNumbers: privacySettings.value.maskSensitiveNumbers,
+    shouldAnonymizeLocations: privacySettings.value.anonymizeLocations,
+  };
+
+  // This would be used by AI service to filter data before sending to LLM
+  return filters;
+};
+
+const exportAuditLog = () => {
+  // Generate audit log export
+  const auditData = {
+    timestamp: new Date().toISOString(),
+    settings: privacySettings.value,
+    usage: aiUsageStats.value,
+    // In real implementation, include detailed audit trail
+  };
+
+  const blob = new Blob([JSON.stringify(auditData, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `privacy_audit_${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const clearAuditLog = () => {
+  if (
+    confirm(
+      "Are you sure you want to clear the AI usage audit log? This action cannot be undone."
+    )
+  ) {
+    aiUsageStats.value = {
+      today: 0,
+      dataAccessed: 0,
+      violations: 0,
+    };
+    console.log("Audit log cleared");
+  }
+};
+
+// Load privacy settings on component mount
+const loadPrivacySettings = () => {
+  try {
+    const saved = localStorage.getItem("legaltracker_privacy_settings");
+    if (saved) {
+      privacySettings.value = { ...privacySettings.value, ...JSON.parse(saved) };
+    }
+  } catch (error) {
+    console.error("Failed to load privacy settings:", error);
   }
 };
 
