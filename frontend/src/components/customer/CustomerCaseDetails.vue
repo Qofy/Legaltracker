@@ -308,6 +308,133 @@
         </div>
       </div>
     </div>
+
+    <!-- Case Progress & Points -->
+    <div v-if="currentCase" class="bg-white rounded-lg border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <svg
+          class="w-5 h-5 text-[#003aca]"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        Case Progress & Key Points
+      </h3>
+
+      <div class="space-y-4">
+        <!-- Progress Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-blue-50 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-blue-700">Total Points</span>
+              <div
+                class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center"
+              >
+                <span class="text-sm font-bold text-blue-700">{{
+                  casePoints[currentCase.id]?.length || 0
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-green-50 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-green-700"
+                >Positive Developments</span
+              >
+              <div
+                class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"
+              >
+                <span class="text-sm font-bold text-green-700">{{
+                  getPointsByOutcome(currentCase.id, "positive")
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-amber-50 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-amber-700">Areas of Focus</span>
+              <div
+                class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center"
+              >
+                <span class="text-sm font-bold text-amber-700">{{
+                  getPointsByOutcome(currentCase.id, "neutral")
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Case Points List -->
+        <div class="space-y-3">
+          <div
+            v-if="casePoints[currentCase.id] && casePoints[currentCase.id].length > 0"
+            v-for="point in casePoints[currentCase.id]"
+            :key="point.id"
+            class="border rounded-lg p-4 hover:shadow-sm transition-shadow"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span
+                    :class="getOutcomeIndicator(point.outcome)"
+                    class="px-2 py-1 rounded-full text-xs font-medium"
+                  >
+                    {{
+                      point.outcome === "positive"
+                        ? "Positive"
+                        : point.outcome === "negative"
+                        ? "Challenge"
+                        : "Update"
+                    }}
+                  </span>
+                  <span class="text-xs text-gray-500">{{
+                    formatDate(point.created_at)
+                  }}</span>
+                </div>
+                <p class="text-gray-800 leading-relaxed">{{ point.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="!casePoints[currentCase.id] || casePoints[currentCase.id].length === 0"
+            class="text-center py-8 text-gray-500"
+          >
+            <div class="mb-3">
+              <svg
+                class="w-12 h-12 text-gray-300 mx-auto"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <p class="text-sm">
+              Your lawyer will add important case updates and key points here as your case
+              progresses.
+            </p>
+            <p class="text-xs text-gray-400 mt-1">
+              Check back regularly for the latest developments.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -341,6 +468,7 @@ const currentCase = ref(null);
 const lawyerInfo = ref({});
 const timeline = ref([]);
 const deadlines = ref([]);
+const casePoints = ref({});
 
 // Helper function to get lawyer ID from case (handles different field names)
 const getLawyerId = (caseData) => {
@@ -350,7 +478,85 @@ const getLawyerId = (caseData) => {
     caseData.lawyerId,
     caseData.assignedLawyerId,
   ];
-  return possibleIds.find((id) => id && id !== null && id !== undefined);
+  return possibleIds.find((id) => id && id !== null && id !== undefined) || null;
+};
+
+// Case points functions
+const loadCasePoints = () => {
+  try {
+    const stored = localStorage.getItem("legaltracker_case_points");
+    if (stored) {
+      casePoints.value = JSON.parse(stored);
+      console.log(
+        "Loaded case points for case:",
+        currentCase.value?.id,
+        casePoints.value[currentCase.value?.id]
+      );
+    } else {
+      console.log("No case points found in localStorage");
+      casePoints.value = {};
+    }
+  } catch (error) {
+    console.error("Error loading case points:", error);
+    casePoints.value = {};
+  }
+};
+
+const getPointsByOutcome = (caseId, outcome) => {
+  const points = casePoints.value[caseId] || [];
+  return points.filter((point) => point.outcome === outcome).length;
+};
+
+const getOutcomeIndicator = (outcome) => {
+  switch (outcome) {
+    case "positive":
+      return "bg-green-100 text-green-700";
+    case "negative":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-blue-100 text-blue-700";
+  }
+};
+
+// Temporary function to add test case points
+const addTestPoints = () => {
+  if (!currentCase.value) return;
+
+  const testPoints = [
+    {
+      id: Date.now() + 1,
+      description:
+        "Initial case review completed. Evidence collection has begun and preliminary research shows strong foundation for the case.",
+      outcome: "positive",
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: Date.now() + 2,
+      description:
+        "Filed motion for discovery. Requested all relevant documents from opposing party regarding mining permits and environmental impact assessments.",
+      outcome: "neutral",
+      created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    },
+    {
+      id: Date.now() + 3,
+      description:
+        "Successfully obtained court injunction to halt mining activities pending environmental assessment. This is a significant win for the community.",
+      outcome: "positive",
+      created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+    },
+  ];
+
+  // Save to localStorage
+  const allCasePoints = JSON.parse(
+    localStorage.getItem("legaltracker_case_points") || "{}"
+  );
+  allCasePoints[currentCase.value.id] = testPoints;
+  localStorage.setItem("legaltracker_case_points", JSON.stringify(allCasePoints));
+
+  // Reload case points
+  loadCasePoints();
+
+  alert("Test case points added! You can now see how they appear.");
 };
 
 const loadMyCases = async () => {
@@ -390,6 +596,10 @@ const loadCaseDetails = async (caseToLoad = null) => {
     if (!targetCase) return;
 
     currentCase.value = targetCase;
+    console.log("Current case set to:", {
+      id: currentCase.value.id,
+      title: currentCase.value.title,
+    });
 
     console.log("Loading case details for:", {
       caseId: targetCase.id,
@@ -497,6 +707,9 @@ const loadCaseDetails = async (caseToLoad = null) => {
         type: t.action_type || "Task",
       }))
       .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+    // Load case points
+    loadCasePoints();
   } catch (error) {
     console.error("Failed to load case details:", error);
   }

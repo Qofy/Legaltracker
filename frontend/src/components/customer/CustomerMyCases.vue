@@ -242,12 +242,12 @@
                 :key="point.id"
                 :class="[
                   'px-2 py-1 rounded text-xs border',
-                  getPointTypeColor(point.type)
+                  getPointOutcomeColor(point.outcome)
                 ]"
-                :title="`${point.title} (${point.impact} impact) - ${point.description || 'No details'}`"
+                :title="`${point.outcome} - ${point.description || 'No details'}`"
               >
-                {{ point.type === 'winning' ? '↗️' : point.type === 'losing' ? '↘️' : '➡️' }}
-                {{ point.title.slice(0, 20) }}{{ point.title.length > 20 ? '...' : '' }}
+                {{ point.outcome === 'positive' ? '↗️' : point.outcome === 'negative' ? '↘️' : '➡️' }}
+                {{ point.description.slice(0, 20) }}{{ point.description.length > 20 ? '...' : '' }}
               </span>
               <span
                 v-if="caseItem.case_points.length > 4"
@@ -544,15 +544,10 @@ const getCaseOutcomeIndicator = (caseItem) => {
   caseItem.case_points.forEach(point => {
     let pointValue = 0;
     
-    // Base value by type
-    if (point.type === 'winning') pointValue = 1;
-    else if (point.type === 'losing') pointValue = -1;
+    // Base value by outcome
+    if (point.outcome === 'positive') pointValue = 1;
+    else if (point.outcome === 'negative') pointValue = -1;
     else pointValue = 0; // neutral
-
-    // Multiply by impact
-    if (point.impact === 'high') pointValue *= 3;
-    else if (point.impact === 'medium') pointValue *= 2;
-    else pointValue *= 1; // low
 
     score += pointValue;
   });
@@ -572,6 +567,18 @@ const getCaseOutcomeIndicator = (caseItem) => {
 };
 
 // Get point type color
+const getPointOutcomeColor = (outcome) => {
+  switch (outcome) {
+    case 'positive':
+      return 'bg-green-100 text-green-700 border-green-200';
+    case 'negative':
+      return 'bg-red-100 text-red-700 border-red-200';
+    case 'neutral':
+    default:
+      return 'bg-blue-100 text-blue-700 border-blue-200';
+  }
+};
+
 const getPointTypeColor = (type) => {
   switch (type) {
     case 'winning':
