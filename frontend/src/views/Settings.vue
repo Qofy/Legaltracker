@@ -313,6 +313,29 @@
                   <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
               </div>
+              <div class="mt-4">
+                <Label for="region_preference">Regional / Locale</Label>
+                <div class="relative">
+                  <select
+                    id="region_preference"
+                    v-model="settings.region_preference"
+                    class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 bg-white"
+                  >
+                    <option value="">(Default)</option>
+                    <option value="en-US">English (United States)</option>
+                    <option value="en-GB">English (United Kingdom)</option>
+                    <option value="es-ES">Español (España)</option>
+                    <option value="fr-FR">Français (France)</option>
+                    <option value="de-DE">Deutsch (Deutschland)</option>
+                    <option value="pt-PT">Português (Portugal)</option>
+                    <option value="pt-BR">Português (Brasil)</option>
+                    <option value="zh-CN">中文 (简体)</option>
+                    <option value="ar-SA">العربية (Saudi Arabia)</option>
+                  </select>
+                  <ChevronDown class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Set preferred locale for date, time and number formatting.</p>
+              </div>
               <div v-if="user?.user_type === 'admin'" class="mt-4">
                 <Label for="theme_preference">Theme</Label>
                 <div class="mt-2 grid grid-cols-3 gap-2">
@@ -347,6 +370,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useUiStore } from '@/stores/ui';
 import { useTheme } from '@/stores/useTheme'
 import { User } from '@/services/entities';
 import { InvokeLLM } from '@/integrations/Core';
@@ -392,6 +416,7 @@ const settings = ref({
 
   // User Preferences
   language_preference: 'en',
+  region_preference: '',
   notification_preferences: {
     email: true,
     case_updates: true,
@@ -421,7 +446,8 @@ const loadUserSettings = async () => {
 
     settings.value = {
       ...settings.value,
-      language_preference: userData.language_preference || 'en',
+    language_preference: userData.language_preference || 'en',
+    region_preference: userData.region_preference || '',
       notification_preferences: userData.notification_preferences || {
         email: true,
         case_updates: true,
@@ -443,6 +469,12 @@ const loadUserSettings = async () => {
       kimi_api_key: userData.kimi_api_key || '',
       local_ai_url: userData.local_ai_url || 'http://localhost:11434'
     };
+    // Sync UI store preferences
+    try {
+      const ui = useUiStore();
+      if (settings.value.language_preference) ui.setLanguage(settings.value.language_preference);
+      if (settings.value.region_preference) ui.setRegion(settings.value.region_preference);
+    } catch (e) {}
     // Keep settings.theme in sync with the app theme store (localStorage or system may override)
     try {
       const themeStore = useTheme()
@@ -478,6 +510,9 @@ const handleSave = async () => {
             ? settings.value.specialization.join(', ')
             : (settings.value.specialization || undefined),
           address: settings.value.address || undefined,
+          // NOTE: language/region preferences are managed client-side (ui store + localStorage).
+          // If you want them persisted server-side, add columns to the backend User entity
+          // and re-enable sending them in this payload.
           // Persist AI configuration so Save makes the selected provider/model active
           ai_provider: settings.value.ai_provider || undefined,
           ai_model: settings.value.ai_model || undefined,
@@ -491,6 +526,12 @@ const handleSave = async () => {
         };
 
         await User.update(uid, payload);
+        // Update local UI store / localStorage so language takes effect immediately
+        try {
+          const ui = useUiStore();
+          if (settings.value.language_preference) ui.setLanguage(settings.value.language_preference);
+          if (settings.value.region_preference) ui.setRegion(settings.value.region_preference);
+        } catch (e) {}
     } catch (e) {
       // Re-throw so the outer catch handles notification
       throw e
