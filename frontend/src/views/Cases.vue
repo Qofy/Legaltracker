@@ -599,8 +599,16 @@ const filters = ref({
 });
 
 // Computed properties
-const isAdmin = computed(() => authStore.user?.user_type === "admin");
-const isLawyer = computed(() => authStore.user?.user_type === "lawyer");
+const isAdmin = computed(() => {
+  console.log('Cases.vue - Auth Store User:', authStore.user);
+  console.log('Cases.vue - User Type:', authStore.user?.user_type);
+  console.log('Cases.vue - Is Admin:', authStore.user?.user_type === "admin");
+  return authStore.user?.user_type === "admin";
+});
+const isLawyer = computed(() => {
+  console.log('Cases.vue - Is Lawyer:', authStore.user?.user_type === "lawyer");
+  return authStore.user?.user_type === "lawyer";
+});
 
 const pageTitle = computed(() => {
   if (isAdmin.value) return "Admin Case Management";

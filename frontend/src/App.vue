@@ -12,82 +12,74 @@
       <!-- persistent overlay icons (always visible) -->
       <div class="fixed top-35 right-4 flex flex-col items-end space-y-2 z-50">
         <button
-          @click="navigateTo('/cases')"
+          @click="handleCasesClick"
           class="flex items-center justify-center w-10 h-10 rounded-md bg-sky-500 dark:bg-sky-500 shadow-sm hover:shadow-md transition text-white"
-          title="Cases"
+          :title="getCurrentButtonConfig('cases').title"
         >
           <Briefcase class="w-5 h-5 text-white" />
         </button>
         <button
-          @click="navigateTo('/schedule')"
+          @click="handleScheduleClick"
           class="flex items-center justify-center w-10 h-10 rounded-md bg-purple-500 dark:bg-purple-500 shadow-sm hover:shadow-md transition text-white"
-          title="Schedule"
+          :title="getCurrentButtonConfig('schedule').title"
         >
           <MapPin class="w-5 h-5 text-white" />
         </button>
         <div class="relative group">
           <button
-            @click="showAllPinnedTasks"
+            @click="handlePinClick"
             class="flex items-center justify-center w-10 h-10 rounded-md bg-blue-500 dark:bg-blue-500 shadow-sm hover:shadow-md transition text-white"
-            title="Current Working Job - View All Pinned Tasks"
+            :title="getCurrentButtonConfig('pin').title"
           >
             <Pin class="w-5 h-5 text-white" />
           </button>
 
-          <!-- Smart Tooltip for Pinned Jobs -->
+          <!-- Smart Tooltip for Pinned Jobs - Role-based content -->
           <div
             class="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 w-72 shadow-xl pointer-events-none group-hover:pointer-events-auto"
           >
-            <div v-if="pinnedJobsInfo.length > 0">
+            <!-- Admin View -->
+            <div v-if="isAdmin">
               <div class="font-semibold text-blue-300 mb-2 flex items-center gap-2">
                 <Pin class="w-3 h-3" />
-                Current Pinned Tasks ({{ pinnedJobsInfo.length }})
+                System Overview
               </div>
-              <div class="space-y-2 max-h-32 overflow-y-auto">
-                <div
-                  v-for="job in pinnedJobsInfo.slice(0, 3)"
-                  :key="job.id"
-                  @click="navigateToCaseDetail(job.id)"
-                  class="border-l-2 border-blue-400 pl-2 cursor-pointer hover:bg-gray-800 rounded p-1 transition-colors duration-200"
-                >
-                  <div class="font-medium text-white hover:text-blue-300">
-                    {{ job.title }}
-                  </div>
-                  <div class="text-gray-300 text-xs">{{ job.description }}</div>
-                  <div class="text-blue-300 text-xs mt-1 flex items-center gap-1">
-                    {{ job.status }} • {{ job.priority }}
-                    <svg
-                      class="w-3 h-3 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-1M14 6L8 12l6 6"
-                      ></path>
-                    </svg>
-                  </div>
-                </div>
-                <div
-                  v-if="pinnedJobsInfo.length > 3"
-                  class="text-gray-400 text-xs text-center pt-1"
-                >
-                  <button
-                    @click="showAllPinnedTasks"
-                    class="hover:text-white cursor-pointer underline"
-                  >
-                    +{{ pinnedJobsInfo.length - 3 }} more tasks... (click to view all)
-                  </button>
-                </div>
+              <div class="text-gray-300 text-xs">
+                <p>• Monitor all cases and lawyers</p>
+                <p>• View system analytics</p>
+                <p>• Manage assignments</p>
+                <p class="mt-2 text-blue-300">Click to access admin dashboard</p>
               </div>
             </div>
-            <div v-else class="text-center text-gray-400">
-              <Pin class="w-4 h-4 mx-auto mb-1 opacity-50" />
-              <div class="text-xs">No active pinned tasks</div>
-              <div class="text-xs text-gray-500">Pin cases from your dashboard</div>
+
+            <!-- Lawyer View -->
+            <div v-else-if="isLawyer">
+              <div class="font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                <Pin class="w-3 h-3" />
+                My Meetings
+              </div>
+              <div class="text-gray-300 text-xs">
+                <p>• View upcoming appointments</p>
+                <p>• Manage client meetings</p>
+                <p>• Check schedule conflicts</p>
+                <p class="mt-2 text-blue-300">Click to access your meetings</p>
+              </div>
+            </div>
+
+            <!-- Client View -->
+            <div v-else class="text-center">
+              <div
+                class="font-semibold text-blue-300 mb-2 flex items-center gap-2 justify-center"
+              >
+                <Pin class="w-3 h-3" />
+                My Meetings
+              </div>
+              <div class="text-gray-300 text-xs">
+                <p>• View scheduled appointments</p>
+                <p>• Connect with your lawyer</p>
+                <p>• Manage meeting requests</p>
+                <p class="mt-2 text-blue-300">Click to access your meetings</p>
+              </div>
             </div>
 
             <!-- Tooltip arrow -->
@@ -227,9 +219,35 @@ import { useAuth } from "./composables/useAuth";
 import { useTheme } from "@/stores/useTheme";
 import { Sun, Moon, Briefcase, MapPin, Bug, Hammer, Pin } from "lucide-vue-next";
 
-const { loadUser, isAuthenticated } = useAuth();
+const { loadUser, isAuthenticated, user, userType } = useAuth();
 const themeStore = useTheme();
 const router = useRouter();
+
+// Computed properties for user roles
+const isAdmin = computed(() => userType.value === "admin");
+const isLawyer = computed(() => userType.value === "lawyer");
+const isClient = computed(
+  () => userType.value === "customer" || userType.value === "client"
+);
+
+// Role-based button configurations
+const buttonConfigs = computed(() => ({
+  cases: {
+    admin: { route: "/cases?view=admin", title: "Manage All Cases", icon: "Briefcase" },
+    lawyer: { route: "/cases", title: "My Assigned Cases", icon: "Briefcase" },
+    client: { route: "/my-cases", title: "My Cases", icon: "Briefcase" },
+  },
+  schedule: {
+    admin: { route: "/schedule", title: "Admin Schedule", icon: "MapPin" },
+    lawyer: { route: "/schedule", title: "My Schedule", icon: "MapPin" },
+    client: { route: "/schedule", title: "Appointments", icon: "MapPin" },
+  },
+  pin: {
+    admin: { title: "System Overview", icon: "Pin" },
+    lawyer: { title: "My Meetings", icon: "Pin" },
+    client: { title: "My Meetings", icon: "Pin" },
+  },
+}));
 
 // Modal states
 const showBugReport = ref(false);
@@ -438,6 +456,52 @@ const createSampleCasesFromPinned = () => {
 // Navigation function
 const navigateTo = (path) => {
   router.push(path);
+};
+
+// Get current button configuration based on user role
+const getCurrentButtonConfig = (buttonType) => {
+  const role = isAdmin.value ? "admin" : isLawyer.value ? "lawyer" : "client";
+  console.log("Getting config for role:", role, "button:", buttonType);
+  return buttonConfigs.value[buttonType][role];
+};
+
+// Role-based button click handlers
+const handleCasesClick = () => {
+  console.log("Current user type:", userType.value);
+  console.log("Is Admin:", isAdmin.value);
+  console.log("Is Lawyer:", isLawyer.value);
+  console.log("Is Client:", isClient.value);
+
+  const config = getCurrentButtonConfig("cases");
+  console.log("Navigation config:", config);
+
+  router.push(config.route);
+};
+
+const handleScheduleClick = () => {
+  const config = getCurrentButtonConfig("schedule");
+  router.push(config.route);
+};
+
+const handlePinClick = () => {
+  console.log("Pin Click - Current user type:", userType.value);
+  console.log("Pin Click - Is Admin:", isAdmin.value);
+  console.log("Pin Click - Is Lawyer:", isLawyer.value);
+  console.log("Pin Click - Is Client:", isClient.value);
+
+  if (isAdmin.value) {
+    // Admin: Show system overview/dashboard
+    console.log("Navigating admin to dashboard");
+    router.push("/dashboard");
+  } else if (isLawyer.value) {
+    // Lawyer: Go to My Meetings
+    console.log("Navigating lawyer to my-meetings");
+    router.push("/my-meetings");
+  } else {
+    // Client: Go to My Meetings
+    console.log("Navigating client to my-meetings");
+    router.push("/my-meetings");
+  }
 };
 
 // Navigate to case detail page
